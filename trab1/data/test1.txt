@@ -1,0 +1,7 @@
+x : int
+y : int
+x = 3
+y = 4
+if (x == 5)
+{ y = 2}
+end
