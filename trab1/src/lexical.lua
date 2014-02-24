@@ -44,13 +44,14 @@ local code = {
   K_END         = 118,
 
 
-
-
-  LINE_END      = 500,
+  STRING        = 200,
   NUMBER        = 300,
   OP            = 400,
-  STRING        = 200,
-  ID            = 900,
+
+  LINE_END      = 500,
+
+
+  ID            = 800,
   ERROR         = 000,
 }
 
@@ -125,15 +126,21 @@ local lexer = lulex.New{
 
 
 
-  { '"[^"]+"', -- nao considera \"
+  { '"[^"]*"', -- nao considera \"
     function(token) PrintToken(code.STRING, token) end
   },
+  { '[%d]+', -- hexadecimal ?
+    function(token) PrintToken(code.NUMBER, token) end
+  },
+  { '', -- op
+    function(token) PrintToken(code.OP, token) end
+  },
+
+
   { '[ \n]+',
     function(token) PrintToken(code.LINE_END, token) end
   },
-
-
-  { '',
+  { '[%a_][%w%d_]*',
     function(token) PrintToken(code.ID, token) end
   },
   { '.',

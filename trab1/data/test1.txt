@@ -5,13 +5,17 @@ comentario 2
 
 */
 
-/*
+
 p : " ola \" ola "
+/*
 x : int
 y : int
 */
 x = 3
 y = 4
+temp = 0
+_temp = 2
+_temp2 = 4
 
 if (x == 5)
  y = 2
