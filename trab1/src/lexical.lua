@@ -9,8 +9,10 @@ local lulex = require "lib/lulex"
 -- Private Methods
 --==============================================================================
 
-local function PrintToken(code, token)
-  print(string.format("codigo: %s token: %s", tostring(code), tostring(token)))
+local function StoreToken(code, token, line)
+  if (_DEBUG) then
+    print(string.format("codigo: %s linha: %s token: %s", tostring(code), tostring(line), tostring(token)))
+  end
 end
 
 
@@ -20,10 +22,13 @@ end
 
 local Lexical = {}
 
+-- number of current line
+local line_number = 1
+
+-- code of each tag
 local code = {
   COMMENT_LINE  = 610,
   COMMENT_BLOCK = 620,
-  --KEYWORD       = 100,
   K_IF          = 101,
   K_THEN        = 102,
   K_ELSE        = 103,
@@ -42,112 +47,252 @@ local code = {
   K_OR          = 116,
   K_NOT         = 117,
   K_END         = 118,
-
-
   STRING        = 200,
   NUMBER        = 300,
-  OP            = 400,
-
+  ["OP_("]      = 401,
+  ["OP_)"]      = 402,
+  ["OP_,"]      = 403,
+  ["OP_:"]      = 404,
+  ["OP_>"]      = 405,
+  ["OP_<"]      = 406,
+  ["OP_>="]     = 407,
+  ["OP_<="]     = 408,
+  ["OP_="]      = 409,
+  ["OP_<>"]     = 410,
+  ["OP_["]      = 411,
+  ["OP_]"]      = 412,
+  ["OP_+"]      = 413,
+  ["OP_-"]      = 414,
+  ["OP_*"]      = 415,
+  ["OP_/"]      = 416,
   LINE_END      = 500,
-
-
   ID            = 800,
   ERROR         = 000,
 }
 
+-- lexer instructions and callbacks 
 local lexer = lulex.New{
   { ' ',
-    function(token)
-      -- do nothing
+    function (token)
     end
   },
   { '//[^\n]+',
-    function(token) PrintToken(code.COMMENT_LINE, token) end
+    function (token)
+      StoreToken(code.COMMENT_LINE, token, line_number)
+    end
   },
   { '/%*[^%*]+%*/',
-    function(token) PrintToken(code.COMMENT_BLOCK, token) end
+    function (token)
+      StoreToken(code.COMMENT_BLOCK, token, line_number)
+      local init = 0
+      while (string.find(token, "\n", init)) do
+        _, init = string.find(token, "\n", init)
+        init = init + 1
+        line_number = line_number + 1
+      end
+    end
   },
-  { '[Ii][Ff]',
-    function(token) PrintToken(code.K_IF, token) end
+  { 'if',
+    function (token)
+      StoreToken(code.K_IF, token, line_number) end
   },
-  { '[Tt][Hh][Ee][Nn]',
-    function(token) PrintToken(code.K_THEN, token) end
+  { 'then',
+    function (token)
+      StoreToken(code.K_THEN, token, line_number) end
   },
-  { '[Ee][Ll][Ss][Ee]',
-    function(token) PrintToken(code.K_ELSE, token) end
+  { 'else',
+    function (token)
+      StoreToken(code.K_ELSE, token, line_number) end
   },
-  { '[Ww][Hh][Ii][Ll][Ee]',
-    function(token) PrintToken(code.K_WHILE, token) end
+  { 'while',
+    function (token)
+      StoreToken(code.K_WHILE, token, line_number) end
   },
-  { '[Ll][Oo][Oo][Pp]',
-    function(token) PrintToken(code.K_LOOP, token) end
+  { 'loop',
+    function (token)
+      StoreToken(code.K_LOOP, token, line_number) end
   },
-  { '[Ff][Uu][Nn]',
-    function(token) PrintToken(code.K_FUN, token) end
+  { 'fun',
+    function (token)
+      StoreToken(code.K_FUN, token, line_number) end
   },
-  { '[Rr][Ee][Tt][Uu][Rr][Nn]',
-    function(token) PrintToken(code.K_RETURN, token) end
+  { 'return',
+    function (token)
+      StoreToken(code.K_RETURN, token, line_number)
+    end
   },
-  { '[Nn][Ee][Ww]',
-    function(token) PrintToken(code.K_NEW, token) end
+  { 'new',
+    function (token)
+      StoreToken(code.K_NEW, token, line_number)
+    end
   },
-  { '[Ss][Tt][Rr][Ii][Nn][Gg]',
-    function(token) PrintToken(code.K_STRING, token) end
+  { 'string',
+    function (token)
+      StoreToken(code.K_STRING, token, line_number)
+    end
   },
-  { '[Ii][Nn][Tt]',
-    function(token) PrintToken(code.K_INT, token) end
+  { 'int',
+    function (token)
+      StoreToken(code.K_INT, token, line_number)
+    end
   },
-  { '[Cc][Hh][Aa][Rr]',
-    function(token) PrintToken(code.K_CHAR, token) end
+  { 'char',
+    function (token)
+      StoreToken(code.K_CHAR, token, line_number)
+    end
   },
-  { '[Bb][Oo][Oo][Ll]',
-    function(token) PrintToken(code.K_BOOL, token) end
+  { 'bool',
+    function (token)
+      StoreToken(code.K_BOOL, token, line_number)
+    end
   },
-  { '[Tt][Rr][Uu][Ee]',
-    function(token) PrintToken(code.K_TRUE, token) end
+  { 'true',
+    function (token)
+      StoreToken(code.K_TRUE, token, line_number)
+    end
   },
-  { '[Ff][Aa][Ll][Ss][Ee]',
-    function(token) PrintToken(code.K_FALSE, token) end
+  { 'false',
+    function (token)
+      StoreToken(code.K_FALSE, token, line_number)
+    end
   },
-  { '[Aa][Nn][Dd]',
-    function(token) PrintToken(code.K_AND, token) end
+  { 'and',
+    function (token)
+      StoreToken(code.K_AND, token, line_number)
+    end
   },
-  { '[Oo][Rr]',
-    function(token) PrintToken(code.K_OR, token) end
+  { 'or',
+    function (token)
+      StoreToken(code.K_OR, token, line_number)
+    end
   },
-  { '[Nn][Oo][Tt]',
-    function(token) PrintToken(code.K_NOT, token) end
+  { 'not',
+    function (token)
+      StoreToken(code.K_NOT, token, line_number)
+    end
   },
-  { '[Ee][Nn][Dd]',
-    function(token) PrintToken(code.K_END, token) end
+  { 'end',
+    function (token)
+      StoreToken(code.K_END, token, line_number)
+    end
   },
-
-
-
-
-
-  { '"[^"]*"', -- nao considera \"
-    function(token) PrintToken(code.STRING, token) end
+  { '"[^"]*"', -- nao considera \" -- leitura sendo feita ate o proximo ". Como diferenciar quebra de linha de \n dentro da string?
+    function (token)
+      StoreToken(code.STRING, token, line_number)
+    end
   },
-  { '[%d]+', -- hexadecimal ?
-    function(token) PrintToken(code.NUMBER, token) end
+  { '[%d]+',
+    function (token)
+      StoreToken(code.NUMBER, token, line_number)
+    end
   },
-  { '', -- op
-    function(token) PrintToken(code.OP, token) end
+  { '0x[%d]+',
+    function (token)
+      StoreToken(code.NUMBER, token, line_number)
+    end
   },
-
-
+  { '%(',
+    function (token)
+      StoreToken(code["OP_("], token, line_number)
+    end
+  },
+  { '%)',
+    function (token)
+      StoreToken(code["OP_)"], token, line_number)
+    end
+  },
+  { ',',
+    function (token)
+      StoreToken(code["OP_,"], token, line_number)
+    end
+  },
+  { ':',
+    function (token)
+      StoreToken(code["OP_:"], token, line_number)
+    end
+  },
+  { '>',
+    function (token)
+      StoreToken(code["OP_>"], token, line_number)
+    end
+  },
+  { '<',
+    function (token)
+      StoreToken(code["OP_<"], token, line_number)
+    end
+  },
+  { '>=',
+    function (token)
+      StoreToken(code["OP_>="], token, line_number)
+    end
+  },
+  { '<=',
+    function (token)
+      StoreToken(code["OP_<="], token, line_number)
+    end
+  },
+  { '=',
+    function (token)
+      StoreToken(code["OP_="], token, line_number)
+    end
+  },
+  { '<>',
+    function (token)
+      StoreToken(code["OP_<>"], token, line_number)
+    end
+  },
+  { '%[',
+    function (token)
+      StoreToken(code["OP_["], token, line_number)
+    end
+  },
+  { '%]',
+    function (token)
+      StoreToken(code["OP_]"], token, line_number)
+    end
+  },
+  { '%+',
+    function (token)
+      StoreToken(code["OP_+"], token, line_number)
+    end
+  },
+  { '%-',
+    function (token)
+      StoreToken(code["OP_-"], token, line_number)
+    end
+  },
+  { '%*',
+    function (token)
+      StoreToken(code["OP_*"], token, line_number)
+    end
+  },
+  { '/',
+    function (token)
+      StoreToken(code["OP_/"], token, line_number)
+    end
+  },
   { '[ \n]+',
-    function(token) PrintToken(code.LINE_END, token) end
+    function (token)
+      StoreToken(code.LINE_END, token, line_number)
+      local init = 0
+      while (string.find(token, "\n", init)) do
+        _, init = string.find(token, "\n", init)
+        init = init + 1
+        line_number = line_number + 1
+      end
+    end
   },
   { '[%a_][%w%d_]*',
-    function(token) PrintToken(code.ID, token) end
+    function (token)
+      StoreToken(code.ID, token, line_number)
+    end
   },
   { '.',
-    function(token) PrintToken(code.ERROR, token) end
+    function (token)
+      StoreToken(code.ERROR, token, line_number)
+    end
   },
 }
-
 
 --==============================================================================
 -- Public Methods
