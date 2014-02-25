@@ -10,6 +10,8 @@ local Lexical = require "src/lexical"
 
 local files = {
   "data/test_general_1.txt",
+  "data/test_keyword_1.txt",
+  "data/test_operator_1.txt",
   "data/test_string_1.txt",
 }
 
