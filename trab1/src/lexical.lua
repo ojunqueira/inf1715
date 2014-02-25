@@ -6,17 +6,6 @@ local lulex = require "lib/lulex"
 
 
 --==============================================================================
--- Private Methods
---==============================================================================
-
-local function StoreToken(code, token, line)
-  if (_DEBUG) then
-    print(string.format("codigo: %s linha: %s token: %s", tostring(code), tostring(line), tostring(token)))
-  end
-end
-
-
---==============================================================================
 -- Data Structure
 --==============================================================================
 
@@ -26,7 +15,57 @@ local Lexical = {}
 local line_number = 1
 
 -- code of each tag
-local code = {
+--  {
+--    ["code id"] = $number,
+--  }
+
+local code = {}
+
+-- lexer instructions and callbacks
+--  {
+--    [#] = {
+--      [1] = pattern,
+--      [2] = function,
+--    }
+--  }
+local lexer = {}
+
+-- tags read in input
+--  {
+--    [#] = {
+--      code  = $number,
+--      line  = $number,
+--      token = $string,
+--    }
+--  }
+local tags = {}
+
+
+--==============================================================================
+-- Private Methods
+--==============================================================================
+
+local function StoreToken(code, token, line)
+  assert(code and type(code) == "number")
+  assert(token)
+  assert(line and type(line) == "number")
+  if (_DEBUG) then
+    print(string.format("codigo: %3d linha: %4d token: %s", code, line, tostring(token)))
+  end
+  local t = {
+    code = code,
+    line = line,
+    token = token,
+  }
+  table.insert(tags, t)
+end
+
+
+--==============================================================================
+-- Initialize
+--==============================================================================
+
+code = {
   COMMENT_LINE  = 610,
   COMMENT_BLOCK = 620,
   K_IF          = 101,
@@ -70,8 +109,7 @@ local code = {
   ERROR         = 000,
 }
 
--- lexer instructions and callbacks 
-local lexer = lulex.New{
+lexer = lulex.New{
   { ' ',
     function (token)
     end
@@ -294,6 +332,7 @@ local lexer = lulex.New{
   },
 }
 
+
 --==============================================================================
 -- Public Methods
 --==============================================================================
@@ -305,10 +344,20 @@ local lexer = lulex.New{
 --    [1] $boolean - false if found any problem, true otherwise
 --    [2] $string  - only when [1] is false, informing which error occurs
 function Lexical.Open (txt)
-  if (_DEBUG) then print("Lex :: Open") end
+  if (_DEBUG) then print("LEX :: Open") end
   assert(txt and type(txt) == "string")
   lexer:run(txt, true)
-  --return true, "Leitura realizada com sucesso."
+  for _, tab in ipairs(tags) do
+    if (tab.code == code.ERROR) then
+      return false, "Erro na identificação das tags"
+    end
+  end
+  return true
+end
+
+function Lexical.GetTags()
+  if (_DEBUG) then print("LEX :: GetTags") end
+  return tags
 end
 
 
