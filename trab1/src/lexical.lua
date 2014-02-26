@@ -12,13 +12,12 @@ local lulex = require "lib/lulex"
 local Lexical = {}
 
 -- number of current line
-local line_number = 1
+local line_number
 
 -- code of each tag
 --  {
 --    ["code id"] = $number,
 --  }
-
 local code = {}
 
 -- lexer instructions and callbacks
@@ -346,6 +345,7 @@ lexer = lulex.New{
 function Lexical.Open (txt)
   if (_DEBUG) then print("LEX :: Open") end
   assert(txt and type(txt) == "string")
+  line_number = 1
   lexer:run(txt, true)
   for _, tab in ipairs(tags) do
     if (tab.code == code.ERROR) then

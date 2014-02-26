@@ -2,7 +2,9 @@
 -- Dependency
 --==============================================================================
 
+require "lib/util"
 local Lexical = require "src/lexical"
+
 
 --==============================================================================
 -- Running
@@ -27,8 +29,10 @@ for k, file_path in ipairs(files) do
     if (not ok) then
       print(string.format("(%2d de %2d) %s - %s", k, #files, "FAILURE", file_path))
       print(msg)
+      if (_DEBUG) then util.TablePrint(Lexical.GetTags()) end
     else
       print(string.format("(%2d de %2d) %s - %s", k, #files, "SUCCESS", file_path))
+      if (_DEBUG) then util.TablePrint(Lexical.GetTags()) end
     end
   end
 end
