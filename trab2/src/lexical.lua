@@ -219,10 +219,16 @@ lexer = lulex.New{
       StoreToken(code.K_END, token, line_number)
     end
   },
-  --{ '"([^"]|\\[nt])*"', -- nao aceita \"
-  { '"([^"]|\\[nt]|\\")*"', -- para corrigir
+  { '\\"([^\\"\\\\]|\\\\[nt\\\\"])*\\"',
     function (token)
-      StoreToken(code.STRING, token, line_number)
+      local str = token
+      str = string.gsub(str, '^"', '')
+      str = string.gsub(str, '"$', '')
+      str = string.gsub(str, '\\"', '"')
+      str = string.gsub(str, '\\n', '\n')
+      str = string.gsub(str, '\\t', '\t')
+      str = string.gsub(str, '\\\\', '\\')
+      StoreToken(code.STRING, str, line_number)
     end
   },
   { '[0-9]+',

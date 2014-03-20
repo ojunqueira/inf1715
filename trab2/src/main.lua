@@ -10,7 +10,19 @@ _DEBUG = false
 --==============================================================================
 
 require "lib/util"
-local Lexical = require "src/lexical"
+local Lexical   = require "src/lexical"
+local Syntactic = require "src/syntactic"
+
+
+--==============================================================================
+-- Return codes
+--==============================================================================
+
+local errors = {
+  open_file = 1,
+  lexical   = 2,
+  syntactic = 3,
+}
 
 
 --==============================================================================
@@ -26,17 +38,31 @@ local Lexical = require "src/lexical"
 local args = {...}
 if (#args == 0) then
    print("Nenhum arquivo de entrada foi informado.")
-   os.exit(1)
+   os.exit(errors.open_file)
 end
 
 for k, v in ipairs(args) do
-	local f = io.open(args[k], "r")
+	print("== INPUT ============================================================")
+  local f = io.open(args[k], "r")
 	local str = f:read("*a")
   f:close()
-  local ok, msg = Lexical.Open(str)
+  print(str)
+  local ok, msg
+  print("== LEXICAL ==========================================================")
+  ok, msg = Lexical.Open(str)
   if (not ok) then
     print("LEX: FAILURE    ", msg)
+    os.exit(errors.lexical)
   else
     print("LEX: SUCCESS")
   end
+  print("== SYNTACTIC ========================================================")
+  ok, msg = Syntactic.Open(Lexical.GetTags())
+  if (not ok) then
+    print("SYN: FAILURE    ", msg)
+    os.exit(errors.syntactic)
+  else
+    print("SYN: SUCCESS")
+  end
+  print("== FINISH ===========================================================")
 end
