@@ -2,18 +2,19 @@
 -- Dependency
 --==============================================================================
 
-local Parser = require "lib/parser"
-local Language = require "lib/mini0"
 
 
 --==============================================================================
 -- Data Structure
 --==============================================================================
 
-local Syntactic = {}
+local Parser = {}
 
--- stores the language gramatical functions
-local grammar_rules
+-- store tokens list received in input
+local tokens_list = {}
+
+-- keep the number of the current token
+local current = 0
 
 
 --==============================================================================
@@ -26,24 +27,36 @@ local grammar_rules
 -- Initialize
 --==============================================================================
 
-grammar_rules = Language.GetRules()
 
 
 --==============================================================================
 -- Public Methods
 --==============================================================================
 
+--Advance:
+--  parameters:
+--  return:
+function Parser.Advance ()
+  if (_DEBUG) then print("PAR :: Advance") end
+  current = current + 1
+end
+
 --Open:
 --  parameters:
 --    [1] $table   - table with tokens read in lexical
 --  return:
---    [1] $boolean - false if found any problem, true otherwise
---    [2] $string  - only when [1] is false, informing which error occurs
-function Syntactic.Open (t)
-  if (_DEBUG) then print("SYN :: Open") end
-  assert(t and type(t) == "table")
-  Parser.Open(t)
-  return true
+function Parser.Open (t)
+  if (_DEBUG) then print("PAR :: Open") end
+  assert(type(t) == "table")
+  tokens_list = t
+end
+
+--Peek:
+--  parameters:
+--  return:
+function Parser.Peek ()
+  if (_DEBUG) then print("PAR :: Peek") end
+  return tokens_list[current + 1]
 end
 
 
@@ -51,4 +64,4 @@ end
 -- Return
 --==============================================================================
 
-return Syntactic
+return Parser
