@@ -12,9 +12,6 @@ local Language = require "lib/mini0"
 
 local Syntactic = {}
 
--- stores the language gramatical functions
-local grammar_rules
-
 
 --==============================================================================
 -- Private Methods
@@ -26,7 +23,6 @@ local grammar_rules
 -- Initialize
 --==============================================================================
 
-grammar_rules = Language.GetRules()
 
 
 --==============================================================================
@@ -43,6 +39,10 @@ function Syntactic.Open (t)
   if (_DEBUG) then print("SYN :: Open") end
   assert(t and type(t) == "table")
   Parser.Open(t)
+  local ok, msg = Language.Start(Parser.Advance, Parser.Peek)
+  if (not ok) then
+  	return false, msg
+  end
   return true
 end
 

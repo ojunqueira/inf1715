@@ -39,7 +39,7 @@ local tags = {}
 -- Private Methods
 --==============================================================================
 
-local function StoreToken(code, token, line)
+local function StoreToken (code, token, line)
   assert(code and type(code) == "number")
   assert(token)
   assert(line and type(line) == "number")

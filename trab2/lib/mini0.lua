@@ -69,14 +69,54 @@ assert(token_codes)
 
 local Language = {}
 
-local mini_rules = {}
+local Advance
+
+local Peek
+
+local function Error (line)
+  error("Syntax error at line " .. line .. ".", 0)
+end
+
+local function Match (token, code)
+  if (token.code ~= code) then
+
+  else
+    error("Expected " .. code .. " got " .. token.code .. " at line " .. token.line, 0)
+  end
+end
 
 
 --==============================================================================
 -- Private Methods
 --==============================================================================
 
-function Program ()
+local function Grammar_decl ()
+  if (_DEBUG) then print("LAN :: Grammar_decl") end
+end
+
+local function Grammar_nl()
+  if (_DEBUG) then print("LAN :: Grammar_nl") end
+  local token = Peek()
+  if (token.code == token_codes.LINE_END) then
+    Advance()
+    token = Peek()
+    while (token.code == token_codes.LINE_END) do
+      Advance()
+      token = Peek()
+    end
+  else
+    Error(token.line)
+  end
+end
+
+local function Grammar_programa ()
+  if (_DEBUG) then print("LAN :: Grammar_programa") end
+  local token = Peek()
+  if (token.code == token_codes.LINE_END) then
+    Grammar_nl()
+  end
+  Grammar_decl()
+
 end
 
 
@@ -90,14 +130,14 @@ end
 -- Public Methods
 --==============================================================================
 
---GetRules:
---  parameters:
---  return:
---    [1] $table - table with mini-0 language rules
-function Language.GetRules ()
-  if (_DEBUG) then print("LAN :: GetRules") end
-  table.insert(mini_rules, Program)
-  return mini_rules
+function Language.Start (func_advance, func_peek)
+  if (_DEBUG) then print("LAN :: Start") end
+  assert(type(func_advance) == "function")
+  assert(type(func_peek) == "function")
+  Advance = func_advance
+  Peek = func_peek
+  Grammar_programa()
+  return true
 end
 
 
