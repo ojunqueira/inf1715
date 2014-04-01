@@ -51,12 +51,20 @@ function Parser.Open (t)
   tokens_list = t
 end
 
---Peek:
+--Peek: peek the next token
 --  parameters:
 --  return:
 function Parser.Peek ()
   if (_DEBUG) then print("PAR :: Peek") end
   return tokens_list[current + 1]
+end
+
+--Peek2: peek the second next token
+--  parameters:
+--  return:
+function Parser.Peek2 ()
+  if (_DEBUG) then print("PAR :: Peek2") end
+  return tokens_list[current + 2]
 end
 
 

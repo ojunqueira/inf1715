@@ -39,7 +39,7 @@ function Syntactic.Open (t)
   if (_DEBUG) then print("SYN :: Open") end
   assert(t and type(t) == "table")
   Parser.Open(t)
-  local ok, msg = Language.Start(Parser.Advance, Parser.Peek)
+  local ok, msg = Language.Start(Parser.Advance, Parser.Peek, Parser.Peek2)
   if (not ok) then
   	return false, msg
   end
