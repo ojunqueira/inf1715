@@ -3,7 +3,7 @@
 --==============================================================================
 
 local lulex = require "lib/lulex"
-assert(token_codes)
+local TokensClass = require "lib/tokens"
 
 
 --==============================================================================
@@ -33,6 +33,8 @@ local lexer = {}
 --    }
 --  }
 local tags = {}
+
+local tokens = TokensClass.GetTokensList()
 
 
 --==============================================================================
@@ -66,12 +68,12 @@ lexer = lulex.New{
   },
   { '//[^\n]+',
     function (token)
-      --StoreToken(token_codes.COMMENT_LINE, token, line_number)
+      --StoreToken(tokens.COMMENT_LINE, token, line_number)
     end
   },
   { '/\\*([^\\*]|\\*[^/])*\\*/',
     function (token)
-      --StoreToken(token_codes.COMMENT_BLOCK, token, line_number)
+      --StoreToken(tokens.COMMENT_BLOCK, token, line_number)
       local init = 0
       while (string.find(token, "\n", init)) do
         _, init = string.find(token, "\n", init)
@@ -82,92 +84,92 @@ lexer = lulex.New{
   },
   { 'if',
     function (token)
-      StoreToken(token_codes.K_IF, token, line_number)
+      StoreToken(tokens.K_IF, token, line_number)
     end
   },
   { 'then',
     function (token)
-      StoreToken(token_codes.K_THEN, token, line_number)
+      StoreToken(tokens.K_THEN, token, line_number)
     end
   },
   { 'else',
     function (token)
-      StoreToken(token_codes.K_ELSE, token, line_number)
+      StoreToken(tokens.K_ELSE, token, line_number)
     end
   },
   { 'while',
     function (token)
-      StoreToken(token_codes.K_WHILE, token, line_number)
+      StoreToken(tokens.K_WHILE, token, line_number)
     end
   },
   { 'loop',
     function (token)
-      StoreToken(token_codes.K_LOOP, token, line_number)
+      StoreToken(tokens.K_LOOP, token, line_number)
     end
   },
   { 'fun',
     function (token)
-      StoreToken(token_codes.K_FUN, token, line_number)
+      StoreToken(tokens.K_FUN, token, line_number)
     end
   },
   { 'return',
     function (token)
-      StoreToken(token_codes.K_RETURN, token, line_number)
+      StoreToken(tokens.K_RETURN, token, line_number)
     end
   },
   { 'new',
     function (token)
-      StoreToken(token_codes.K_NEW, token, line_number)
+      StoreToken(tokens.K_NEW, token, line_number)
     end
   },
   { 'string',
     function (token)
-      StoreToken(token_codes.K_STRING, token, line_number)
+      StoreToken(tokens.K_STRING, token, line_number)
     end
   },
   { 'int',
     function (token)
-      StoreToken(token_codes.K_INT, token, line_number)
+      StoreToken(tokens.K_INT, token, line_number)
     end
   },
   { 'char',
     function (token)
-      StoreToken(token_codes.K_CHAR, token, line_number)
+      StoreToken(tokens.K_CHAR, token, line_number)
     end
   },
   { 'bool',
     function (token)
-      StoreToken(token_codes.K_BOOL, token, line_number)
+      StoreToken(tokens.K_BOOL, token, line_number)
     end
   },
   { 'true',
     function (token)
-      StoreToken(token_codes.K_TRUE, token, line_number)
+      StoreToken(tokens.K_TRUE, token, line_number)
     end
   },
   { 'false',
     function (token)
-      StoreToken(token_codes.K_FALSE, token, line_number)
+      StoreToken(tokens.K_FALSE, token, line_number)
     end
   },
   { 'and',
     function (token)
-      StoreToken(token_codes.K_AND, token, line_number)
+      StoreToken(tokens.K_AND, token, line_number)
     end
   },
   { 'or',
     function (token)
-      StoreToken(token_codes.K_OR, token, line_number)
+      StoreToken(tokens.K_OR, token, line_number)
     end
   },
   { 'not',
     function (token)
-      StoreToken(token_codes.K_NOT, token, line_number)
+      StoreToken(tokens.K_NOT, token, line_number)
     end
   },
   { 'end',
     function (token)
-      StoreToken(token_codes.K_END, token, line_number)
+      StoreToken(tokens.K_END, token, line_number)
     end
   },
   { '\\"([^\\"\\\\]|\\\\[nt\\\\"])*\\"',
@@ -179,102 +181,102 @@ lexer = lulex.New{
       str = string.gsub(str, '\\n', '\n')
       str = string.gsub(str, '\\t', '\t')
       str = string.gsub(str, '\\\\', '\\')
-      StoreToken(token_codes.STRING, str, line_number)
+      StoreToken(tokens.STRING, str, line_number)
     end
   },
   { '[0-9]+',
     function (token)
-      StoreToken(token_codes.NUMBER, token, line_number)
+      StoreToken(tokens.NUMBER, token, line_number)
     end
   },
   { '0x[0-9]+',
     function (token)
-      StoreToken(token_codes.NUMBER, tonumber(token), line_number)
+      StoreToken(tokens.NUMBER, tonumber(token), line_number)
     end
   },
   { '\\(',
     function (token)
-      StoreToken(token_codes["OP_("], token, line_number)
+      StoreToken(tokens["OP_("], token, line_number)
     end
   },
   { '\\)',
     function (token)
-      StoreToken(token_codes["OP_)"], token, line_number)
+      StoreToken(tokens["OP_)"], token, line_number)
     end
   },
   { ',',
     function (token)
-      StoreToken(token_codes["OP_,"], token, line_number)
+      StoreToken(tokens["OP_,"], token, line_number)
     end
   },
   { ':',
     function (token)
-      StoreToken(token_codes["OP_:"], token, line_number)
+      StoreToken(tokens["OP_:"], token, line_number)
     end
   },
   { '>',
     function (token)
-      StoreToken(token_codes["OP_>"], token, line_number)
+      StoreToken(tokens["OP_>"], token, line_number)
     end
   },
   { '<',
     function (token)
-      StoreToken(token_codes["OP_<"], token, line_number)
+      StoreToken(tokens["OP_<"], token, line_number)
     end
   },
   { '>=',
     function (token)
-      StoreToken(token_codes["OP_>="], token, line_number)
+      StoreToken(tokens["OP_>="], token, line_number)
     end
   },
   { '<=',
     function (token)
-      StoreToken(token_codes["OP_<="], token, line_number)
+      StoreToken(tokens["OP_<="], token, line_number)
     end
   },
   { '=',
     function (token)
-      StoreToken(token_codes["OP_="], token, line_number)
+      StoreToken(tokens["OP_="], token, line_number)
     end
   },
   { '<>',
     function (token)
-      StoreToken(token_codes["OP_<>"], token, line_number)
+      StoreToken(tokens["OP_<>"], token, line_number)
     end
   },
   { '\\[',
     function (token)
-      StoreToken(token_codes["OP_["], token, line_number)
+      StoreToken(tokens["OP_["], token, line_number)
     end
   },
   { '\\]',
     function (token)
-      StoreToken(token_codes["OP_]"], token, line_number)
+      StoreToken(tokens["OP_]"], token, line_number)
     end
   },
   { '\\+',
     function (token)
-      StoreToken(token_codes["OP_+"], token, line_number)
+      StoreToken(tokens["OP_+"], token, line_number)
     end
   },
   { '-',
     function (token)
-      StoreToken(token_codes["OP_-"], token, line_number)
+      StoreToken(tokens["OP_-"], token, line_number)
     end
   },
   { '\\*',
     function (token)
-      StoreToken(token_codes["OP_*"], token, line_number)
+      StoreToken(tokens["OP_*"], token, line_number)
     end
   },
   { '/',
     function (token)
-      StoreToken(token_codes["OP_/"], token, line_number)
+      StoreToken(tokens["OP_/"], token, line_number)
     end
   },
   { '[ \n]+',
     function (token)
-      StoreToken(token_codes.LINE_END, token, line_number)
+      StoreToken(tokens.LINE_END, token, line_number)
       local init = 0
       while (string.find(token, "\n", init)) do
         _, init = string.find(token, "\n", init)
@@ -285,12 +287,12 @@ lexer = lulex.New{
   },
   { '[a-zA-Z_][a-zA-Z0-9]*',
     function (token)
-      StoreToken(token_codes.ID, token, line_number)
+      StoreToken(tokens.ID, token, line_number)
     end
   },
   { '.',
     function (token)
-      StoreToken(token_codes.ERROR, token, line_number)
+      StoreToken(tokens.ERROR, token, line_number)
     end
   },
 }
@@ -313,7 +315,7 @@ function Lexical.Open (txt)
   line_number = 1
   lexer:run(txt, true)
   for _, tab in ipairs(tags) do
-    if (tab.code == token_codes.ERROR) then
+    if (tab.code == tokens.ERROR) then
       return false, "Erro na identificação das tags"
     end
   end

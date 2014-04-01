@@ -2,7 +2,7 @@
 -- Global Defines
 --==============================================================================
 
-_DEBUG = true
+_DEBUG = false
 
 
 --==============================================================================
@@ -10,7 +10,6 @@ _DEBUG = true
 --==============================================================================
 
 require "lib/util"
-require "lib/tokencodes"
 local Lexical   = require "src/lexical"
 local Syntactic = require "src/syntactic"
 

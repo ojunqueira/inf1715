@@ -82,7 +82,7 @@
 -- Dependency
 --==============================================================================
 
-assert(token_codes)
+local TokensClass = require "lib/tokens"
 
 
 --==============================================================================
@@ -102,6 +102,8 @@ local Parser = {}
 --    $name = $function
 --  }
 local Grammar = {}
+
+local tokens = TokensClass.GetTokensList()
 
 
 --==============================================================================
@@ -124,10 +126,10 @@ local function Match (code)
   if (_DEBUG) then print("LAN :: Match") end
   local token = Parser.Peek()
   if (token.code == code) then
-    print("    Match code ", code)
+    print("    Match code ", TokensClass.GetTokenName(code))
     Parser.Advance()
   else
-    error("Expected " .. code .. " got " .. token.code .. " at line " .. token.line, 0)
+    error("Expected " .. TokensClass.GetTokenName(code) .. " got " .. TokensClass.GetTokenName(token.code) .. " at line " .. token.line, 0)
   end
 end
 
@@ -141,7 +143,7 @@ function Grammar.bloco ()
   while (true) do
     local token = Parser.Peek()
     local token2 = Parser.Peek2()
-    if (token.code == token_codes.ID and token2.code == token_codes["OP_:"]) then
+    if (token.code == tokens.ID and token2.code == tokens["OP_:"]) then
       Grammar.declvar()
       Grammar.nl()
     else
@@ -150,10 +152,10 @@ function Grammar.bloco ()
   end
   while (true) do
     local token = Parser.Peek()
-    if (token.code == token_codes.K_ID or
-        token.code == token_codes.K_IF or
-        token.code == token_codes.K_WHILE or
-        token.code == token_codes.K_RETURN) then
+    if (token.code == tokens.K_ID or
+        token.code == tokens.K_IF or
+        token.code == tokens.K_WHILE or
+        token.code == tokens.K_RETURN) then
       Grammar.comando()
       Grammar.nl()
     else
@@ -164,10 +166,10 @@ end
 
 function Grammar.chamada ()
   if (_DEBUG) then print("LAN :: Grammar_chamada") end
-  Match(token_codes.ID)
-  Match(token_codes["OP_("])
+  Match(tokens.ID)
+  Match(tokens["OP_("])
   Grammar.listaexp()
-  Match(token_codes["OP_)"])
+  Match(tokens["OP_)"])
 end
 
 function Grammar.cmdatrib ()
@@ -176,16 +178,16 @@ end
 
 function Grammar.cmdif ()
   if (_DEBUG) then print("LAN :: Grammar_cmdif") end
-  Match(token_codes.K_IF)
+  Match(tokens.K_IF)
   Grammar.exp()
   Grammar.nl()
   Grammar.bloco()
   while (true) do
     local token = Parser.Peek()
     local token2 = Parser.Peek()
-    if (token.code == token_codes.K_ELSE and token2.code == token_codes.K_IF) then
-      Match(token_codes.K_ELSE)
-      Match(token_codes.K_IF)
+    if (token.code == tokens.K_ELSE and token2.code == tokens.K_IF) then
+      Match(tokens.K_ELSE)
+      Match(tokens.K_IF)
       Grammar.exp()
       Grammar.nl()
       Grammar.bloco()
@@ -194,50 +196,49 @@ function Grammar.cmdif ()
     end
   end
   local token = Parser.Peek()
-  if (token.code == token_codes.K_ELSE) then
-    Match(token_codes.K_ELSE)
+  if (token.code == tokens.K_ELSE) then
+    Match(tokens.K_ELSE)
     Grammar.nl()
     Grammar.bloco()
   end
-  Match(token_codes.K_END)
+  Match(tokens.K_END)
 end
 
 function Grammar.cmdreturn ()
   if (_DEBUG) then print("LAN :: Grammar_cmdreturn") end
-  Match(token_codes.K_RETURN)
+  Match(tokens.K_RETURN)
   local token = Parser.Peek()
-  -- Valido isso abaixo? ou devemos enumerar todas as condicoes de EXP ?
-  if (token.code ~= token_codes.LINE_END) then
+  if (token.code ~= tokens.LINE_END) then
     Grammar.exp()
   end
 end
 
 function Grammar.cmdwhile ()
   if (_DEBUG) then print("LAN :: Grammar_cmdwhile") end
-  Match(token_codes.K_WHILE)
+  Match(tokens.K_WHILE)
   Grammar.exp()
   Grammar.nl()
   Grammar.bloco()
-  Match(token_codes.K_LOOP)
+  Match(tokens.K_LOOP)
 end
 
 function Grammar.comando ()
   if (_DEBUG) then print("LAN :: Grammar_comando") end
   local token = Parser.Peek()
-  if (token.code == token_codes.K_IF) then
+  if (token.code == tokens.K_IF) then
     Grammar.cmdif()
-  elseif (token.code == token_codes.K_WHILE) then
+  elseif (token.code == tokens.K_WHILE) then
     Grammar.cmdwhile()
-  elseif (token.code == token_codes.K_RETURN) then
+  elseif (token.code == tokens.K_RETURN) then
     Grammar.cmdreturn()
-  elseif (token.code == token_codes.ID) then
+  elseif (token.code == tokens.ID) then
     local token2 = Parser.Peek2()
-    if (token2.code == token_codes["OP_:"]) then
+    if (token2.code == tokens["OP_:"]) then
       Grammar.declvar()
-    elseif (token2.code == token_codes["OP_("]) then
+    elseif (token2.code == tokens["OP_("]) then
       Grammar.chamada()
-    elseif (token2.code == token_codes["OP_="] or
-            token2.code == token_codes["OP_["]) then
+    elseif (token2.code == tokens["OP_="] or
+            token2.code == tokens["OP_["]) then
       Grammar.cmdatrib()
     else
       Error(token.line)
@@ -247,12 +248,13 @@ function Grammar.comando ()
   end
 end
 
+-- decl      → funcao | global
 function Grammar.decl ()
   if (_DEBUG) then print("LAN :: Grammar_decl") end
   local token = Parser.Peek()
-  if (token.code == token_codes.K_FUN) then
+  if (token.code == tokens.K_FUN) then
     Grammar.funcao()
-  elseif (token.code == token_codes.ID) then
+  elseif (token.code == tokens.ID) then
     Grammar.global()
   else
     Error(token.line)
@@ -261,8 +263,8 @@ end
 
 function Grammar.declvar ()
   if (_DEBUG) then print("LAN :: Grammar_declvar") end
-  Match(token_codes.ID)
-  Match(token_codes["OP_:"])
+  Match(tokens.ID)
+  Match(tokens["OP_:"])
   Grammar.tipo()
 end
 
@@ -298,22 +300,23 @@ end
 
 function Grammar.funcao ()
   if (_DEBUG) then print("LAN :: Grammar_funcao") end
-  Match(token_codes.K_FUN)
-  Match(token_codes.ID)
-  Match(token_codes["OP_("])
+  Match(tokens.K_FUN)
+  Match(tokens.ID)
+  Match(tokens["OP_("])
   Grammar.params()
-  Match(token_codes["OP_)"])
+  Match(tokens["OP_)"])
   local token = Parser.Peek()
-  if (token.code == token_codes["OP_:"]) then
-    Match(token_codes["OP_:"])
+  if (token.code == tokens["OP_:"]) then
+    Match(tokens["OP_:"])
     Grammar.tipo()
   end
   Grammar.nl()
   Grammar.bloco()
-  Match(token_codes.K_END)
+  Match(tokens.K_END)
   Grammar.nl()
 end
 
+-- global    → declvar nl
 function Grammar.global ()
   if (_DEBUG) then print("LAN :: Grammar_global") end
   Grammar.declvar()
@@ -324,13 +327,14 @@ function Grammar.listaexp ()
   if (_DEBUG) then print("LAN :: Grammar_listaexp") end
 end
 
+-- nl        → NL { NL }
 function Grammar.nl()
   if (_DEBUG) then print("LAN :: Grammar_nl") end
-  Match(token_codes.LINE_END)
+  Match(tokens.LINE_END)
   while (true) do
     local token = Parser.Peek()
-    if (token.code == token_codes.LINE_END) then
-      Match(token_codes.LINE_END)
+    if (token.code == tokens.LINE_END) then
+      Match(tokens.LINE_END)
     else
       break
     end
@@ -339,8 +343,8 @@ end
 
 function Grammar.parametro ()
   if (_DEBUG) then print("LAN :: Grammar_parametro") end
-  Match(token_codes.ID)
-  Match(token_codes["OP_:"])
+  Match(tokens.ID)
+  Match(tokens["OP_:"])
   Grammar.tipo()
 end
 
@@ -348,13 +352,13 @@ function Grammar.params ()
   if (_DEBUG) then print("LAN :: Grammar_params") end
   local token
   token = Parser.Peek()
-  if (token.code == token_codes["OP_)"]) then
-  elseif (token.code == token_codes.ID) then
+  if (token.code == tokens["OP_)"]) then
+  elseif (token.code == tokens.ID) then
     Grammar.parametro()
     while (true) do
       token = Parser.Peek()
-      if (token.code == token_codes["OP_,"]) then
-        Match(token_codes["OP_,"])
+      if (token.code == tokens["OP_,"]) then
+        Match(tokens["OP_,"])
         Grammar.parametro()
       else
         break
@@ -365,13 +369,14 @@ function Grammar.params ()
   end
 end
 
+-- programa  → { NL } decl { decl }
 function Grammar.programa ()
   if (_DEBUG) then print("LAN :: Grammar_programa") end
   local token = Parser.Peek()
-  if (token.code == token_codes.LINE_END) then
+  if (token.code == tokens.LINE_END) then
     Grammar.nl()
-  elseif (token.code == token_codes.K_FUN or
-          token.code == token_codes.ID) then
+  elseif (token.code == tokens.K_FUN or
+          token.code == tokens.ID) then
     Grammar.decl()
   else
     Error(token.line)
@@ -382,14 +387,14 @@ function Grammar.tipo ()
   if (_DEBUG) then print("LAN :: Grammar_tipo") end
   local token
   token = Parser.Peek()
-  if (token.code == token_codes.K_INT or
-      token.code == token_codes.K_BOOL or
-      token.code == token_codes.K_CHAR or
-      token.code == token_codes.K_STRING) then
+  if (token.code == tokens.K_INT or
+      token.code == tokens.K_BOOL or
+      token.code == tokens.K_CHAR or
+      token.code == tokens.K_STRING) then
     Grammar.tipobase()
-  elseif (token.code == token_codes["OP_["]) then
-    Match(token_codes["OP_["])
-    Match(token_codes["OP_]"])
+  elseif (token.code == tokens["OP_["]) then
+    Match(tokens["OP_["])
+    Match(tokens["OP_]"])
     Grammar.tipo()
   else
     Error(token.line)
@@ -400,14 +405,14 @@ function Grammar.tipobase ()
   if (_DEBUG) then print("LAN :: Grammar_tipobase") end
   local token
   token = Parser.Peek()
-  if (token.code == token_codes.K_INT) then
-    Match(token_codes.K_INT)
-  elseif (token.code == token_codes.K_BOOL) then
-    Match(token_codes.K_BOOL)
-  elseif (token.code == token_codes.K_CHAR) then
-    Match(token_codes.K_CHAR)
-  elseif (token.code == token_codes.K_STRING) then
-    Match(token_codes.K_STRING)
+  if (token.code == tokens.K_INT) then
+    Match(tokens.K_INT)
+  elseif (token.code == tokens.K_BOOL) then
+    Match(tokens.K_BOOL)
+  elseif (token.code == tokens.K_CHAR) then
+    Match(tokens.K_CHAR)
+  elseif (token.code == tokens.K_STRING) then
+    Match(tokens.K_STRING)
   else
     Error(token.line)
   end

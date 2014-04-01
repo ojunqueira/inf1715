@@ -1,18 +1,20 @@
 --==============================================================================
--- Class Dependency
+-- Dependency
 --==============================================================================
 
 
 
 --==============================================================================
--- Class Implementation
+-- Data Structure
 --==============================================================================
+
+local Tokens = {}
 
 -- code of each token
 --  {
 --    ["token id"] = $number,
 --  }
-token_codes = {
+local codes = {
   COMMENT_LINE  = 610,
   COMMENT_BLOCK = 620,
   K_IF          = 101,
@@ -61,6 +63,19 @@ token_codes = {
 -- Public Methods
 --==============================================================================
 
+function Tokens.GetTokensList ()
+  return codes
+end
+
+function Tokens.GetTokenName (token_code)
+  assert(type(token_code) == "number")
+  for name, code in pairs(codes) do
+    if (code == token_code) then
+      return name
+    end
+  end
+  return nil
+end
 
 
 --==============================================================================
@@ -73,3 +88,4 @@ token_codes = {
 -- Return
 --==============================================================================
 
+return Tokens
