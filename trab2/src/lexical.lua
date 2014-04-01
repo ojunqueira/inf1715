@@ -34,6 +34,10 @@ local lexer = {}
 --  }
 local tags = {}
 
+--  list of tokens
+--  {
+--    [name] = $number,
+--  }
 local tokens = TokensClass.GetTokensList()
 
 
@@ -189,7 +193,7 @@ lexer = lulex.New{
       StoreToken(tokens.NUMBER, token, line_number)
     end
   },
-  { '0x[0-9]+',
+  { '0x[0-9abcdef]+',
     function (token)
       StoreToken(tokens.NUMBER, tonumber(token), line_number)
     end

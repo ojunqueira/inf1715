@@ -6,7 +6,7 @@ comentario 2
 */
 
 
-p : " ola  ola "
+p : int
 /*
 x : int
 y : int
