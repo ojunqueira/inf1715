@@ -1,5 +1,0 @@
-"ola mundo"
-" ola \n ola "
-" erro neste identificador \" aqui"
-" ultimo \t aqui"
-" ultimo \\ aqui"

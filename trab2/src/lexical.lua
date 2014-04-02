@@ -2,7 +2,7 @@
 -- Debug
 --==============================================================================
 
-local printTokensCapture = false
+local printTokensCapture  = false
 
 
 --==============================================================================
@@ -201,7 +201,7 @@ lexer = lulex.New{
       StoreToken(tokens.NUMBER, token, line_number)
     end
   },
-  { '0x[0-9abcdef]+',
+  { '0x[0-9a-fA-F]+',
     function (token)
       StoreToken(tokens.NUMBER, tonumber(token), line_number)
     end
@@ -328,7 +328,7 @@ function Lexical.Open (txt)
   lexer:run(txt, true)
   for _, tab in ipairs(tags) do
     if (tab.code == tokens.ERROR) then
-      return false, "Erro na identificação das tags"
+      return false, "Erro na identificação das tags na linha " .. tab.line
     end
   end
   return true

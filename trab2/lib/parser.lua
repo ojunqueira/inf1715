@@ -54,6 +54,7 @@ end
 function Parser.Open (t)
   if (_DEBUG) then print("PAR :: Open") end
   assert(type(t) == "table")
+  current = 0
   tokens_list = t
 end
 

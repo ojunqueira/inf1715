@@ -6,17 +6,20 @@ comentario 2
 */
 
 
-p : int
+p : " ola ola "
 /*
 x : int
 y : int
 */
 x <> 3
 _ < 3
-y = 4 + 0x45
+y = 4 + 6
 temp = 0
 _temp = 2 - 10
 _temp2 = 4
+
+x = 0xA7
+y = 0xa7
 
 if (x <= 5)
  y = 2
