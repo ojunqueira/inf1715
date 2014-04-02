@@ -1,4 +1,11 @@
 --==============================================================================
+-- Debug
+--==============================================================================
+
+local printTokensCapture = false
+
+
+--==============================================================================
 -- Dependency
 --==============================================================================
 
@@ -46,11 +53,12 @@ local tokens = TokensClass.GetTokensList()
 --==============================================================================
 
 local function StoreToken (code, token, line)
+  if (_DEBUG) then print("LEX :: StoreToken") end
   assert(code and type(code) == "number")
   assert(token)
   assert(line and type(line) == "number")
-  if (_DEBUG) then
-    print(string.format("codigo: %3d linha: %4d token: %s", code, line, tostring(token)))
+  if (_DEBUG or printTokensCapture) then
+    print(string.format("codigo: '%10s' linha: %4d token: %s", TokensClass.GetTokenName(code), line, tostring(token)))
   end
   local t = {
     code = code,
