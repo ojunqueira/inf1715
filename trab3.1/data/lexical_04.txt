@@ -1,0 +1,3 @@
+"ola mundo"
+" ola \" ola "
+"identificador \t aqui"
