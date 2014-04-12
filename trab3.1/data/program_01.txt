@@ -19,7 +19,7 @@ lines
 
 fun func2 (d:[][]string, e:int) :bool
   b:int
-  return 4 + 2 * (5 + 40 - e) + b
+  return 4 + 2 * (5 + 40 - e) + b - func1(1)
 end
 
 fun Compare (a:int, b:int) :int
@@ -74,6 +74,9 @@ fun main () : int
 
   if (b[1] < 0)
     f[2] = true
+  end
+
+  if (a = 0 or b[1] = 0)
   end
   
   return

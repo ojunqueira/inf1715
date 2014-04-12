@@ -66,6 +66,6 @@ for k, v in ipairs(args) do
     print("SYN: SUCCESS")
   end
   print("== AST TREE =========================================================")
-  ASTree.Print()
+  --ASTree.Print()
   print("== FINISH ===========================================================")
 end
