@@ -9,7 +9,7 @@
 --==============================================================================
 
 local ParserClass = require "lib/parser"
-local Language = require "lib/mini0"
+local LanguageClass = require "lib/mini0"
 
 
 --==============================================================================
@@ -45,7 +45,7 @@ function Syntactic.Open (t)
   if (_DEBUG) then print("SYN :: Open") end
   assert(t and type(t) == "table")
   ParserClass.Open(t)
-  local ok, msg = Language.Start(ParserClass.Advance, ParserClass.Peek, ParserClass.Peek2)
+  local ok, msg = LanguageClass.Start(ParserClass.Advance, ParserClass.Peek, ParserClass.Peek2)
   if (not ok) then
   	return false, msg
   end

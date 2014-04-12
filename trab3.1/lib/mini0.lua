@@ -10,6 +10,7 @@ local printTokensMatch = false
 --==============================================================================
 
 local TokensClass = require "lib/tokens"
+local ASTClass = require "lib/syntax_tree"
 
 
 --==============================================================================
@@ -53,6 +54,8 @@ end
 --  Parameters:
 --    [1] $number - Next expected token code number
 --  Return:
+--    [1] $string - Token value/name
+--    [2] $number - Token line number
 local function Match (code)
   if (_DEBUG) then print("LAN :: Match") end
   local token = Parser.Peek()
@@ -61,6 +64,7 @@ local function Match (code)
       print(string.format("    Match code '%10s' %s", TokensClass.GetTokenName(code), token.token))
     end
     Parser.Advance()
+    return token.token, token.line
   else
     if (token) then
       error("Expected " .. TokensClass.GetTokenName(code) .. " got " .. TokensClass.GetTokenName(token.code) .. " at line " .. token.line, 0)
@@ -77,14 +81,18 @@ end
 
 -- bloco     → { declvar nl }
 --             { comando nl }
-function Grammar.bloco ()
+--  parameters:
+--  return:
+--    [1] $table  - List of DECLARE, [...] nodes
+function Grammar.Block ()
   if (_DEBUG) then print("LAN :: Grammar_bloco") end
+  local list = {}
   while (true) do
     local token = Parser.Peek()
     local token2 = Parser.Peek2()
     if (token and token2 and token.code == tokens.ID and token2.code == tokens["OP_:"]) then
-      Grammar.declvar()
-      Grammar.nl()
+      table.insert(list, Grammar.DeclareVar())
+      Grammar.LineEnd()
     else
       break
     end
@@ -96,29 +104,34 @@ function Grammar.bloco ()
         token.code == tokens.K_IF or
         token.code == tokens.K_WHILE or
         token.code == tokens.K_RETURN) then
-      Grammar.comando()
-      Grammar.nl()
+      table.insert(list, Grammar.Command() or {}) -- RETIRAR OPCAO {}
+      Grammar.LineEnd()
     else
       break
     end
   end
+  return list
 end
 
 -- chamada   → ID '(' listaexp ')'
-function Grammar.chamada ()
+function Grammar.Call ()
   if (_DEBUG) then print("LAN :: Grammar_chamada") end
-  Match(tokens.ID)
+  local name, line, exps
+  name, line = Match(tokens.ID)
   Match(tokens["OP_("])
-  Grammar.listaexp()
+  exps = Grammar.ListExpressions()
   Match(tokens["OP_)"])
+  return ASTClass.NewCallNode(line, name, exps)
 end
 
 -- cmdatrib  → var '=' exp
-function Grammar.cmdatrib ()
+function Grammar.CmdAtrib ()
   if (_DEBUG) then print("LAN :: Grammar_cmdatrib") end
-  Grammar.var()
+  local var, expression
+  var = Grammar.Var()
   Match(tokens["OP_="])
-  Grammar.exp()
+  expression = Grammar.Expression()
+  return ASTClass.NewCmdAtribNode(var, expression)
 end
 
 -- cmdif     → 'if' exp nl
@@ -130,21 +143,21 @@ end
 --                bloco
 --             ]
 --             'end'
-function Grammar.cmdif ()
+function Grammar.CmdIf ()
   if (_DEBUG) then print("LAN :: Grammar_cmdif") end
   Match(tokens.K_IF)
-  Grammar.exp()
-  Grammar.nl()
-  Grammar.bloco()
+  Grammar.Expression()
+  Grammar.LineEnd()
+  Grammar.Block()
   while (true) do
     local token = Parser.Peek()
     local token2 = Parser.Peek2()
     if (token and token2 and token.code == tokens.K_ELSE and token2.code == tokens.K_IF) then
       Match(tokens.K_ELSE)
       Match(tokens.K_IF)
-      Grammar.exp()
-      Grammar.nl()
-      Grammar.bloco()
+      Grammar.Expression()
+      Grammar.LineEnd()
+      Grammar.Block()
     else
       break
     end
@@ -152,54 +165,61 @@ function Grammar.cmdif ()
   local token = Parser.Peek()
   if (token and token.code == tokens.K_ELSE) then
     Match(tokens.K_ELSE)
-    Grammar.nl()
-    Grammar.bloco()
+    Grammar.LineEnd()
+    Grammar.Block()
   end
   Match(tokens.K_END)
 end
 
 -- cmdreturn → 'return' exp | 'return'
-function Grammar.cmdreturn ()
+function Grammar.CmdReturn ()
   if (_DEBUG) then print("LAN :: Grammar_cmdreturn") end
-  Match(tokens.K_RETURN)
+  local line, exp
+  _, line = Match(tokens.K_RETURN)
   local token = Parser.Peek()
   if (token and token.code ~= tokens.LINE_END) then
-    Grammar.exp()
+    exp = Grammar.Expression()
   end
+  return ASTClass.NewCmdReturnNode(line, exp)
 end
 
 -- cmdwhile  → 'while' exp nl
 --                bloco
 --             'loop'
-function Grammar.cmdwhile ()
+function Grammar.CmdWhile ()
   if (_DEBUG) then print("LAN :: Grammar_cmdwhile") end
-  Match(tokens.K_WHILE)
-  Grammar.exp()
-  Grammar.nl()
-  Grammar.bloco()
+  local line, exp, block
+  _, line = Match(tokens.K_WHILE)
+  exp = Grammar.Expression()
+  Grammar.LineEnd()
+  block = Grammar.Block()
   Match(tokens.K_LOOP)
+  return ASTClass.NewCmdWhileNode(line, exp, block)
 end
 
--- comando   → cmdif | cmdwhile | cmdatrib | cmdreturn | chamada 
-function Grammar.comando ()
+-- comando   → cmdif | cmdwhile | cmdatrib | cmdreturn | chamada
+--  parameters:
+--  return:
+--    [1] $table - List of DECLARE, CMDATRIB, CMDRETURN, CMDWHILE, [...] nodes
+function Grammar.Command ()
   if (_DEBUG) then print("LAN :: Grammar_comando") end
   local token = Parser.Peek()
   if (token and token.code == tokens.K_IF) then
-    Grammar.cmdif()
+    return Grammar.CmdIf()
   elseif (token and token.code == tokens.K_WHILE) then
-    Grammar.cmdwhile()
+    return Grammar.CmdWhile()
   elseif (token and token.code == tokens.K_RETURN) then
-    Grammar.cmdreturn()
+    return Grammar.CmdReturn()
   elseif (token and token.code == tokens.ID) then
     local token2 = Parser.Peek2()
     if (token2 and token2.code == tokens["OP_:"]) then
-      Grammar.declvar()
+      return Grammar.DeclareVar()
     elseif (token2 and token2.code == tokens["OP_("]) then
-      Grammar.chamada()
+      return Grammar.Call()
     elseif (token2 and 
             token2.code == tokens["OP_="] or
             token2.code == tokens["OP_["]) then
-      Grammar.cmdatrib()
+      return Grammar.CmdAtrib()
     else
       Error(token.line or nil)
     end
@@ -209,24 +229,35 @@ function Grammar.comando ()
 end
 
 -- decl      → funcao | global
-function Grammar.decl ()
+--  parameters:
+--  return:
+--    [1] $table  - DECLARE or FUNCTION node
+function Grammar.Declare ()
   if (_DEBUG) then print("LAN :: Grammar_decl") end
+  local decl
   local token = Parser.Peek()
   if (token and token.code == tokens.K_FUN) then
-    Grammar.funcao()
+    decl = Grammar.Function(parent_node)
   elseif (token and token.code == tokens.ID) then
-    Grammar.global()
+    decl = Grammar.Global(parent_node)
   else
     Error(token.line or nil)
   end
+  return decl
 end
 
 -- declvar   → ID ':' tipo
-function Grammar.declvar ()
+--
+--  parameters:
+--  return:
+--    [1] $table  - DECLARE node
+function Grammar.DeclareVar ()
   if (_DEBUG) then print("LAN :: Grammar_declvar") end
-  Match(tokens.ID)
+  local name, line, typebase, array
+  name, line = Match(tokens.ID)
   Match(tokens["OP_:"])
-  Grammar.tipo()
+  typebase, array = Grammar.Type()
+  return ASTClass.NewDeclareNode(line, name, typebase, array)
 end
 
 -- exp       → LITNUMERAL
@@ -251,103 +282,104 @@ end
 --           | exp 'or' exp
 --           | 'not' exp
 --           | '-' exp
-function Grammar.exp ()
+function Grammar.Expression ()
   if (_DEBUG) then print("LAN :: Grammar_exp") end
-  Grammar.exp_preced_1()
+  Grammar.ExpressionLevel1()
+  return {}
 end
 
-function Grammar.exp_preced_1 ()
-  Grammar.exp_preced_2()
+function Grammar.ExpressionLevel1 ()
+  Grammar.ExpressionLevel2()
   local token = Parser.Peek()
   if (token and token.code == tokens.K_OR) then
     Match(tokens.K_OR)
-    Grammar.exp_preced_1()
+    Grammar.ExpressionLevel1()
   end
 end
 
-function Grammar.exp_preced_2 ()
-  Grammar.exp_preced_3()
+function Grammar.ExpressionLevel2 ()
+  Grammar.ExpressionLevel3()
   local token = Parser.Peek()
   if (token and token.code == tokens.K_AND) then
     Match(tokens.K_AND)
-    Grammar.exp_preced_2()
+    Grammar.ExpressionLevel2()
   end
 end
 
-function Grammar.exp_preced_3 ()
-  Grammar.exp_preced_4()
+function Grammar.ExpressionLevel3 ()
+  Grammar.ExpressionLevel4()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_="]) then
     Match(tokens["OP_="])
-    Grammar.exp_preced_3()
+    Grammar.ExpressionLevel3()
   elseif (token and token.code == tokens["OP_<>"]) then
     Match(tokens["OP_<>"])
-    Grammar.exp_preced_3()
+    Grammar.ExpressionLevel3()
   end
 end
 
-function Grammar.exp_preced_4 ()
-  Grammar.exp_preced_5()
+function Grammar.ExpressionLevel4 ()
+  Grammar.ExpressionLevel5()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_>"]) then
     Match(tokens["OP_>"])
-    Grammar.exp_preced_4()
+    Grammar.ExpressionLevel4()
   elseif (token and token.code == tokens["OP_<"]) then
     Match(tokens["OP_<"])
-    Grammar.exp_preced_4()
+    Grammar.ExpressionLevel4()
   elseif (token and token.code == tokens["OP_>="]) then
     Match(tokens["OP_>="])
-    Grammar.exp_preced_4()
+    Grammar.ExpressionLevel4()
   elseif (token and token.code == tokens["OP_<="]) then
     Match(tokens["OP_<="])
-    Grammar.exp_preced_4()
+    Grammar.ExpressionLevel4()
   end
 end
 
-function Grammar.exp_preced_5 ()
-  Grammar.exp_preced_6()
+function Grammar.ExpressionLevel5 ()
+  Grammar.ExpressionLevel6()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_+"]) then
     Match(tokens["OP_+"])
-    Grammar.exp_preced_5()
+    Grammar.ExpressionLevel5()
   elseif (token and token.code == tokens["OP_-"]) then
     Match(tokens["OP_-"])
-    Grammar.exp_preced_5()
+    Grammar.ExpressionLevel5()
   end
 end
 
-function Grammar.exp_preced_6 ()
-  Grammar.exp_preced_7()
+function Grammar.ExpressionLevel6 ()
+  Grammar.ExpressionLevel7()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_*"]) then
     Match(tokens["OP_*"])
-    Grammar.exp_preced_6()
+    Grammar.ExpressionLevel6()
   elseif (token and token.code == tokens["OP_/"]) then
     Match(tokens["OP_/"])
-    Grammar.exp_preced_6()
+    Grammar.ExpressionLevel6()
   end
 end
 
-function Grammar.exp_preced_7 ()
-  Grammar.exp_preced_8()
+function Grammar.ExpressionLevel7 ()
+  Grammar.ExpressionLevel8()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_-"]) then
     Match(tokens["OP_-"])
-    Grammar.exp_preced_6()
+    Grammar.ExpressionLevel6()
   end
 end
 
-function Grammar.exp_preced_8 ()
-  Grammar.exp_preced_9()
+function Grammar.ExpressionLevel8 ()
+  Grammar.ExpressionLevel9()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_("]) then
     Match(tokens["OP_("])
-    Grammar.exp()
+    Grammar.Expression()
     Match(tokens["OP_)"])
   end
 end
 
-function Grammar.exp_preced_9 ()
+function Grammar.ExpressionLevel9 ()
   local token = Parser.Peek()
   if (token and token.code == tokens.NUMBER) then
     Match(tokens.NUMBER)
@@ -360,18 +392,18 @@ function Grammar.exp_preced_9 ()
   elseif (token and token.code == tokens.K_NEW) then
     Match(tokens.K_NEW)
     Match(tokens["OP_["])
-    Grammar.exp()
+    Grammar.Expression()
     Match(tokens["OP_]"])
-    Grammar.tipo()
+    Grammar.Type()
   elseif (token and token.code == tokens.K_NOT) then
     Match(tokens.K_NOT)
-    Grammar.exp()
+    Grammar.Expression()
   elseif (token and token.code == tokens.ID) then
     local token2 = Parser.Peek2()
     if (token2 and token2.code == tokens["OP_("]) then
-      Grammar.chamada()
+      Grammar.Call()
     else
-      Grammar.var()
+      Grammar.Var()
     end
   end
 end
@@ -379,51 +411,59 @@ end
 -- funcao    → 'fun' ID '(' params ')' [ ':' tipo ] nl
 --                bloco
 --             'end' nl
-function Grammar.funcao ()
+--  parameters:
+--  return:
+--    [1] $table  - FUNCTION node
+function Grammar.Function ()
   if (_DEBUG) then print("LAN :: Grammar_funcao") end
+  local name, line, params, ret_type, array_size, block
   Match(tokens.K_FUN)
-  Match(tokens.ID)
+  name, line = Match(tokens.ID)
   Match(tokens["OP_("])
-  Grammar.params()
+  params = Grammar.Parameters()
   Match(tokens["OP_)"])
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_:"]) then
     Match(tokens["OP_:"])
-    Grammar.tipo()
+    ret_type, array_size = Grammar.Type()
   end
-  Grammar.nl()
-  Grammar.bloco()
+  Grammar.LineEnd()
+  block = Grammar.Block()
   Match(tokens.K_END)
-  Grammar.nl()
+  Grammar.LineEnd()
+  return ASTClass.NewFunctionNode(line, name, params, ret_type, array_size, block)
 end
 
 -- global    → declvar nl
-function Grammar.global ()
+function Grammar.Global ()
   if (_DEBUG) then print("LAN :: Grammar_global") end
-  Grammar.declvar()
-  Grammar.nl()
+  local node = Grammar.DeclareVar()
+  Grammar.LineEnd()
+  return node
 end
 
 -- listaexp  → /*vazio*/ | exp { ',' exp }
-function Grammar.listaexp ()
+function Grammar.ListExpressions ()
   if (_DEBUG) then print("LAN :: Grammar_listaexp") end
+  local list = {}
   local token = Parser.Peek()
   if (token and token.code ~= tokens["OP_)"]) then
-    Grammar.exp()
+    table.insert(list, Grammar.Expression())
     while (true) do
       token = Parser.Peek()
       if (token and token.code == tokens["OP_,"]) then
         Match(tokens["OP_,"])
-        Grammar.exp()
+        table.insert(list, Grammar.Expression())
       else
         break
       end
     end
   end
+  return list
 end
 
 -- nl        → NL { NL }
-function Grammar.nl()
+function Grammar.LineEnd()
   if (_DEBUG) then print("LAN :: Grammar_nl") end
   Match(tokens.LINE_END)
   while (true) do
@@ -437,47 +477,58 @@ function Grammar.nl()
 end
 
 -- parametro → ID ':' tipo
-function Grammar.parametro ()
+--  parameters:
+--  return:
+--    [1] $table  - PARAMETER node
+function Grammar.Parameter ()
   if (_DEBUG) then print("LAN :: Grammar_parametro") end
-  Match(tokens.ID)
+  local name, typebase, array_size
+  name, _ = Match(tokens.ID)
   Match(tokens["OP_:"])
-  Grammar.tipo()
+  typebase, array_size = Grammar.Type()
+  return ASTClass.NewParameterNode(name, typebase, array_size)
 end
 
 -- params    → /*vazio*/ | parametro { ',' parametro }
-function Grammar.params ()
+--  parameters:
+--  return:
+--    [1] $table  - List of PARAMETER nodes
+function Grammar.Parameters ()
   if (_DEBUG) then print("LAN :: Grammar_params") end
+  local list = {}
   local token = Parser.Peek()
   if (token and token.code ~= tokens["OP_)"]) then
-    Grammar.parametro()
+    table.insert(list, Grammar.Parameter())
     while (true) do
       token = Parser.Peek()
       if (token and token.code == tokens["OP_,"]) then
         Match(tokens["OP_,"])
-        Grammar.parametro()
+        table.insert(list, Grammar.Parameter())
       else
         break
       end
     end
   end
+  return list
 end
 
 -- programa  → { NL } decl { decl }
-function Grammar.programa ()
+function Grammar.Program ()
   if (_DEBUG) then print("LAN :: Grammar_programa") end
+  local node = {}
   local token = Parser.Peek()
   if (token and token.code == tokens.LINE_END) then
-    Grammar.nl()
+    Grammar.LineEnd()
   end
   token = Parser.Peek()
   if (token and 
       token.code == tokens.K_FUN or
       token.code == tokens.ID) then
-    Grammar.decl()
+    table.insert(node, Grammar.Declare())
     while (true) do
       token = Parser.Peek()
       if (token) then
-        Grammar.decl()
+        table.insert(node, Grammar.Declare())
       else
         break
       end
@@ -485,58 +536,80 @@ function Grammar.programa ()
   else
     Error(token.line or nil)
   end
+  ASTClass.NewProgramNode(node)
 end
 
 -- tipo      → tipobase | '[' ']' tipo
-function Grammar.tipo ()
+--  parameters:
+--  return:
+--    [1] $typebase
+--    [2] $array_size
+function Grammar.Type (array_size)
   if (_DEBUG) then print("LAN :: Grammar_tipo") end
+  array_size = array_size or 0
+  local typebase
   local token = Parser.Peek()
   if (token and
       token.code == tokens.K_INT or
       token.code == tokens.K_BOOL or
       token.code == tokens.K_CHAR or
       token.code == tokens.K_STRING) then
-    Grammar.tipobase()
+    typebase = Grammar.Typebase()
   elseif (token and token.code == tokens["OP_["]) then
     Match(tokens["OP_["])
     Match(tokens["OP_]"])
-    Grammar.tipo()
+    array_size = array_size + 1
+    typebase, array_size = Grammar.Type(array_size)
   else
     Error(token.line or nil)
   end
+  return typebase, array_size
 end
 
 -- tipobase  → 'int' | 'bool' | 'char' | 'string'
-function Grammar.tipobase ()
+--  parameters:
+--  return:
+--    [1] $typebase
+function Grammar.Typebase ()
   if (_DEBUG) then print("LAN :: Grammar_tipobase") end
   local token = Parser.Peek()
   if (token and token.code == tokens.K_INT) then
     Match(tokens.K_INT)
+    return "int"
   elseif (token and token.code == tokens.K_BOOL) then
     Match(tokens.K_BOOL)
+    return "bool"
   elseif (token and token.code == tokens.K_CHAR) then
     Match(tokens.K_CHAR)
+    return "char"
   elseif (token and token.code == tokens.K_STRING) then
     Match(tokens.K_STRING)
+    return "string"
   else
     Error(token.line or nil)
   end
 end
 
 -- var       → ID | var '[' exp ']'
-function Grammar.var ()
+--  parameters:
+--  return:
+--    [1] $table - VAR node
+function Grammar.Var ()
   if (_DEBUG) then print("LAN :: Grammar_var") end
-  Match(tokens.ID)
+  local name, line
+  local array = {}
+  name, line = Match(tokens.ID)
   while (true) do
     local token = Parser.Peek()
     if (token and token.code == tokens["OP_["]) then
       Match(tokens["OP_["])
-      Grammar.exp()
+      table.insert(array, Grammar.Expression())
       Match(tokens["OP_]"])
     else
       break
     end
   end
+  return ASTClass.NewVarNode(line, name, array)
 end
 
 
@@ -552,7 +625,7 @@ function Language.Start (func_advance, func_peek, func_peek2)
   Parser.Advance = func_advance
   Parser.Peek = func_peek
   Parser.Peek2 = func_peek2
-  local ok, msg = pcall(function () Grammar.programa() end)
+  local ok, msg = pcall(function () Grammar.Program() end)
   if (not ok) then
     return false, msg
   end

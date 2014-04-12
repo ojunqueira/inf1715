@@ -12,6 +12,7 @@ _DEBUG = false
 require "lib/util"
 local Lexical   = require "src/lexical"
 local Syntactic = require "src/syntactic"
+local ASTree    = require "lib/syntax_tree"
 
 
 --==============================================================================
@@ -19,9 +20,10 @@ local Syntactic = require "src/syntactic"
 --==============================================================================
 
 local errors = {
-  open_file = 1,
-  lexical   = 2,
-  syntactic = 3,
+  no_input  = 1,
+  open_file = 2,
+  lexical   = 3,
+  syntactic = 4,
 }
 
 
@@ -29,15 +31,20 @@ local errors = {
 -- Running
 --==============================================================================
 
+print("== START TEST =======================================================")
 local args = {...}
 if (#args == 0) then
    print("Nenhum arquivo de entrada foi informado.")
-   os.exit(errors.open_file)
+   os.exit(errors.no_input)
 end
 
 for k, v in ipairs(args) do
 	print("== INPUT ============================================================")
   local f = io.open(args[k], "r")
+  if (not f) then
+    print(string.format("Arquivo %s nao pode ser aberto", args[k]))
+    os.exit(errors.open_file)
+  end
 	local str = f:read("*a")
   f:close()
   print(str)
@@ -58,5 +65,7 @@ for k, v in ipairs(args) do
   else
     print("SYN: SUCCESS")
   end
+  print("== AST TREE =========================================================")
+  ASTree.Print()
   print("== FINISH ===========================================================")
 end

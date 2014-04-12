@@ -47,7 +47,7 @@ function Parser.Advance ()
   current = current + 1
 end
 
---Open:
+--Open: Start a new parser with current table input, erasing any previous one
 --  parameters:
 --    [1] $table   - table with tokens read in lexical
 --  return:

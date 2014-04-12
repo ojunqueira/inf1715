@@ -1,5 +1,6 @@
 x:int
 y:[]string
+z:[][][] bool
 
 fun func1 (a:int) : []int
   // comment
@@ -30,6 +31,7 @@ fun Compare (a:int, b:int) :int
   else
     c = 0
   end
+  func1(c)
   return c
 end
 
@@ -41,7 +43,7 @@ fun main () : int
   d:[]char
 
   e:bool
-  f:[]bool
+  f:[][]bool
 
   g:string
   h:[]string
@@ -57,8 +59,8 @@ fun main () : int
   d[1*5/5+1] = "world"
 
   e = true
-  f[1] = false
-  f[3] = false
+  f[1][0] = false
+  f[3][1] = false
 
   if (false)
     x = "a"
