@@ -4,13 +4,13 @@
 -- Debug
 --==============================================================================
 
-local printTree = true
+local printTree = false
 
 --==============================================================================
 -- Dependency
 --==============================================================================
 
-require "lib/util"
+require "lib/util" -- TEMPORARY
 
 
 --==============================================================================
@@ -27,6 +27,11 @@ local list_ids = {
   CMDRETURN = 022,
   CMDWHILE  = 023,
   DECLARE   = 002,
+  EXP_CALL  = 033,
+  EXP_EXP   = 035,
+  EXP_OP    = 031,
+  EXP_VALUE = 034,
+  EXP_VAR   = 032,
   FUNCTION  = 011,
   PARAMETER = 012,
   PROGRAM   = 001,
@@ -43,7 +48,7 @@ local tree = {}
 function Print.Call (indent, t)
   print(indent .. "CALL [" .. t.name .. "] @" .. t.line .. "  {")
   for _, node in ipairs(t.exps) do
-    Print.Expression(indent .. "  ", node)
+    print(Print.Expression(node))
   end
   print(indent .. "}")
 end
@@ -51,13 +56,13 @@ end
 function Print.CmdAtrib (indent, t)
   print(indent .. "ATRIB @" .. t.line .. " {")
   Print.Var(indent .. "  ", t.var)
-  Print.Expression(indent .. "  ", t.exp)
+  print(Print.Expression(t.exp))
   print(indent .. "}")
 end
 
 function Print.CmdReturn (indent, t)
   print(indent .. "RETURN @" .. t.line .. " {")
-  Print.Expression(indent .. "  ", t.exp)
+  print(Print.Expression(t.exp))
   print(indent .. "}")
 end
 
@@ -68,11 +73,12 @@ end
 
 function Print.Declare (indent, t)
   print(indent .. "DECLARE @" .. t.line .. "{")
-  Print.Var(indent .. "  ", t)
+  print(indent .. "ID [" .. t.name .. "] " .. t.type .. " " .. t.size .. " @" .. t.line)
   print(indent .. "}")
 end
 
-function Print.Expression (indent, t)
+function Print.Expression (exp)
+  return ""
 end
 
 function Print.Function (indent, t)
@@ -115,7 +121,11 @@ function Print.Program (indent, t)
 end
 
 function Print.Var (indent, t)
-  print(indent .. "ID [" .. t.name .. "] " .. t.size .. " @" .. t.line)
+  local array_str = ""
+  for _, exp in ipairs(t.array) do
+    array_str = array_str .. "[" .. Print.Expression() .. "]"
+  end
+  print(indent .. "ID [" .. t.name .. "] " .. array_str .. " @" .. t.line)
 end
 
 
@@ -228,6 +238,96 @@ function AbstractSyntaxTree.NewDeclareNode (line, name, typebase, size)
   return node
 end
 
+--NewExpCallNode:
+--  {
+--    id    = $number - one of list_ids values
+--    name  = $string - 
+--    array = $table  - 
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewExpCallNode (call)
+  if (_DEBUG) then print("AST :: NewExpCallNode") end
+  local node = {
+    id    = list_ids.EXP_CALL,
+    name  = call.name,
+    exps  = call.exps,
+  }
+  return node
+end
+
+--NewExpOperatorNode:
+--  {
+--    id    = $number - one of list_ids values
+--    op    = $string - 
+--    [1]   = 
+--    [2]   = 
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewExpOperatorNode (left, operator, right)
+  if (_DEBUG) then print("AST :: NewExpOperatorNode") end
+  local node = {
+    id    = list_ids.EXP_OP,
+    op    = operator,
+    left,
+    right,
+  }
+  return node
+end
+
+--NewExpParenthesisNode:
+--  {
+--    id    = $number - one of list_ids values
+--    exp   = $table  - EXPRESSION node
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewExpParenthesisNode (exp)
+  if (_DEBUG) then print("AST :: NewExpParenthesisNode") end
+  local node = {
+    id  = list_ids.EXP_EXP,
+    exp = unpack(exp)
+  }
+  return node
+end
+
+--NewExpValueNode:
+--  {
+--    id    = $number - one of list_ids values
+--    type  = $string - 
+--    value = $string or $number or $boolean - 
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewExpValueNode (type, value)
+  if (_DEBUG) then print("AST :: NewExpValueNode") end
+  local node = {
+    id    = list_ids.EXP_VALUE,
+    type  = type,
+    value = value,
+  }
+  return node
+end
+
+--NewExpVarNode:
+--  {
+--    id    = $number - one of list_ids values
+--    name  = $string - 
+--    array = $table  - 
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewExpVarNode (var)
+  if (_DEBUG) then print("AST :: NewExpVarNode") end
+  local node = {
+    id    = list_ids.EXP_VAR,
+    name  = var.name,
+    array = var.array,
+  }
+  return node
+end
+
 --NewFunctionNode:
 --  {
 --    id      = $number - one of list_ids values
@@ -291,17 +391,17 @@ end
 --    id    = $number - one of list_ids values
 --    line  = $number - line number
 --    name  = $string - var name
---    size  = $number - 
+--    array = $table  - 
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewVarNode (line, name, size)
+function AbstractSyntaxTree.NewVarNode (line, name, array)
   if (_DEBUG) then print("AST :: NewVarNode") end
   local node = {
     id    = list_ids.VAR,
     line  = line,
     name  = name,
-    size  = size,
+    array = array,
   }
   return node
 end

@@ -308,7 +308,7 @@ function Grammar.Expression ()
   if (_DEBUG) then print("LAN :: Grammar_exp") end
   local exp = Grammar.ExpressionLevel1()
   if exp then
-    --util.TablePrint(exp)
+    util.TablePrint({exp})
     return {exp}
   end
   return {}
@@ -319,7 +319,7 @@ function Grammar.ExpressionLevel1 ()
   local token = Parser.Peek()
   if (token and token.code == tokens.K_OR) then
     Match(tokens.K_OR)
-    return {left, Grammar.ExpressionLevel1(), op = "or"}
+    return ASTClass.NewExpOperatorNode(left, "or", Grammar.ExpressionLevel1())
   end
   return left
 end
@@ -329,7 +329,7 @@ function Grammar.ExpressionLevel2 ()
   local token = Parser.Peek()
   if (token and token.code == tokens.K_AND) then
     Match(tokens.K_AND)
-    return {left, Grammar.ExpressionLevel2(), op = "and"}
+    return ASTClass.NewExpOperatorNode(left, "and", Grammar.ExpressionLevel2())
   end
   return left
 end
@@ -339,10 +339,10 @@ function Grammar.ExpressionLevel3 ()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_="]) then
     Match(tokens["OP_="])
-    return {left, Grammar.ExpressionLevel3(), op = "="}
+    return ASTClass.NewExpOperatorNode(left, "=", Grammar.ExpressionLevel3())
   elseif (token and token.code == tokens["OP_<>"]) then
     Match(tokens["OP_<>"])
-    return {left, Grammar.ExpressionLevel3(), op = "<>"}
+    return ASTClass.NewExpOperatorNode(left, "<>", Grammar.ExpressionLevel3())
   end
   return left
 end
@@ -352,16 +352,16 @@ function Grammar.ExpressionLevel4 ()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_>"]) then
     Match(tokens["OP_>"])
-    return {left, Grammar.ExpressionLevel4(), op = ">"}
+    return ASTClass.NewExpOperatorNode(left, ">", Grammar.ExpressionLevel4())
   elseif (token and token.code == tokens["OP_<"]) then
     Match(tokens["OP_<"])
-    return {left, Grammar.ExpressionLevel4(), op = "<"}
+    return ASTClass.NewExpOperatorNode(left, "<", Grammar.ExpressionLevel4())
   elseif (token and token.code == tokens["OP_>="]) then
     Match(tokens["OP_>="])
-    return {left, Grammar.ExpressionLevel4(), op = ">="}
+    return ASTClass.NewExpOperatorNode(left, ">=", Grammar.ExpressionLevel4())
   elseif (token and token.code == tokens["OP_<="]) then
     Match(tokens["OP_<="])
-    return {left, Grammar.ExpressionLevel4(), op = "<="}
+    return ASTClass.NewExpOperatorNode(left, "<=", Grammar.ExpressionLevel4())
   end
   return left
 end
@@ -371,10 +371,10 @@ function Grammar.ExpressionLevel5 ()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_+"]) then
     Match(tokens["OP_+"])
-    return {left, Grammar.ExpressionLevel5(), op = "+"}
+    return ASTClass.NewExpOperatorNode(left, "+", Grammar.ExpressionLevel5())
   elseif (token and token.code == tokens["OP_-"]) then
     Match(tokens["OP_-"])
-    return {left, Grammar.ExpressionLevel5(), op = "-"}
+    return ASTClass.NewExpOperatorNode(left, "-", Grammar.ExpressionLevel5())
   end
   return left
 end
@@ -384,10 +384,10 @@ function Grammar.ExpressionLevel6 ()
   local token = Parser.Peek()
   if (token and token.code == tokens["OP_*"]) then
     Match(tokens["OP_*"])
-    return {left, Grammar.ExpressionLevel6(), op = "*"}
+    return ASTClass.NewExpOperatorNode(left, "*", Grammar.ExpressionLevel6())
   elseif (token and token.code == tokens["OP_/"]) then
     Match(tokens["OP_/"])
-    return {left, Grammar.ExpressionLevel6(), op = "/"}
+    return ASTClass.NewExpOperatorNode(left, "/", Grammar.ExpressionLevel6())
   end
   return left
 end
@@ -398,7 +398,7 @@ function Grammar.ExpressionLevel7 ()
   if (token and token.code == tokens["OP_-"]) then
     Match(tokens["OP_-"])
     -- PROBLEM WITH -exp
-    return {left, Grammar.ExpressionLevel7(), op = "-"}
+    return ASTClass.NewExpOperatorNode(left, "-", Grammar.ExpressionLevel7())
   end
   return left
 end
@@ -410,7 +410,7 @@ function Grammar.ExpressionLevel8 ()
     Match(tokens["OP_("])
     local exp = Grammar.Expression()
     Match(tokens["OP_)"])
-    return {unpack(exp), type = "expression"}
+    return ASTClass.NewExpParenthesisNode(exp)
   end
   return left
 end
@@ -418,13 +418,13 @@ end
 function Grammar.ExpressionLevel9 ()
   local token = Parser.Peek()
   if (token and token.code == tokens.NUMBER) then
-    return {value = Match(tokens.NUMBER), type = "number"}
+    return ASTClass.NewExpValueNode("number", Match(tokens.NUMBER))
   elseif (token and token.code == tokens.STRING) then
-    return {value = Match(tokens.STRING), type = "string"}
+    return ASTClass.NewExpValueNode("string", Match(tokens.STRING))
   elseif (token and token.code == tokens.K_TRUE) then
-    return {value = Match(tokens.K_TRUE), type = "boolean"}
+    return ASTClass.NewExpValueNode("boolean", Match(tokens.K_TRUE))
   elseif (token and token.code == tokens.K_FALSE) then
-    return {value = Match(tokens.K_FALSE), type = "boolean"}
+    return ASTClass.NewExpValueNode("boolean", Match(tokens.K_FALSE))
   elseif (token and token.code == tokens.K_NEW) then
     -- NEED TO DEFINE WHAT TO DO HERE
     Match(tokens.K_NEW)
@@ -437,13 +437,12 @@ function Grammar.ExpressionLevel9 ()
     Match(tokens.K_NOT)
     Grammar.Expression()
   elseif (token and token.code == tokens.ID) then
-    -- NEED TO DEFINE WHAT TO DO HERE
     local node
     local token2 = Parser.Peek2()
     if (token2 and token2.code == tokens["OP_("]) then
-      return {value = Grammar.Call(), type = "function"}
+      return ASTClass.NewExpCallNode(Grammar.Call())
     else
-      return {value = Grammar.Var(), type = "var"}
+      return ASTClass.NewExpVarNode(Grammar.Var())
     end
   end
 end
