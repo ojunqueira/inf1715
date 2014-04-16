@@ -35,68 +35,154 @@ local tree = {}
 -- Private Methods
 --==============================================================================
 
-function Print.FunctionCall (indent, t)
+function Print.Block (indent, t)
+  if (t) then
+    for _, node in ipairs(t) do
+      if (node.id == nodes_codes["ATTRIBUTION"]) then
+        Print.ComandAttribution(indent, node)
+      elseif (node.id == nodes_codes["IF"]) then
+        Print.ComandIf(indent, node)
+      elseif (node.id == nodes_codes["RETURN"]) then
+        Print.ComandReturn(indent, node)
+      elseif (node.id == nodes_codes["WHILE"]) then
+        Print.ComandWhile(indent, node)
+      elseif (node.id == nodes_codes["DECLARE"]) then
+        Print.Declare(indent, node)
+      elseif (node.id == nodes_codes["CALL"]) then
+        Print.Call(indent, node)
+      elseif (node.id == nodes_codes["VAR"]) then
+        Print.Variable(indent, node)
+      else
+        error("block node error")
+      end
+    end
+  end
+end
+
+function Print.Call (indent, t)
   print(indent .. "CALL [" .. t.name .. "] @" .. t.line .. "  {")
   for _, node in ipairs(t.exps) do
-    print(Print.Expression(node))
+    print(indent .. "  PARAM " .. Print.Expression(node))
   end
   print(indent .. "}")
 end
 
 function Print.ComandAttribution (indent, t)
   print(indent .. "ATRIB @" .. t.line .. " {")
+  local str = ""
+  str = str .. t.var.name
+  if (t.var.array) then
+    for _, exp in ipairs(t.var.array) do
+      str = str .. "[" .. Print.Expression(exp) .. "]"
+    end
+  end
   Print.Variable(indent .. "  ", t.var)
-  print(Print.Expression(t.exp))
+
+  print(indent .. "  =" .. Print.Expression(t.exp))
+  print(indent .. "}")
+end
+
+function Print.ComandElseIf (indent, t)
+  print(indent .. "ELSEIF [" .. Print.Expression(t.cond) .. "] @" .. t.line)
+  Print.Block(indent .. "  ", t.block)
+end
+
+function Print.ComandIf (indent, t)
+  print(indent .. "IF [" .. Print.Expression(t.cond) .. "] @" .. t.line .. " {")
+  Print.Block(indent .. "  ", t.block)
+  if (t["elseif"]) then
+    for _, elseif_node in ipairs(t["elseif"]) do
+      Print.ComandElseIf(indent, elseif_node)
+    end
+  end
+  if (t["else"]) then
+    print(indent .. "ELSE ")
+    Print.Block(indent .. "  ", t["else"])
+  end
   print(indent .. "}")
 end
 
 function Print.ComandReturn (indent, t)
   print(indent .. "RETURN @" .. t.line .. " {")
-  print(Print.Expression(t.exp))
+  print(indent .. "  " .. Print.Expression(t.exp))
   print(indent .. "}")
 end
 
 function Print.ComandWhile (indent, t)
-  print(indent .. "WHILE @" .. t.line .. " {")
-  -- CONTINUE
+  print(indent .. "WHILE [" .. Print.Expression(t.condition) .. "] @" .. t.line .. " {")
+  Print.Block(indent .. "  ", t.block)
   print(indent .. "}")
 end
 
 function Print.Declare (indent, t)
   print(indent .. "DECLARE @" .. t.line .. "{")
-  print(indent .. "  ID [" .. t.name .. "] " .. t.type .. " " .. t.size .. " @" .. t.line)
+  print(indent .. "  ID [" .. t.name .. "] " .. t.type .. string.rep("[]", t.size) .. " @" .. t.line)
   print(indent .. "}")
 end
 
-function Print.Expression (exp)
-  return ""
+function Print.Expression (node)
+  local str = ""
+  if (not node) then
+    return ""
+  end
+  if (node.id == nodes_codes["PARENTHESIS"]) then
+    str = str .. " (" .. Print.Expression(node.exp) .. ")"
+  elseif (node.id == nodes_codes["NEWVAR"]) then
+    str = str .. " new [" .. Print.Expression(node.exp) .. "] " .. node.type
+  elseif (node.id == nodes_codes["DENY"]) then
+    str = str .. " not " .. Print.Expression(node.exp)
+  elseif (node.id == nodes_codes["OPERATOR"]) then
+    str = str .. Print.Expression(node[1]) .. " " .. node.op .. " " .. Print.Expression(node[2])
+  elseif (node.id == nodes_codes["VALUE"]) then
+    str = str .. " " .. node.value
+  elseif (node.id == nodes_codes["CALL"]) then
+    str = str .. " " .. node.name .. "("
+    if (node.exps) then
+      str = str .. Print.Expression(node.exps[1])
+      if (node.exps[2]) then
+        for i = 2, #node.exps do
+          str = str .. ", " .. Print.Expression(node.exps[i])
+        end
+      end
+    end
+    str = str .. ")"
+  elseif (node.id == nodes_codes["VAR"]) then
+    str = str .. " " .. node.name
+    if (node.array) then
+      for _, exp in ipairs(node.array) do
+        str = str .. "["
+        str = str .. Print.Expression(exp)
+        str = str .. "]"
+      end
+    end
+  else
+    error("expression node error")
+  end
+  return str
 end
 
 function Print.Function (indent, t)
   print(indent .. "FUN [" .. t.name .. "] @" .. t.line .. " {")
   for _, node in ipairs(t.params) do
-    Print.Parameter(indent .. "  ", node)
+    print(indent .. "  FUNC_PARAMETER [" .. node.name .. "] " .. node.type .. string.rep("[]", node.size))
   end
-  print(indent .. "  FUNC_RETURN " .. t.r_type .. " - " .. t.r_size)
+  print(indent .. "  FUNC_RETURN " .. t.r_type .. string.rep("[]", t.r_size))
   for _, node in ipairs(t.block) do
     if (node.id == nodes_codes["DECLARE"]) then
       Print.Declare(indent .. "  ", node)
-    elseif (node.id == nodes_codes["FUNCTION_CALL"]) then
-      Print.FunctionCall(indent .. "  ", node)
-    elseif (node.id == nodes_codes["COMAND_ATTRIBUTION"]) then
+    elseif (node.id == nodes_codes["CALL"]) then
+      Print.Call(indent .. "  ", node)
+    elseif (node.id == nodes_codes["ATTRIBUTION"]) then
       Print.ComandAttribution(indent .. "  ", node)
-    elseif (node.id == nodes_codes["COMAND_RETURN"]) then
+    elseif (node.id == nodes_codes["IF"]) then
+      Print.ComandIf(indent .. "  ", node)
+    elseif (node.id == nodes_codes["RETURN"]) then
       Print.ComandReturn(indent .. "  ", node)
-    elseif (node.id == nodes_codes["COMAND_WHILE"]) then
+    elseif (node.id == nodes_codes["WHILE"]) then
       Print.ComandWhile(indent .. "  ", node)
     end
   end
   print(indent .. "}")
-end
-
-function Print.Parameter (indent, t)
-  local str = indent .. "FUNC_PARAMETER [" .. t.name .. "] " .. t.type .. " - " .. t.size
-  print(str)
 end
 
 function Print.Program (indent, t)
@@ -130,18 +216,19 @@ end
 -- Public Methods
 --==============================================================================
 
---NewComandAttributionNode:
+--NewAttributionNode:
 --  {
 --    id    = $number - one of nodes_codes values
---    var   = $table  - VAR node
 --    exp   = $table  - EXPRESSION node
+--    line  = $number - line number
+--    var   = $table  - VAR node
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewComandAttributionNode (var, expression)
-  if (_DEBUG) then print("AST :: NewComandAttributionNode") end
+function AbstractSyntaxTree.NewAttributionNode (var, expression)
+  if (_DEBUG) then print("AST :: NewAttributionNode") end
   local node = {
-    id    = nodes_codes["COMAND_ATTRIBUTION"],
+    id    = nodes_codes["ATTRIBUTION"],
     exp   = expression,
     line  = var.line,
     var   = var,
@@ -149,48 +236,27 @@ function AbstractSyntaxTree.NewComandAttributionNode (var, expression)
   return node
 end
 
---NewComandIfNode:
-
-
---NewComandReturnNode:
+--NewCallNode:
 --  {
 --    id    = $number - one of nodes_codes values
 --    line  = $number - line number
---    exp   = $table  - EXPRESSION node
+--    name  = $string - var name
+--    exps  = $table  - list of EXPRESSIONS nodes
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewComandReturnNode (line, expression)
-  if (_DEBUG) then print("AST :: NewComandReturnNode") end
+function AbstractSyntaxTree.NewCallNode (line, name, expressions)
+  if (_DEBUG) then print("AST :: NewCallNode") end
   local node = {
-    id    = nodes_codes["COMAND_RETURN"],
-    exp   = expression,
-    line  = line,
+    id   = nodes_codes["CALL"],
+    line = line,
+    name = name,
+    exps = expressions,
   }
   return node
 end
 
---NewComandWhileNode:
---  {
---    id    = $number - one of nodes_codes values
---    block = $table  - list of COMMANDS that will be executed if [cond] is true
---    cond  = $table  - EXPRESSION NODE, represents condition
---    line  = $number - line number
---  }
---  parameters:
---  return:
-function AbstractSyntaxTree.NewComandWhileNode (line, condition, block)
-  if (_DEBUG) then print("AST :: NewComandWhileNode") end
-  local node = {
-    id    = nodes_codes["COMAND_WHILE"],
-    block = block,
-    cond  = condition,
-    line  = line,
-  }
-  return node
-end
-
---NewDeclareVariableNode:
+--NewDeclVarNode:
 --  {
 --    id    = $number - one of nodes_codes values
 --    line  = $number - line number
@@ -200,8 +266,8 @@ end
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewDeclareVariableNode (line, name, typebase, size)
-  if (_DEBUG) then print("AST :: NewDeclareVariableNode") end
+function AbstractSyntaxTree.NewDeclVarNode (line, name, typebase, size)
+  if (_DEBUG) then print("AST :: NewDeclVarNode") end
   local node = {
     id    = nodes_codes["DECLARE"],
     line  = line,
@@ -212,90 +278,38 @@ function AbstractSyntaxTree.NewDeclareVariableNode (line, name, typebase, size)
   return node
 end
 
---NewExpNewNode:
---  {
---    id    = $number - one of nodes_codes values
---    exp   = $table  - EXPRESSION node
---    type  = $string - [bool, char, int, string]
---  }
---  parameters:
---  return:
-function AbstractSyntaxTree.NewExpNewNode (expression, type)
-  if (_DEBUG) then print("AST :: NewExpNotNode") end
-  local node = {
-    id    = nodes_codes["EXPRESSION_NEW"],
-    exp   = expression,
-    type  = type,
-  }
-  return node
-end
-
---NewExpNotNode:
+--NewDenyNode:
 --  {
 --    id    = $number - one of nodes_codes values
 --    exp   = $table  - EXPRESSION node
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewExpNotNode (expression)
-  if (_DEBUG) then print("AST :: NewExpNotNode") end
+function AbstractSyntaxTree.NewDenyNode (expression)
+  if (_DEBUG) then print("AST :: NewDenyNode") end
   local node = {
-    id    = nodes_codes["EXPRESSION_NOT"],
+    id    = nodes_codes["DENY"],
     exp   = expression,
   }
   return node
 end
 
---NewExpOperatorNode:
+--NewElseIfNode:
 --  {
 --    id    = $number - one of nodes_codes values
---    op    = $string - 
---    [1]   = 
---    [2]   = 
+--    block = $table  - list of COMMANDS that will be executed if [cond] is true
+--    cond  = $table  - EXPRESSION NODE, represents condition
+--    line  = $number - line number
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewExpOperatorNode (left, operator, right)
-  if (_DEBUG) then print("AST :: NewExpOperatorNode") end
+function AbstractSyntaxTree.NewElseIfNode (line, condition, block)
+  if (_DEBUG) then print("AST :: NewElseIfNode") end
   local node = {
-    id    = nodes_codes["EXPRESSION_OPERATOR"],
-    op    = operator,
-    left,
-    right,
-  }
-  return node
-end
-
---NewExpParenthesisNode:
---  {
---    id    = $number - one of nodes_codes values
---    exp   = $table  - EXPRESSION node
---  }
---  parameters:
---  return:
-function AbstractSyntaxTree.NewExpParenthesisNode (expression)
-  if (_DEBUG) then print("AST :: NewExpParenthesisNode") end
-  local node = {
-    id  = nodes_codes["EXPRESSION_PARENTHESIS"],
-    exp = unpack(expression)
-  }
-  return node
-end
-
---NewExpValueNode:
---  {
---    id    = $number - one of nodes_codes values
---    type  = $string - 
---    value = $string or $number or $boolean - 
---  }
---  parameters:
---  return:
-function AbstractSyntaxTree.NewExpValueNode (type, value)
-  if (_DEBUG) then print("AST :: NewExpValueNode") end
-  local node = {
-    id    = nodes_codes["EXPRESSION_VALUE"],
-    type  = type,
-    value = value,
+    id          = nodes_codes["ELSEIF"],
+    block       = block,
+    cond        = condition,
+    line        = line,
   }
   return node
 end
@@ -326,22 +340,64 @@ function AbstractSyntaxTree.NewFunctionNode (line, name, parameters, return_type
   return node
 end
 
---NewFunctionCallNode:
+--NewIfNode:
 --  {
---    id    = $number - one of nodes_codes values
---    line  = $number - line number
---    name  = $string - var name
---    exps  = $table  - list of EXPRESSIONS nodes
+--    id      = $number - one of nodes_codes values
+--    block   = $table  - list of COMMANDS that will be executed if [cond] is true
+--    cond    = $table  - EXPRESSION NODE, represents condition
+--    else    = $table  - list of COMMANDS that will be executed none conditions are true
+--    elseif  = $table  - list of ELSEIF nodes
+--    line    = $number - line number
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewFunctionCallNode (line, name, expressions)
-  if (_DEBUG) then print("AST :: NewFunctionCallNode") end
+function AbstractSyntaxTree.NewIfNode (line, condition, block, elseif_node, else_block)
+  if (_DEBUG) then print("AST :: NewIfNode") end
   local node = {
-    id   = nodes_codes["FUNCTION_CALL"],
-    line = line,
-    name = name,
-    exps = expressions,
+    id          = nodes_codes["IF"],
+    block       = block,
+    cond        = condition,
+    ["else"]    = else_block,
+    ["elseif"]  = elseif_node,
+    line        = line,
+  }
+  return node
+end
+
+--NewNewVarNode:
+--  {
+--    id    = $number - one of nodes_codes values
+--    exp   = $table  - EXPRESSION node
+--    type  = $string - [bool, char, int, string]
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewNewVarNode (expression, type)
+  if (_DEBUG) then print("AST :: NewNewVarNode") end
+  local node = {
+    id    = nodes_codes["NEWVAR"],
+    exp   = expression,
+    type  = type,
+  }
+  return node
+end
+
+--NewOperatorNode:
+--  {
+--    id    = $number - one of nodes_codes values
+--    op    = $string - 
+--    [1]   = 
+--    [2]   = 
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewOperatorNode (left, operator, right)
+  if (_DEBUG) then print("AST :: NewOperatorNode") end
+  local node = {
+    id    = nodes_codes["OPERATOR"],
+    op    = operator,
+    left,
+    right,
   }
   return node
 end
@@ -366,6 +422,22 @@ function AbstractSyntaxTree.NewParameterNode (name, typebase, size)
   return node
 end
 
+--NewParenthesisNode:
+--  {
+--    id    = $number - one of nodes_codes values
+--    exp   = $table  - EXPRESSION node
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewParenthesisNode (expression)
+  if (_DEBUG) then print("AST :: NewParenthesisNode") end
+  local node = {
+    id  = nodes_codes["PARENTHESIS"],
+    exp = expression,
+  }
+  return node
+end
+
 --NewProgramNode:
 --  {
 --    id       = $number - one of nodes_codes values
@@ -381,7 +453,43 @@ function AbstractSyntaxTree.NewProgramNode (ast_tree)
   if (printTree) then AbstractSyntaxTree.Print() end
 end
 
---NewVariableNode:
+--NewReturnNode:
+--  {
+--    id    = $number - one of nodes_codes values
+--    line  = $number - line number
+--    exp   = $table  - EXPRESSION node
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewReturnNode (line, expression)
+  if (_DEBUG) then print("AST :: NewReturnNode") end
+  local node = {
+    id    = nodes_codes["RETURN"],
+    exp   = expression,
+    line  = line,
+  }
+  return node
+end
+
+--NewValueNode:
+--  {
+--    id    = $number - one of nodes_codes values
+--    type  = $string - 
+--    value = $string or $number or $boolean - 
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewValueNode (type, value)
+  if (_DEBUG) then print("AST :: NewValueNode") end
+  local node = {
+    id    = nodes_codes["VALUE"],
+    type  = type,
+    value = value,
+  }
+  return node
+end
+
+--NewVarNode:
 --  {
 --    id    = $number - one of nodes_codes values
 --    line  = $number - line number
@@ -390,13 +498,33 @@ end
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewVariableNode (line, name, array)
-  if (_DEBUG) then print("AST :: NewVariableNode") end
+function AbstractSyntaxTree.NewVarNode (line, name, array)
+  if (_DEBUG) then print("AST :: NewVarNode") end
   local node = {
-    id    = nodes_codes["VARIABLE"],
+    id    = nodes_codes["VAR"],
     line  = line,
     name  = name,
     array = array,
+  }
+  return node
+end
+
+--NewWhileNode:
+--  {
+--    id    = $number - one of nodes_codes values
+--    block = $table  - list of COMMANDS that will be executed if [cond] is true
+--    cond  = $table  - EXPRESSION NODE, represents condition
+--    line  = $number - line number
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewWhileNode (line, condition, block)
+  if (_DEBUG) then print("AST :: NewWhileNode") end
+  local node = {
+    id    = nodes_codes["WHILE"],
+    block = block,
+    cond  = condition,
+    line  = line,
   }
   return node
 end
