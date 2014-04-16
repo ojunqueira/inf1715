@@ -10,7 +10,7 @@ local printTokensCapture  = false
 --==============================================================================
 
 local lulex = require "lib/lulex"
-local TokensClass = require "lib/tokens"
+local TokensClass = require "lib/token_codes"
 
 
 --==============================================================================

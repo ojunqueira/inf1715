@@ -73,11 +73,12 @@ fun main () : int
   loop
 
   if (b[1] < 0)
-    f[2] = true
+    f[2] = not true
   end
 
   if (a = 0 or b[1] = 0)
   end
   
+  a = new [4] int
   return
 end

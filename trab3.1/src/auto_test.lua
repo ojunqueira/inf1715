@@ -64,6 +64,11 @@ local files = {
     lexical   = true,
     syntactic = true,     
   },
+  ["data/program_02.txt"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,     
+  },
 }
 
 
