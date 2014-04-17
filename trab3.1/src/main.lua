@@ -3,6 +3,7 @@
 --==============================================================================
 
 _DEBUG = false
+local printInput = false
 
 
 --==============================================================================
@@ -47,7 +48,9 @@ for k, v in ipairs(args) do
   end
 	local str = f:read("*a")
   f:close()
-  print(str)
+  if (printInput) then
+    print(str)
+  end
   local ok, msg
   print("== LEXICAL ==========================================================")
   ok, msg = Lexical.Open(str)

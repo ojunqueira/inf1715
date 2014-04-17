@@ -106,18 +106,20 @@ function Print.ComandReturn (indent, t)
   print(indent .. "RETURN @" .. t.line .. " {")
   print(indent .. "  " .. Print.Expression(t.exp))
   print(indent .. "}")
+  -- print(indent .. "RETURN [" .. Print.Expression(t.exp) .. "] @" .. t.line)
 end
 
 function Print.ComandWhile (indent, t)
-  print(indent .. "WHILE [" .. Print.Expression(t.condition) .. "] @" .. t.line .. " {")
+  print(indent .. "WHILE [" .. Print.Expression(t.cond) .. "] @" .. t.line .. " {")
   Print.Block(indent .. "  ", t.block)
   print(indent .. "}")
 end
 
 function Print.Declare (indent, t)
   print(indent .. "DECLARE @" .. t.line .. "{")
-  print(indent .. "  ID [" .. t.name .. "] " .. t.type .. string.rep("[]", t.size) .. " @" .. t.line)
+  print(indent .. "  ID [" .. t.name .. "] " .. t.type .. string.rep("[]", t.dimension) .. " @" .. t.line)
   print(indent .. "}")
+  -- print(indent .. "DECLARE [" .. t.name .. "] " .. t.type .. string.rep("[]", t.dimension) .. " @" .. t.line)
 end
 
 function Print.Expression (node)
@@ -164,9 +166,9 @@ end
 function Print.Function (indent, t)
   print(indent .. "FUN [" .. t.name .. "] @" .. t.line .. " {")
   for _, node in ipairs(t.params) do
-    print(indent .. "  FUNC_PARAMETER [" .. node.name .. "] " .. node.type .. string.rep("[]", node.size))
+    print(indent .. "  FUNC_PARAMETER [" .. node.name .. "] " .. node.type .. string.rep("[]", node.dimension))
   end
-  print(indent .. "  FUNC_RETURN " .. t.r_type .. string.rep("[]", t.r_size))
+  print(indent .. "  FUNC_RETURN " .. t.ret_type .. string.rep("[]", t.ret_dimension))
   for _, node in ipairs(t.block) do
     if (node.id == nodes_codes["DECLARE"]) then
       Print.Declare(indent .. "  ", node)
@@ -218,7 +220,7 @@ end
 
 --NewAttributionNode:
 --  {
---    id    = $number - one of nodes_codes values
+--    id    = $number - ATTRIBUTION code
 --    exp   = $table  - EXPRESSION node
 --    line  = $number - line number
 --    var   = $table  - VAR node
@@ -238,10 +240,10 @@ end
 
 --NewCallNode:
 --  {
---    id    = $number - one of nodes_codes values
+--    id    = $number - CALL code
 --    line  = $number - line number
 --    name  = $string - var name
---    exps  = $table  - list of EXPRESSIONS nodes
+--    exps  = $table  - list of EXPRESSION nodes
 --  }
 --  parameters:
 --  return:
@@ -258,29 +260,29 @@ end
 
 --NewDeclVarNode:
 --  {
---    id    = $number - one of nodes_codes values
---    line  = $number - line number
---    name  = $string - var name
---    size  = $number - 
---    type  = $string - [bool, char, int, string]
+--    id        = $number - DECLARE code
+--    line      = $number - line number
+--    name      = $string - var name
+--    dimension = $number - var dimension
+--    type      = $string - [bool, char, int, string]
 --  }
 --  parameters:
 --  return:
 function AbstractSyntaxTree.NewDeclVarNode (line, name, typebase, size)
   if (_DEBUG) then print("AST :: NewDeclVarNode") end
   local node = {
-    id    = nodes_codes["DECLARE"],
-    line  = line,
-    name  = name,
-    size  = size,
-    type  = typebase,
+    id        = nodes_codes["DECLARE"],
+    line      = line,
+    name      = name,
+    dimension = size,
+    type      = typebase,
   }
   return node
 end
 
 --NewDenyNode:
 --  {
---    id    = $number - one of nodes_codes values
+--    id    = $number - DENY code
 --    exp   = $table  - EXPRESSION node
 --  }
 --  parameters:
@@ -296,7 +298,7 @@ end
 
 --NewElseIfNode:
 --  {
---    id    = $number - one of nodes_codes values
+--    id    = $number - ELSEIF code
 --    block = $table  - list of COMMANDS that will be executed if [cond] is true
 --    cond  = $table  - EXPRESSION NODE, represents condition
 --    line  = $number - line number
@@ -316,33 +318,33 @@ end
 
 --NewFunctionNode:
 --  {
---    id      = $number - one of nodes_codes values
---    block   = $table  - list of COMMANDS that will be executed if [cond] is true
---    line    = $number - line number
---    name    = $string - var name
---    params  = $table  - list of PARAMETER nodes
---    r_type  = $string - [bool, char, int, string], represents functino return type
---    r_size  = $number - 
+--    id            = $number - FUNCTION code
+--    block         = $table  - list of COMMANDS that will be executed
+--    line          = $number - line number
+--    name          = $string - var name
+--    params        = $table  - list of PARAMETER nodes
+--    ret_type      = $string - [bool, char, int, string], represents function return type
+--    ret_dimension = $number - function return dimension
 --  }
 --  parameters:
 --  return:
 function AbstractSyntaxTree.NewFunctionNode (line, name, parameters, return_type, return_size, block)
   if (_DEBUG) then print("AST :: NewFunctionNode") end
   local node = {
-    id      = nodes_codes["FUNCTION"],
-    line    = line,
-    name    = name,
-    params  = parameters,
-    r_type  = return_type,
-    r_size  = return_size,
-    block   = block,
+    id            = nodes_codes["FUNCTION"],
+    line          = line,
+    name          = name,
+    params        = parameters,
+    ret_type      = return_type,
+    ret_dimension = return_size,
+    block         = block,
   }
   return node
 end
 
 --NewIfNode:
 --  {
---    id      = $number - one of nodes_codes values
+--    id      = $number - IF code
 --    block   = $table  - list of COMMANDS that will be executed if [cond] is true
 --    cond    = $table  - EXPRESSION NODE, represents condition
 --    else    = $table  - list of COMMANDS that will be executed none conditions are true
@@ -366,7 +368,7 @@ end
 
 --NewNewVarNode:
 --  {
---    id    = $number - one of nodes_codes values
+--    id    = $number - NEWVAR code
 --    exp   = $table  - EXPRESSION node
 --    type  = $string - [bool, char, int, string]
 --  }
@@ -384,10 +386,10 @@ end
 
 --NewOperatorNode:
 --  {
---    id    = $number - one of nodes_codes values
---    op    = $string - 
---    [1]   = 
---    [2]   = 
+--    id    = $number - OPERATOR code
+--    op    = $string - [+ - * / > < >= <= == <>], one of possible operations
+--    [1]   = $table  - EXPRESSION node, left side of operator
+--    [2]   = $table  - EXPRESSION node, right side of operator
 --  }
 --  parameters:
 --  return:
@@ -404,27 +406,27 @@ end
 
 --NewParameterNode:
 --  {
---    id    = $number - one of nodes_codes values
---    name  = $string - var name
---    size  = $number - 
---    type  = $string - [bool, char, int, string]
+--    id        = $number - PARAMETER code
+--    name      = $string - var name
+--    dimension = $number - var dimension
+--    type      = $string - [bool, char, int, string]
 --  }
 --  parameters:
 --  return:
 function AbstractSyntaxTree.NewParameterNode (name, typebase, size)
   if (_DEBUG) then print("AST :: NewProgramNode") end
   local node = {
-    id    = nodes_codes["PARAMETER"],
-    name  = name,
-    size  = size,
-    type  = typebase,
+    id        = nodes_codes["PARAMETER"],
+    name      = name,
+    dimension = size,
+    type      = typebase,
   }
   return node
 end
 
 --NewParenthesisNode:
 --  {
---    id    = $number - one of nodes_codes values
+--    id    = $number - PARENTHESIS code
 --    exp   = $table  - EXPRESSION node
 --  }
 --  parameters:
@@ -440,7 +442,7 @@ end
 
 --NewProgramNode:
 --  {
---    id       = $number - one of nodes_codes values
+--    id       = $number - PROGRAM code
 --    [1 to N] = DECLARE or FUNCTION node
 --  }
 --  parameters:
@@ -455,7 +457,7 @@ end
 
 --NewReturnNode:
 --  {
---    id    = $number - one of nodes_codes values
+--    id    = $number - RETURN code
 --    line  = $number - line number
 --    exp   = $table  - EXPRESSION node
 --  }
@@ -473,9 +475,11 @@ end
 
 --NewValueNode:
 --  {
---    id    = $number - one of nodes_codes values
---    type  = $string - 
---    value = $string or $number or $boolean - 
+--    id    = $number   - VALUE code
+--    type  = $string   - [bool, char, int, string]
+--    value = $string   - if type == char or string,
+--            $number   - if type == int,
+--            $boolean  - if type == bool,
 --  }
 --  parameters:
 --  return:
@@ -491,10 +495,10 @@ end
 
 --NewVarNode:
 --  {
---    id    = $number - one of nodes_codes values
+--    id    = $number - VAR code
+--    array = $table  - list of EXPRESSIONS, one for each dimension
 --    line  = $number - line number
 --    name  = $string - var name
---    array = $table  - 
 --  }
 --  parameters:
 --  return:
@@ -511,9 +515,9 @@ end
 
 --NewWhileNode:
 --  {
---    id    = $number - one of nodes_codes values
+--    id    = $number - WHILE code
 --    block = $table  - list of COMMANDS that will be executed if [cond] is true
---    cond  = $table  - EXPRESSION NODE, represents condition
+--    cond  = $table  - EXPRESSION node, represents condition
 --    line  = $number - line number
 --  }
 --  parameters:
