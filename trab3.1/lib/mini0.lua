@@ -406,29 +406,6 @@ function Grammar.ExpressionLevel6 ()
 end
 
 function Grammar.ExpressionLevel7 ()
-  local left = Grammar.ExpressionLevel8()
-  local token = Parser.Peek()
-  if (token and token.code == tokens["OP_-"]) then
-    Match(tokens["OP_-"])
-    -- PROBLEM WITH -exp
-    return ASTClass.NewOperatorNode(left, "-", Grammar.ExpressionLevel7())
-  end
-  return left
-end
-
-function Grammar.ExpressionLevel8 ()
-  local left = Grammar.ExpressionLevel9()
-  local token = Parser.Peek()
-  if (token and token.code == tokens["OP_("]) then
-    Match(tokens["OP_("])
-    local exp = Grammar.Expression()
-    Match(tokens["OP_)"])
-    return ASTClass.NewParenthesisNode(exp)
-  end
-  return left
-end
-
-function Grammar.ExpressionLevel9 ()
   local token = Parser.Peek()
   if (token and token.code == tokens.NUMBER) then
     return ASTClass.NewValueNode("number", Match(tokens.NUMBER))
@@ -457,6 +434,14 @@ function Grammar.ExpressionLevel9 ()
     else
       return Grammar.Var()
     end
+  elseif (token and token.code == tokens["OP_("]) then
+    Match(tokens["OP_("])
+    local exp = Grammar.Expression()
+    Match(tokens["OP_)"])
+    return ASTClass.NewParenthesisNode(exp)
+  elseif (token and token.code == tokens["OP_-"]) then
+    Match(tokens["OP_-"])
+    return ASTClass.NewOperatorNode(left, "-", Grammar.Expression())
   end
 end
 
