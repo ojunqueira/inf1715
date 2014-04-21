@@ -1,0 +1,9 @@
+a:int
+b:string
+c:[]int
+d:[][]string
+e:int
+f:[][][][]string
+g:bool
+h:[]bool
+i:[][]bool
