@@ -192,9 +192,7 @@ function Grammar.comando ()
     Grammar.cmdreturn()
   elseif (token and token.code == tokens.ID) then
     local token2 = Parser.Peek2()
-    if (token2 and token2.code == tokens["OP_:"]) then
-      Grammar.declvar()
-    elseif (token2 and token2.code == tokens["OP_("]) then
+    if (token2 and token2.code == tokens["OP_("]) then
       Grammar.chamada()
     elseif (token2 and 
             token2.code == tokens["OP_="] or
@@ -373,6 +371,8 @@ function Grammar.exp_preced_9 ()
     else
       Grammar.var()
     end
+  else
+    Error(token.line or nil)
   end
 end
 

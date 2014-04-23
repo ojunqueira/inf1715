@@ -64,6 +64,212 @@ local files = {
     lexical   = true,
     syntactic = true,     
   },
+
+
+
+  ["testes_gabarito/00-fail-empty.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/01-global.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/02-fun.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/03-nls.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/04-funglobal.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/05-params.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/06-declvar.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/07-if.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/08-fail-else.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/09-fail-elseif.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/10-fail-if.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/11-ifdecl.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/12-while.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/13-fail-while.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/14-ifwhile.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/15-fail-ifwhile.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/16-atrib.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/17-call.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/18-fail-call.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/19-callargs.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/19-fail-callargs.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/20-return.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/21-arrays.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/21-return-noargs.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/22-exp.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/22-fail-exp.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/23-fail-fun.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/24-fail-fun2.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/25-fail-fun3.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/26-fail-fun4.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/27-fail-global.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/28-fail-block.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/29-fail-params.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/30-fail-param.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/31-fail-type.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/32-fail-declvar.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/33-fail-missingexp.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/34-fail-invalidexp.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+  ["testes_gabarito/35-expprio.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+  },
+  ["testes_gabarito/36-fail-roottoken.m0"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = false,
+  },
+
+
+
 }
 
 

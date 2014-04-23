@@ -9,7 +9,8 @@ local printTree = false
 --==============================================================================
 
 require "lib/util"
-local NodesClass = require "lib/node_codes"
+local NodesClass  = require "lib/node_codes"
+local SymbolClass = require "src/symbol_table"
 
 
 --==============================================================================

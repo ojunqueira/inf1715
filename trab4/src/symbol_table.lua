@@ -8,15 +8,14 @@
 -- Dependency
 --==============================================================================
 
-local ParserClass 	= require "src/parser"
-local LanguageClass = require "src/mini0"
+require "lib/util"
 
 
 --==============================================================================
 -- Data Structure
 --==============================================================================
 
-local Syntactic = {}
+local SymbolTable = {}
 
 
 --==============================================================================
@@ -35,21 +34,13 @@ local Syntactic = {}
 -- Public Methods
 --==============================================================================
 
---Open:
---  parameters:
---    [1] $table   - table with tokens read in lexical
---  return:
---    [1] $boolean - false if found any problem, true otherwise
---    [2] $string  - only when [1] is false, informing which error occurs
-function Syntactic.Open (t)
-  if (_DEBUG) then print("SYN :: Open") end
-  assert(t and type(t) == "table")
-  ParserClass.Open(t)
-  local ok, msg = LanguageClass.Start(ParserClass.Advance, ParserClass.Peek, ParserClass.Peek2)
-  if (not ok) then
-  	return false, msg
-  end
-  return true
+function SymbolTable.AddScope ()
+end
+
+function SymbolTable.EndScope ()
+end
+
+function SymbolTable.New ()
 end
 
 
@@ -57,4 +48,4 @@ end
 -- Return
 --==============================================================================
 
-return Syntactic
+return SymbolTable

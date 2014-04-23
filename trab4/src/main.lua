@@ -13,7 +13,7 @@ local printInput = false
 require "lib/util"
 local Lexical   = require "src/lexical"
 local Syntactic = require "src/syntactic"
-local ASTree    = require "lib/syntax_tree"
+local ASTree    = require "src/syntax_tree"
 
 
 --==============================================================================
@@ -70,6 +70,7 @@ for k, v in ipairs(args) do
   end
   print("== AST TREE =========================================================")
   ASTree.Print()
+  print("== AST TREE =========================================================")
   print("== FINISH ===========================================================")
 end
 

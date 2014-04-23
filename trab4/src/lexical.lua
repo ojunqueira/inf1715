@@ -9,7 +9,7 @@ local printTokensCapture  = false
 -- Dependency
 --==============================================================================
 
-local lulex = require "lib/lulex"
+local lulex       = require "lib/lulex"
 local TokensClass = require "lib/token_codes"
 
 
@@ -297,7 +297,7 @@ lexer = lulex.New{
       end
     end
   },
-  { '[a-zA-Z_][a-zA-Z0-9]*',
+  { '[a-zA-Z_][a-zA-Z0-9_]*',
     function (token)
       StoreToken(tokens.ID, token, line_number)
     end

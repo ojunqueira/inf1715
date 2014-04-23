@@ -10,7 +10,7 @@ local printTokensMatch = false
 --==============================================================================
 
 local TokensClass = require "lib/token_codes"
-local ASTClass    = require "lib/syntax_tree"
+local ASTClass    = require "src/syntax_tree"
 
 
 --==============================================================================
@@ -243,9 +243,7 @@ function Grammar.Command ()
     return Grammar.CmdReturn()
   elseif (token and token.code == tokens.ID) then
     local token2 = Parser.Peek2()
-    if (token2 and token2.code == tokens["OP_:"]) then
-      return Grammar.DeclareVar()
-    elseif (token2 and token2.code == tokens["OP_("]) then
+    if (token2 and token2.code == tokens["OP_("]) then
       return Grammar.Call()
     elseif (token2 and 
             token2.code == tokens["OP_="] or
@@ -442,6 +440,8 @@ function Grammar.ExpressionLevel7 ()
   elseif (token and token.code == tokens["OP_-"]) then
     Match(tokens["OP_-"])
     return ASTClass.NewOperatorNode(left, "-", Grammar.Expression())
+  else
+    Error(token.line or nil)
   end
 end
 

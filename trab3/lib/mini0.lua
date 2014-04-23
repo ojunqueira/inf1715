@@ -243,9 +243,7 @@ function Grammar.Command ()
     return Grammar.CmdReturn()
   elseif (token and token.code == tokens.ID) then
     local token2 = Parser.Peek2()
-    if (token2 and token2.code == tokens["OP_:"]) then
-      return Grammar.DeclareVar()
-    elseif (token2 and token2.code == tokens["OP_("]) then
+    if (token2 and token2.code == tokens["OP_("]) then
       return Grammar.Call()
     elseif (token2 and 
             token2.code == tokens["OP_="] or
