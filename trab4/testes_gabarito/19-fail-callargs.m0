@@ -1,4 +1,0 @@
-
-fun f(i:int):int
-   f(i,12,int)
-end

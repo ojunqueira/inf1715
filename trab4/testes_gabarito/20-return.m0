@@ -1,5 +1,0 @@
-
-fun the_answer():char
-   return 42
-end
-

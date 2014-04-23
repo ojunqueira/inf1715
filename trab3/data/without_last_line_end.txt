@@ -1,3 +1,0 @@
-
-fun func1 () :int
-end
