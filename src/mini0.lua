@@ -436,7 +436,7 @@ function Grammar.ExpressionLevel7 ()
     Match(tokens["OP_("])
     local exp = Grammar.Expression()
     Match(tokens["OP_)"])
-    return ASTClass.NewParenthesisNode(exp)
+    return exp
   elseif (token and token.code == tokens["OP_-"]) then
     Match(tokens["OP_-"])
     return ASTClass.NewOperatorNode(left, "-", Grammar.Expression())
