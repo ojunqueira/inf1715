@@ -169,7 +169,7 @@ function Print.Function (indent, t)
   for _, node in ipairs(t.params) do
     print(indent .. "  FUNC_PARAMETER [" .. node.name .. "] " .. node.type .. string.rep("[]", node.dimension))
   end
-  print(indent .. "  FUNC_RETURN " .. t.ret_type .. string.rep("[]", t.ret_dimension))
+  print(indent .. "  FUNC_RETURN " .. (t.ret_type or "VOID") .. string.rep("[]", t.ret_dimension or 0))
   for _, node in ipairs(t.block) do
     if (node.id == nodes_codes["DECLARE"]) then
       Print.Declare(indent .. "  ", node)
