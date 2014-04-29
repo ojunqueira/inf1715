@@ -124,7 +124,7 @@ function Print.Declare (indent, t)
 end
 
 function Print.Expression (node)
-  local str = ""
+  local str = "("
   if (not node) then
     return ""
   end
@@ -161,7 +161,7 @@ function Print.Expression (node)
   else
     error("expression node error")
   end
-  return str
+  return str..")"
 end
 
 function Print.Function (indent, t)
