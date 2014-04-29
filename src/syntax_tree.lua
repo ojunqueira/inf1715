@@ -4,13 +4,13 @@
 
 local printTree = false
 
+
 --==============================================================================
 -- Dependency
 --==============================================================================
 
 require "lib/util"
 local NodesClass  = require "lib/node_codes"
-local SymbolClass = require "src/symbol_table"
 
 
 --==============================================================================
@@ -51,8 +51,8 @@ function Print.Block (indent, t)
         Print.Declare(indent, node)
       elseif (node.id == nodes_codes["CALL"]) then
         Print.Call(indent, node)
-      elseif (node.id == nodes_codes["VAR"]) then
-        Print.Variable(indent, node)
+      --elseif (node.id == nodes_codes["VAR"]) then
+        --Print.Variable(indent, node)
       else
         error("block node error")
       end
@@ -218,6 +218,12 @@ end
 --==============================================================================
 -- Public Methods
 --==============================================================================
+
+--GetTree:
+function AbstractSyntaxTree.GetTree ()
+  --return util.TableCopy(tree)
+  return tree
+end
 
 --NewAttributionNode:
 --  {

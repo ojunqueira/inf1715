@@ -1,0 +1,6 @@
+
+fun func1 () :int
+end
+
+fun func1 () :string
+end

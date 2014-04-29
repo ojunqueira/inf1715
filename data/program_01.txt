@@ -7,8 +7,6 @@ fun func1 (a:int) : []int
   return 4
 end
 
-x:string
-
 /*
 comment
 more
