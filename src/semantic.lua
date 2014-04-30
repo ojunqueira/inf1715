@@ -51,7 +51,7 @@ end
 --    [1] $string
 --  Return:
 local function ErrorDeclaredSymbol (sym_prev, sym_new)
-  error(string.format("Semantic error at line %d. Symbol %s was declared at line %d", sym_new.line, sym_prev.name, sym_prev.line), 0)
+  error(string.format("Semantic error at line %d. Symbol '%s' was declared at line %d", sym_new.line, sym_prev.name, sym_prev.line), 0)
 end
 
 

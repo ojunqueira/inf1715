@@ -1,0 +1,4 @@
+
+fun func1 ()
+  a = 4
+end

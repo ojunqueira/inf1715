@@ -20,286 +20,378 @@ local Semantic  = require "src/semantic"
 --==============================================================================
 
 local files = {
-  --[[
-  ["nilfile.txt"] = {
+  {
+    name      = "nil_file",
     open      = false,
   },
-  ["data/lexical_01.txt"] = {
+  {
+    name      = "lex_overload_01",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["data/lexical_02.txt"] = {
+  {
+    name      = "lex_overload_02",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["data/lexical_03.txt"] = {
+  {
+    name      = "lex_overload_03",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["data/lexical_04.txt"] = {
+  {
+    name      = "lex_overload_04",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["data/without_last_line_end.txt"] = {
-    open      = true,
-    lexical   = true,
-    syntactic = false,
-  },
-  ["data/fun_01.txt"] = {
+  {
+    name      = "sem_fail_declare_same_name_01",
     open      = true,
     lexical   = true,
     syntactic = true,
     semantic  = false,
   },
-  ["data/global_01.txt"] = {
+  {
+    name      = "sem_fail_declare_same_name_02",
     open      = true,
     lexical   = true,
     syntactic = true,
     semantic  = false,
   },
-  ["data/program_01.txt"] = {
+  {
+    name      = "sem_fail_func_ret_dimension_different",
     open      = true,
     lexical   = true,
     syntactic = true,
     semantic  = false,
   },
-  --]]
-  ["data/sem_fail_func_same_name.txt"] = {
+  {
+    name      = "sem_fail_func_ret_type_different",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true, --false
+    semantic  = false,
   },
-  ["data/sem_fail_func_same_name_var.txt"] = {
+  {
+    name      = "sem_fail_func_void_return",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true, --false
+    semantic  = false,
   },
-  ["data/sem_fail_func_ret_type.txt"] = {
+  {
+    name      = "sem_fail_if_condition_int",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true, --false
+    semantic  = false,
   },
-  ["data/sem_fail_var_same_name_func.txt"] = {
+  {
+    name      = "sem_fail_var_array_bool",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true, --false
+    semantic  = false,
   },
-  ["data/sem_fail_if_exp_bool.txt"] = {
+  {
+    name      = "sem_fail_var_array_dimension_zero",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true, --false
+    semantic  = false,
   },
-  --[[
-  ["testes_gabarito/00-fail-empty.m0"] = {
+  {
+    name      = "sem_fail_var_array_larger",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_var_existent",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_var_undeclared",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+
+
+  {
+    name      = "00-fail-empty",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/01-global.m0"] = {
+  {
+    name      = "01-global",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/02-fun.m0"] = {
+  {
+    name      = "02-fun",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/03-nls.m0"] = {
+  {
+    name      = "03-nls",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/04-funglobal.m0"] = {
+  {
+    name      = "04-funglobal",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/05-params.m0"] = {
+  {
+    name      = "05-params",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/06-declvar.m0"] = {
+  {
+    name      = "06-declvar",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/07-if.m0"] = {
+  {
+    name      = "07-if",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/08-fail-else.m0"] = {
+  {
+    name      = "08-fail-else",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/09-fail-elseif.m0"] = {
+  {
+    name      = "09-fail-elseif",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/10-fail-if.m0"] = {
+  {
+    name      = "10-fail-if",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/11-ifdecl.m0"] = {
+  {
+    name      = "11-ifdecl",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/12-while.m0"] = {
+  {
+    name      = "12-while",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/13-fail-while.m0"] = {
+  {
+    name      = "13-fail-while",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/14-ifwhile.m0"] = {
+  {
+    name      = "14-ifwhile",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/15-fail-ifwhile.m0"] = {
+  {
+    name      = "15-fail-ifwhile",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/16-atrib.m0"] = {
+  {
+    name      = "16-atrib",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/17-call.m0"] = {
+  {
+    name      = "17-call",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/18-fail-call.m0"] = {
+  {
+    name      = "18-fail-call",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/19-callargs.m0"] = {
+  {
+    name      = "19-callargs",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/19-fail-callargs.m0"] = {
+  {
+    name      = "19-fail-callargs",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/20-return.m0"] = {
+  {
+    name      = "20-return",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/21-arrays.m0"] = {
+  {
+    name      = "21-arrays",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/21-return-noargs.m0"] = {
+  {
+    name      = "21-return-noargs",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/22-exp.m0"] = {
+  {
+    name      = "22-exp",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/22-fail-exp.m0"] = {
+  {
+    name      = "22-fail-exp",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/23-fail-fun.m0"] = {
+  {
+    name      = "23-fail-fun",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/24-fail-fun2.m0"] = {
+  {
+    name      = "24-fail-fun2",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/25-fail-fun3.m0"] = {
+  {
+    name      = "25-fail-fun3",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/26-fail-fun4.m0"] = {
+  {
+    name      = "26-fail-fun4",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/27-fail-global.m0"] = {
+  {
+    name      = "27-fail-global",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/28-fail-block.m0"] = {
+  {
+    name      = "28-fail-block",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/29-fail-params.m0"] = {
+  {
+    name      = "29-fail-params",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/30-fail-param.m0"] = {
+  {
+    name      = "30-fail-param",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/31-fail-type.m0"] = {
+  {
+    name      = "31-fail-type",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/32-fail-declvar.m0"] = {
+  {
+    name      = "32-fail-declvar",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/33-fail-missingexp.m0"] = {
+  {
+    name      = "33-fail-missingexp",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/34-fail-invalidexp.m0"] = {
+  {
+    name      = "34-fail-invalidexp",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  ["testes_gabarito/35-expprio.m0"] = {
+  {
+    name      = "35-expprio",
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = true,
   },
-  ["testes_gabarito/36-fail-roottoken.m0"] = {
+  {
+    name      = "36-fail-roottoken",
     open      = true,
     lexical   = true,
     syntactic = false,
   },
-  --]]
+  {
+    name      = "37-invprio",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
 }
 
 
@@ -313,20 +405,21 @@ local function Run ()
   for _, _ in pairs (files) do
     num_files = num_files + 1
   end
-  for file, valid in pairs (files) do
+  for _, valid in ipairs (files) do
     local file_str                  --  keeps the convertion of file to string
     local unexpected_error = false  --  inform that an unexpected error occurs (if true stop further tests)
     local expected_error = false    --  inform that an expected error occurs (if true stop further tests)
+    
     -- TEST OPENING
     ------------------------------------------------
     if (not unexpected_error and not expected_error) then
-      local f = io.open(file, "r")
+      local f = io.open("data/" .. valid.name .. ".txt", "r")
       if (not f and valid.open) then
         unexpected_error = true
-        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to open.', num_files_read, num_files, file))
+        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to open.', num_files_read, num_files, valid.name))
       elseif (f and not valid.open) then
         unexpected_error = true
-        print(string.format('(%2s de %2s) FAILURE - File "%s" not expected to open.', num_files_read, num_files, file))
+        print(string.format('(%2s de %2s) FAILURE - File "%s" not expected to open.', num_files_read, num_files, valid.name))
       elseif (not f and not valid.open) then
         expected_error = true
       else
@@ -334,52 +427,56 @@ local function Run ()
         f:close()
       end
     end
+    
     -- TEST LEXICAL
     ------------------------------------------------
     if (not unexpected_error and not expected_error) then
       local ok, msg = Lexical.Open(file_str)
       if (not ok and valid.lexical) then
         unexpected_error = true
-        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on lexical. \n\t %s', num_files_read, num_files, file, msg or ""))
+        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on lexical. \n\t %s', num_files_read, num_files, valid.name, msg or ""))
       elseif (ok and not valid.lexical) then
         unexpected_error = true
-        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to FAIL on lexical. \n\t %s', num_files_read, num_files, file, msg or ""))
+        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to FAIL on lexical. \n\t %s', num_files_read, num_files, valid.name, msg or ""))
       elseif (not ok and not valid.lexical) then
         expected_error = true
       end
     end
+    
     -- TEST SYNTAX
     ------------------------------------------------
     if (not unexpected_error and not expected_error) then
       local ok, msg = Syntactic.Open(Lexical.GetTags())
       if (not ok and valid.syntactic) then
         unexpected_error = true
-        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on syntactic. \n\t %s', num_files_read, num_files, file, msg or ""))
+        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on syntactic. \n\t %s', num_files_read, num_files, valid.name, msg or ""))
       elseif (ok and not valid.syntactic) then
         unexpected_error = true
-        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to FAIL on syntactic. \n\t %s', num_files_read, num_files, file, msg or ""))
+        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to FAIL on syntactic. \n\t %s', num_files_read, num_files, valid.name, msg or ""))
       elseif (not ok and not valid.syntactic) then
         expected_error = true
       end
     end
+    
     -- TEST SEMANTIC
     ------------------------------------------------
     if (not unexpected_error and not expected_error) then
       local ok, msg = Semantic.Open(Syntactic.GetTree())
       if (not ok and valid.semantic) then
         unexpected_error = true
-        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on semantic. \n\t %s', num_files_read, num_files, file, msg or ""))
+        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on semantic. \n\t %s', num_files_read, num_files, valid.name, msg or ""))
       elseif (ok and not valid.semantic) then
         unexpected_error = true
-        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to FAIL on semantic. \n\t %s', num_files_read, num_files, file, msg or ""))
+        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to FAIL on semantic. \n\t %s', num_files_read, num_files, valid.name, msg or ""))
       elseif (not ok and not valid.semantic) then
         expected_error = true
       end
     end
+    
     -- PASSED ALL TESTS
     ------------------------------------------------
     if (not unexpected_error or expected_error) then
-      print(string.format('(%2s de %2s) SUCCESS - File "%s".', num_files_read, num_files, file))
+      print(string.format('(%2s de %2s) SUCCESS - File "%s".', num_files_read, num_files, valid.name))
     end
     num_files_read = num_files_read + 1
   end

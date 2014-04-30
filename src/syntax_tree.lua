@@ -132,8 +132,10 @@ function Print.Expression (node)
     str = str .. " (" .. Print.Expression(node.exp) .. ")"
   elseif (node.id == nodes_codes["NEWVAR"]) then
     str = str .. " new [" .. Print.Expression(node.exp) .. "] " .. node.type
-  elseif (node.id == nodes_codes["DENY"]) then
+  elseif (node.id == nodes_codes["NEGATE"]) then
     str = str .. " not " .. Print.Expression(node.exp)
+  elseif (node.id == nodes_codes["UNARY"]) then
+    str = str .. " - " .. Print.Expression(node.exp)
   elseif (node.id == nodes_codes["OPERATOR"]) then
     str = str .. Print.Expression(node[1]) .. " " .. node.op .. " " .. Print.Expression(node[2])
   elseif (node.id == nodes_codes["VALUE"]) then

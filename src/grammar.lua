@@ -422,7 +422,8 @@ function Grammar.ExpressionLevel7 ()
     return ASTClass.NewNewVarNode(exp, typebase)
   elseif (token and token.code == tokens.K_NOT) then
     Match(tokens.K_NOT)
-    local exp = Grammar.Expression()
+    --local exp = Grammar.Expression()
+    local exp = Grammar.ExpressionLevel7()
     return ASTClass.NewNegateNode(exp)
   elseif (token and token.code == tokens.ID) then
     local node
@@ -439,10 +440,9 @@ function Grammar.ExpressionLevel7 ()
     return exp
   elseif (token and token.code == tokens["OP_-"]) then
     Match(tokens["OP_-"])
-    --return ASTClass.NewDenyNode(Grammar.Expression())
-    return ASTClass.NewUnaryNode(Grammar.Expression())
+    --return ASTClass.NewUnaryNode(Grammar.Expression())
+    return ASTClass.NewUnaryNode(Grammar.ExpressionLevel7())
   else
-    print("token ", token.code)
     Error(token.line or nil)
   end
 end
