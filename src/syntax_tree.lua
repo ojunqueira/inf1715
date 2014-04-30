@@ -287,22 +287,6 @@ function AbstractSyntaxTree.NewDeclVarNode (line, name, typebase, size)
   return node
 end
 
---NewDenyNode:
---  {
---    id    = $number - DENY code
---    exp   = $table  - EXPRESSION node
---  }
---  parameters:
---  return:
-function AbstractSyntaxTree.NewDenyNode (expression)
-  if (_DEBUG) then print("AST :: NewDenyNode") end
-  local node = {
-    id    = nodes_codes["DENY"],
-    exp   = expression,
-  }
-  return node
-end
-
 --NewElseIfNode:
 --  {
 --    id    = $number - ELSEIF code
@@ -373,6 +357,22 @@ function AbstractSyntaxTree.NewIfNode (line, condition, block, elseif_node, else
   return node
 end
 
+--NewNegateNode:
+--  {
+--    id    = $number - NEGATE code
+--    exp   = $table  - EXPRESSION node
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewNegateNode (expression)
+  if (_DEBUG) then print("AST :: NewNegateNode") end
+  local node = {
+    id    = nodes_codes["NEGATE"],
+    exp   = expression,
+  }
+  return node
+end
+
 --NewNewVarNode:
 --  {
 --    id    = $number - NEWVAR code
@@ -394,7 +394,7 @@ end
 --NewOperatorNode:
 --  {
 --    id    = $number - OPERATOR code
---    op    = $string - [+ - * / > < >= <= == <>], one of possible operations
+--    op    = $string - [and or + - * / > < >= <= = <>], one of possible operations
 --    [1]   = $table  - EXPRESSION node, left side of operator
 --    [2]   = $table  - EXPRESSION node, right side of operator
 --  }
@@ -414,16 +414,18 @@ end
 --NewParameterNode:
 --  {
 --    id        = $number - PARAMETER code
---    name      = $string - var name
 --    dimension = $number - var dimension
+--    line      = $number - line number
+--    name      = $string - var name
 --    type      = $string - [bool, char, int, string]
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewParameterNode (name, typebase, size)
+function AbstractSyntaxTree.NewParameterNode (line, name, typebase, size)
   if (_DEBUG) then print("AST :: NewProgramNode") end
   local node = {
     id        = nodes_codes["PARAMETER"],
+    line      = line,
     name      = name,
     dimension = size,
     type      = typebase,
@@ -476,6 +478,22 @@ function AbstractSyntaxTree.NewReturnNode (line, expression)
     id    = nodes_codes["RETURN"],
     exp   = expression,
     line  = line,
+  }
+  return node
+end
+
+--NewUnaryNode:
+--  {
+--    id    = $number - UNARY code
+--    exp   = $table  - EXPRESSION node
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewUnaryNode (expression)
+  if (_DEBUG) then print("AST :: NewUnaryNode") end
+  local node = {
+    id    = nodes_codes["UNARY"],
+    exp   = expression,
   }
   return node
 end

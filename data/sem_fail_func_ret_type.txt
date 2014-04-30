@@ -1,0 +1,5 @@
+
+fun func1 () :int
+  x:char
+  return x
+end

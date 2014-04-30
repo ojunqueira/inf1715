@@ -9,7 +9,8 @@
 --==============================================================================
 
 local ParserClass 	= require "src/parser"
-local LanguageClass = require "src/mini0"
+local LanguageClass = require "src/grammar"
+local ASTClass		  = require "src/syntax_tree"
 
 
 --==============================================================================
@@ -35,6 +36,12 @@ local Syntactic = {}
 -- Public Methods
 --==============================================================================
 
+--GetTree:
+function Syntactic.GetTree()
+  if (_DEBUG) then print("SYN :: GetTree") end
+  return ASTClass.GetTree()
+end
+
 --Open:
 --  parameters:
 --    [1] $table   - table with tokens read in lexical
@@ -50,6 +57,12 @@ function Syntactic.Open (t)
   	return false, msg
   end
   return true
+end
+
+--PrintTree:
+function Syntactic.PrintTree()
+  if (_DEBUG) then print("SYN :: PrintTree") end
+  return ASTClass.Print()
 end
 
 

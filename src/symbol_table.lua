@@ -121,10 +121,10 @@ function SymbolTable.SetSymbol (t)
   symbol.name = t.name
   if (t.id == nodes_codes["FUNCTION"]) then
     symbol.id = "function"
-    symbol.params = t.params
+    symbol.params = util.TableCopy(t.params)
     symbol.ret_type = t.ret_type
     symbol.ret_dimension = t.ret_dimension
-  elseif (t.id == nodes_codes["DECLARE"]) then
+  elseif (t.id == nodes_codes["DECLARE"] or t.id == nodes_codes["PARAMETER"]) then
     symbol.id = "variable"
     symbol.type = t.type
     symbol.dimension = t.dimension
@@ -133,7 +133,7 @@ function SymbolTable.SetSymbol (t)
   end
   scopes[#scopes] = scopes[#scopes] or {}
   scopes[#scopes][t.name] = symbol
-  util.TablePrint(scopes)
+  --util.TablePrint(scopes)
 end
 
 

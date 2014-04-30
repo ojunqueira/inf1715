@@ -1,0 +1,5 @@
+
+fun func1 () :int
+  func1:int
+  return func1
+end

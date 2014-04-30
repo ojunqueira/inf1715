@@ -10,8 +10,9 @@ _DEBUG = false
 --==============================================================================
 
 require "lib/util"
-local Lexical = require "src/lexical"
+local Lexical   = require "src/lexical"
 local Syntactic = require "src/syntactic"
+local Semantic  = require "src/semantic"
 
 
 --==============================================================================
@@ -19,7 +20,7 @@ local Syntactic = require "src/syntactic"
 --==============================================================================
 
 local files = {
-  -- ERROR CASES
+  --[[
   ["nilfile.txt"] = {
     open      = false,
   },
@@ -48,25 +49,56 @@ local files = {
     lexical   = true,
     syntactic = false,
   },
-  -- WORKING CASES
   ["data/fun_01.txt"] = {
     open      = true,
     lexical   = true,
     syntactic = true,
+    semantic  = false,
   },
   ["data/global_01.txt"] = {
     open      = true,
     lexical   = true,
-    syntactic = true,     
+    syntactic = true,
+    semantic  = false,
   },
   ["data/program_01.txt"] = {
     open      = true,
     lexical   = true,
-    syntactic = true,     
+    syntactic = true,
+    semantic  = false,
   },
-
-
-
+  --]]
+  ["data/sem_fail_func_same_name.txt"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true, --false
+  },
+  ["data/sem_fail_func_same_name_var.txt"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true, --false
+  },
+  ["data/sem_fail_func_ret_type.txt"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true, --false
+  },
+  ["data/sem_fail_var_same_name_func.txt"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true, --false
+  },
+  ["data/sem_fail_if_exp_bool.txt"] = {
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true, --false
+  },
+  --[[
   ["testes_gabarito/00-fail-empty.m0"] = {
     open      = true,
     lexical   = true,
@@ -267,9 +299,7 @@ local files = {
     lexical   = true,
     syntactic = false,
   },
-
-
-
+  --]]
 }
 
 
@@ -329,6 +359,20 @@ local function Run ()
         unexpected_error = true
         print(string.format('(%2s de %2s) FAILURE - File "%s" expected to FAIL on syntactic. \n\t %s', num_files_read, num_files, file, msg or ""))
       elseif (not ok and not valid.syntactic) then
+        expected_error = true
+      end
+    end
+    -- TEST SEMANTIC
+    ------------------------------------------------
+    if (not unexpected_error and not expected_error) then
+      local ok, msg = Semantic.Open(Syntactic.GetTree())
+      if (not ok and valid.semantic) then
+        unexpected_error = true
+        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on semantic. \n\t %s', num_files_read, num_files, file, msg or ""))
+      elseif (ok and not valid.semantic) then
+        unexpected_error = true
+        print(string.format('(%2s de %2s) FAILURE - File "%s" expected to FAIL on semantic. \n\t %s', num_files_read, num_files, file, msg or ""))
+      elseif (not ok and not valid.semantic) then
         expected_error = true
       end
     end

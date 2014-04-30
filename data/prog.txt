@@ -1,0 +1,19 @@
+x:[]int
+
+fun g ()
+end
+
+fun y (a:[]int) :int
+  b:bool
+  c:[]char
+  i:int
+  s:[][]string
+  b = not true
+  b = not 4
+  i = -3
+  g()
+  c = s[1][2]
+  s[1][5] = c
+  i = a[c]
+  return a[i]
+end

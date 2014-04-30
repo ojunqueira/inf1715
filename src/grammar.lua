@@ -131,13 +131,13 @@ function Grammar.Call ()
   return ASTClass.NewCallNode(line, name, exps)
 end
 
---CmdAtrib:
+--CmdAttrib:
 --  syntax:
 --    cmdatrib  → var '=' exp
 --  parameters:
 --  return:
 --    [1] $table  - ATTRIBUTION node
-function Grammar.CmdAtrib ()
+function Grammar.CmdAttrib ()
   if (_DEBUG) then print("LAN :: Grammar_cmdatrib") end
   local var, expression
   var = Grammar.Var()
@@ -248,7 +248,7 @@ function Grammar.Command ()
     elseif (token2 and 
             token2.code == tokens["OP_="] or
             token2.code == tokens["OP_["]) then
-      return Grammar.CmdAtrib()
+      return Grammar.CmdAttrib()
     else
       Error(token.line or nil)
     end
@@ -406,13 +406,13 @@ end
 function Grammar.ExpressionLevel7 ()
   local token = Parser.Peek()
   if (token and token.code == tokens.NUMBER) then
-    return ASTClass.NewValueNode("number", Match(tokens.NUMBER))
+    return ASTClass.NewValueNode("int", Match(tokens.NUMBER))
   elseif (token and token.code == tokens.STRING) then
     return ASTClass.NewValueNode("string", Match(tokens.STRING))
   elseif (token and token.code == tokens.K_TRUE) then
-    return ASTClass.NewValueNode("boolean", Match(tokens.K_TRUE))
+    return ASTClass.NewValueNode("bool", Match(tokens.K_TRUE))
   elseif (token and token.code == tokens.K_FALSE) then
-    return ASTClass.NewValueNode("boolean", Match(tokens.K_FALSE))
+    return ASTClass.NewValueNode("bool", Match(tokens.K_FALSE))
   elseif (token and token.code == tokens.K_NEW) then
     Match(tokens.K_NEW)
     Match(tokens["OP_["])
@@ -423,7 +423,7 @@ function Grammar.ExpressionLevel7 ()
   elseif (token and token.code == tokens.K_NOT) then
     Match(tokens.K_NOT)
     local exp = Grammar.Expression()
-    return ASTClass.NewDenyNode(exp)
+    return ASTClass.NewNegateNode(exp)
   elseif (token and token.code == tokens.ID) then
     local node
     local token2 = Parser.Peek2()
@@ -439,11 +439,14 @@ function Grammar.ExpressionLevel7 ()
     return exp
   elseif (token and token.code == tokens["OP_-"]) then
     Match(tokens["OP_-"])
-    return ASTClass.NewOperatorNode(left, "-", Grammar.Expression())
+    --return ASTClass.NewDenyNode(Grammar.Expression())
+    return ASTClass.NewUnaryNode(Grammar.Expression())
   else
+    print("token ", token.code)
     Error(token.line or nil)
   end
 end
+-- DENY = NEGATE
 
 --Function:
 --  syntax:
@@ -535,11 +538,11 @@ end
 --    [1] $table  - PARAMETER node
 function Grammar.Parameter ()
   if (_DEBUG) then print("LAN :: Grammar_parametro") end
-  local name, typebase, array_size
-  name, _ = Match(tokens.ID)
+  local name, line, typebase, array_size
+  name, line = Match(tokens.ID)
   Match(tokens["OP_:"])
   typebase, array_size = Grammar.Type()
-  return ASTClass.NewParameterNode(name, typebase, array_size)
+  return ASTClass.NewParameterNode(line, name, typebase, array_size)
 end
 
 --Parameters:
