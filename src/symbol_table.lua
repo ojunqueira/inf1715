@@ -45,7 +45,7 @@ end
 -- Public Methods
 --==============================================================================
 
---AddScope:
+--AddScope: Insert a new scope level
 --  parameters:
 --  return:
 function SymbolTable.AddScope ()
@@ -53,7 +53,7 @@ function SymbolTable.AddScope ()
   scopes[#scopes + 1] = {}
 end
 
---Clear:
+--Clear: Remove all scopes
 --  parameters:
 --  return:
 function SymbolTable.Clear ()
@@ -61,9 +61,27 @@ function SymbolTable.Clear ()
   scopes = {}
 end
 
---GetSymbol:
+--GetCurrentScopeSymbol: Get symbol only if present in current scope
 --  parameters:
+--    [1] $string         - Symbol name
 --  return:
+--    [1] $table or $nil  - Copy of symbol structure if found, otherwise nil
+function SymbolTable.GetCurrentScopeSymbol (name)
+  if (_DEBUG) then print("SYB :: GetCurrentScopeSymbol") end
+  local num_scope = #scopes
+  if (scopes[#scopes][name]) then
+    local symbol = util.TableCopy(scopes[#scopes][name])
+    symbol.name = name
+    return symbol
+  end
+  return nil
+end
+
+--GetSymbol: Get symbol if present in current or above scopes
+--  parameters:
+--    [1] $string         - Symbol name
+--  return:
+--    [1] $table or $nil  - Copy of symbol structure if found, otherwise nil
 function SymbolTable.GetSymbol (name)
   if (_DEBUG) then print("SYB :: GetSymbol") end
   local num_scope = #scopes
@@ -78,7 +96,7 @@ function SymbolTable.GetSymbol (name)
   return nil
 end
 
---Print:
+--Print: Print symbol table
 --  parameters:
 --  return:
 function SymbolTable.Print ()
@@ -86,7 +104,7 @@ function SymbolTable.Print ()
   util.TablePrint(scopes)
 end
 
---RemoveScope:
+--RemoveScope: Remove current scope
 --  parameters:
 --  return:
 function SymbolTable.RemoveScope ()
@@ -94,7 +112,7 @@ function SymbolTable.RemoveScope ()
   scopes[#scopes] = nil
 end
 
---SetSymbol:
+--SetSymbol: Create a new symbol in current scope
 --          function or var
 --  parameters:
 --    [1] $table  - 

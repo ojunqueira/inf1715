@@ -1,5 +1,4 @@
 
 fun func1 () :int
-  x:bool
-  return x
+  return
 end

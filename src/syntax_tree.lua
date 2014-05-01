@@ -11,6 +11,7 @@ local printTree = false
 
 require "lib/util"
 local NodesClass  = require "lib/node_codes"
+local PrintClass  = require "lib/util_tree"
 
 
 --==============================================================================
@@ -18,9 +19,6 @@ local NodesClass  = require "lib/node_codes"
 --==============================================================================
 
 local AbstractSyntaxTree = {}
-
---  list of nodes print functions
-local Print = {}
 
 --  list of nodes code
 --  {
@@ -36,179 +34,6 @@ local tree = {}
 -- Private Methods
 --==============================================================================
 
-function Print.Block (indent, t)
-  if (t) then
-    for _, node in ipairs(t) do
-      if (node.id == nodes_codes["ATTRIBUTION"]) then
-        Print.ComandAttribution(indent, node)
-      elseif (node.id == nodes_codes["IF"]) then
-        Print.ComandIf(indent, node)
-      elseif (node.id == nodes_codes["RETURN"]) then
-        Print.ComandReturn(indent, node)
-      elseif (node.id == nodes_codes["WHILE"]) then
-        Print.ComandWhile(indent, node)
-      elseif (node.id == nodes_codes["DECLARE"]) then
-        Print.Declare(indent, node)
-      elseif (node.id == nodes_codes["CALL"]) then
-        Print.Call(indent, node)
-      --elseif (node.id == nodes_codes["VAR"]) then
-        --Print.Variable(indent, node)
-      else
-        error("block node error")
-      end
-    end
-  end
-end
-
-function Print.Call (indent, t)
-  print(indent .. "CALL [" .. t.name .. "] @" .. t.line .. "  {")
-  for _, node in ipairs(t.exps) do
-    print(indent .. "  PARAM " .. Print.Expression(node))
-  end
-  print(indent .. "}")
-end
-
-function Print.ComandAttribution (indent, t)
-  print(indent .. "ATRIB @" .. t.line .. " {")
-  local str = ""
-  str = str .. t.var.name
-  if (t.var.array) then
-    for _, exp in ipairs(t.var.array) do
-      str = str .. "[" .. Print.Expression(exp) .. "]"
-    end
-  end
-  Print.Variable(indent .. "  ", t.var)
-
-  print(indent .. "  =" .. Print.Expression(t.exp))
-  print(indent .. "}")
-end
-
-function Print.ComandElseIf (indent, t)
-  print(indent .. "ELSEIF [" .. Print.Expression(t.cond) .. "] @" .. t.line)
-  Print.Block(indent .. "  ", t.block)
-end
-
-function Print.ComandIf (indent, t)
-  print(indent .. "IF [" .. Print.Expression(t.cond) .. "] @" .. t.line .. " {")
-  Print.Block(indent .. "  ", t.block)
-  if (t["elseif"]) then
-    for _, elseif_node in ipairs(t["elseif"]) do
-      Print.ComandElseIf(indent, elseif_node)
-    end
-  end
-  if (t["else"]) then
-    print(indent .. "ELSE ")
-    Print.Block(indent .. "  ", t["else"])
-  end
-  print(indent .. "}")
-end
-
-function Print.ComandReturn (indent, t)
-  print(indent .. "RETURN @" .. t.line .. " {")
-  print(indent .. "  " .. Print.Expression(t.exp))
-  print(indent .. "}")
-  -- print(indent .. "RETURN [" .. Print.Expression(t.exp) .. "] @" .. t.line)
-end
-
-function Print.ComandWhile (indent, t)
-  print(indent .. "WHILE [" .. Print.Expression(t.cond) .. "] @" .. t.line .. " {")
-  Print.Block(indent .. "  ", t.block)
-  print(indent .. "}")
-end
-
-function Print.Declare (indent, t)
-  print(indent .. "DECLARE @" .. t.line .. "{")
-  print(indent .. "  ID [" .. t.name .. "] " .. t.type .. string.rep("[]", t.dimension) .. " @" .. t.line)
-  print(indent .. "}")
-  -- print(indent .. "DECLARE [" .. t.name .. "] " .. t.type .. string.rep("[]", t.dimension) .. " @" .. t.line)
-end
-
-function Print.Expression (node)
-  local str = "("
-  if (not node) then
-    return ""
-  end
-  if (node.id == nodes_codes["PARENTHESIS"]) then
-    str = str .. " (" .. Print.Expression(node.exp) .. ")"
-  elseif (node.id == nodes_codes["NEWVAR"]) then
-    str = str .. " new [" .. Print.Expression(node.exp) .. "] " .. node.type
-  elseif (node.id == nodes_codes["NEGATE"]) then
-    str = str .. " not " .. Print.Expression(node.exp)
-  elseif (node.id == nodes_codes["UNARY"]) then
-    str = str .. " - " .. Print.Expression(node.exp)
-  elseif (node.id == nodes_codes["OPERATOR"]) then
-    str = str .. Print.Expression(node[1]) .. " " .. node.op .. " " .. Print.Expression(node[2])
-  elseif (node.id == nodes_codes["VALUE"]) then
-    str = str .. " " .. node.value
-  elseif (node.id == nodes_codes["CALL"]) then
-    str = str .. " " .. node.name .. "("
-    if (node.exps) then
-      str = str .. Print.Expression(node.exps[1])
-      if (node.exps[2]) then
-        for i = 2, #node.exps do
-          str = str .. ", " .. Print.Expression(node.exps[i])
-        end
-      end
-    end
-    str = str .. ")"
-  elseif (node.id == nodes_codes["VAR"]) then
-    str = str .. " " .. node.name
-    if (node.array) then
-      for _, exp in ipairs(node.array) do
-        str = str .. "["
-        str = str .. Print.Expression(exp)
-        str = str .. "]"
-      end
-    end
-  else
-    error("expression node error")
-  end
-  return str..")"
-end
-
-function Print.Function (indent, t)
-  print(indent .. "FUN [" .. t.name .. "] @" .. t.line .. " {")
-  for _, node in ipairs(t.params) do
-    print(indent .. "  FUNC_PARAMETER [" .. node.name .. "] " .. node.type .. string.rep("[]", node.dimension))
-  end
-  print(indent .. "  FUNC_RETURN " .. (t.ret_type or "VOID") .. string.rep("[]", t.ret_dimension or 0))
-  for _, node in ipairs(t.block) do
-    if (node.id == nodes_codes["DECLARE"]) then
-      Print.Declare(indent .. "  ", node)
-    elseif (node.id == nodes_codes["CALL"]) then
-      Print.Call(indent .. "  ", node)
-    elseif (node.id == nodes_codes["ATTRIBUTION"]) then
-      Print.ComandAttribution(indent .. "  ", node)
-    elseif (node.id == nodes_codes["IF"]) then
-      Print.ComandIf(indent .. "  ", node)
-    elseif (node.id == nodes_codes["RETURN"]) then
-      Print.ComandReturn(indent .. "  ", node)
-    elseif (node.id == nodes_codes["WHILE"]) then
-      Print.ComandWhile(indent .. "  ", node)
-    end
-  end
-  print(indent .. "}")
-end
-
-function Print.Program (indent, t)
-  print(indent .. "PROGRAM {")
-  for _, node in ipairs(t) do
-    if (node.id == nodes_codes["DECLARE"]) then
-      Print.Declare(indent .. "  ", node)
-    elseif (node.id == nodes_codes["FUNCTION"]) then
-      Print.Function(indent .. "  ", node)
-    end
-  end
-  print(indent .. "}")
-end
-
-function Print.Variable (indent, t)
-  local array_str = ""
-  for _, exp in ipairs(t.array) do
-    array_str = array_str .. "[" .. Print.Expression() .. "]"
-  end
-  print(indent .. "ID [" .. t.name .. "] " .. array_str .. " @" .. t.line)
-end
 
 
 --==============================================================================
@@ -363,32 +188,38 @@ end
 --  {
 --    id    = $number - NEGATE code
 --    exp   = $table  - EXPRESSION node
+--    line  = $number - line number
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewNegateNode (expression)
+function AbstractSyntaxTree.NewNegateNode (line, expression)
   if (_DEBUG) then print("AST :: NewNegateNode") end
   local node = {
     id    = nodes_codes["NEGATE"],
     exp   = expression,
+    line  = line,
   }
   return node
 end
 
 --NewNewVarNode:
 --  {
---    id    = $number - NEWVAR code
---    exp   = $table  - EXPRESSION node
---    type  = $string - [bool, char, int, string]
+--    id        = $number - NEWVAR code
+--    dimension = $number - var dimension
+--    exp       = $table  - EXPRESSION node
+--    line      = $number - line number
+--    type      = $string - [bool, char, int, string]
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewNewVarNode (expression, type)
+function AbstractSyntaxTree.NewNewVarNode (line, expression, type, dimension)
   if (_DEBUG) then print("AST :: NewNewVarNode") end
   local node = {
-    id    = nodes_codes["NEWVAR"],
-    exp   = expression,
-    type  = type,
+    id        = nodes_codes["NEWVAR"],
+    dimension = dimension,
+    exp       = expression,
+    line      = line,
+    type      = type,
   }
   return node
 end
@@ -396,16 +227,18 @@ end
 --NewOperatorNode:
 --  {
 --    id    = $number - OPERATOR code
+--    line  = $number - line number
 --    op    = $string - [and or + - * / > < >= <= = <>], one of possible operations
 --    [1]   = $table  - EXPRESSION node, left side of operator
 --    [2]   = $table  - EXPRESSION node, right side of operator
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewOperatorNode (left, operator, right)
+function AbstractSyntaxTree.NewOperatorNode (line, left, operator, right)
   if (_DEBUG) then print("AST :: NewOperatorNode") end
   local node = {
     id    = nodes_codes["OPERATOR"],
+    line  = line,
     op    = operator,
     left,
     right,
@@ -439,14 +272,16 @@ end
 --  {
 --    id    = $number - PARENTHESIS code
 --    exp   = $table  - EXPRESSION node
+--    line  = $number - line number
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewParenthesisNode (expression)
+function AbstractSyntaxTree.NewParenthesisNode (line, expression)
   if (_DEBUG) then print("AST :: NewParenthesisNode") end
   local node = {
-    id  = nodes_codes["PARENTHESIS"],
-    exp = expression,
+    id    = nodes_codes["PARENTHESIS"],
+    exp   = expression,
+    line  = line,
   }
   return node
 end
@@ -488,14 +323,16 @@ end
 --  {
 --    id    = $number - UNARY code
 --    exp   = $table  - EXPRESSION node
+--    line  = $number - line number
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewUnaryNode (expression)
+function AbstractSyntaxTree.NewUnaryNode (line, expression)
   if (_DEBUG) then print("AST :: NewUnaryNode") end
   local node = {
     id    = nodes_codes["UNARY"],
     exp   = expression,
+    line  = line,
   }
   return node
 end
@@ -503,6 +340,7 @@ end
 --NewValueNode:
 --  {
 --    id    = $number   - VALUE code
+--    line  = $number - line number
 --    type  = $string   - [bool, char, int, string]
 --    value = $string   - if type == char or string,
 --            $number   - if type == int,
@@ -510,10 +348,11 @@ end
 --  }
 --  parameters:
 --  return:
-function AbstractSyntaxTree.NewValueNode (type, value)
+function AbstractSyntaxTree.NewValueNode (line, type, value)
   if (_DEBUG) then print("AST :: NewValueNode") end
   local node = {
     id    = nodes_codes["VALUE"],
+    line  = line,
     type  = type,
     value = value,
   }
@@ -565,7 +404,7 @@ end
 --  return:
 function AbstractSyntaxTree.Print ()
   if (_DEBUG) then print("AST :: Print") end
-  Print.Program("", tree)
+  PrintClass.Print(tree)
 end
 
 

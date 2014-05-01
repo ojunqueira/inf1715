@@ -7,9 +7,7 @@ fun hehe(c:char):bool
    if c = 64
       while i < 10
          if i / 2 * 2 = i
-            printf("%d\n", i)
          else
-            printf("******\n", i)
          end
          i = i+1
       loop

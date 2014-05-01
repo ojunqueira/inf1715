@@ -1,0 +1,5 @@
+y:char
+
+fun x ()
+  y()
+end

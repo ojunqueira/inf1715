@@ -3,6 +3,7 @@
 --==============================================================================
 
 _DEBUG = false
+local printFailMessage = false
 
 
 --==============================================================================
@@ -23,6 +24,11 @@ local files = {
   {
     name      = "nil_file",
     open      = false,
+  },
+  {
+    name      = "lex_fail",
+    open      = true,
+    lexical   = false,
   },
   {
     name      = "lex_overload_01",
@@ -49,6 +55,55 @@ local files = {
     syntactic = false,
   },
   {
+    name      = "sem_complete_program",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "sem_elseif_block",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "sem_fail_attrib_string_char",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_attrib_char_string",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_attrib_int_bool",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_call_not_function",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_call_wrong_param_number",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
     name      = "sem_fail_declare_same_name_01",
     open      = true,
     lexical   = true,
@@ -57,6 +112,13 @@ local files = {
   },
   {
     name      = "sem_fail_declare_same_name_02",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  }, 
+  {
+    name      = "sem_fail_elseif_condition",
     open      = true,
     lexical   = true,
     syntactic = true,
@@ -70,7 +132,21 @@ local files = {
     semantic  = false,
   },
   {
+    name      = "sem_fail_func_ret_nil",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
     name      = "sem_fail_func_ret_type_different",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_func_same_par_name",
     open      = true,
     lexical   = true,
     syntactic = true,
@@ -152,7 +228,7 @@ local files = {
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "04-funglobal",
@@ -166,21 +242,21 @@ local files = {
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "06-declvar",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "07-if",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "08-fail-else",
@@ -205,14 +281,14 @@ local files = {
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "12-while",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "13-fail-while",
@@ -258,7 +334,7 @@ local files = {
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "19-fail-callargs",
@@ -285,14 +361,14 @@ local files = {
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "22-exp",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "22-fail-exp",
@@ -377,7 +453,7 @@ local files = {
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "36-fail-roottoken",
@@ -409,7 +485,8 @@ local function Run ()
     local file_str                  --  keeps the convertion of file to string
     local unexpected_error = false  --  inform that an unexpected error occurs (if true stop further tests)
     local expected_error = false    --  inform that an expected error occurs (if true stop further tests)
-    
+    local ok, msg
+
     -- TEST OPENING
     ------------------------------------------------
     if (not unexpected_error and not expected_error) then
@@ -422,6 +499,7 @@ local function Run ()
         print(string.format('(%2s de %2s) FAILURE - File "%s" not expected to open.', num_files_read, num_files, valid.name))
       elseif (not f and not valid.open) then
         expected_error = true
+        msg = "File could not be opened"
       else
         file_str = f:read("*a")
         f:close()
@@ -431,7 +509,7 @@ local function Run ()
     -- TEST LEXICAL
     ------------------------------------------------
     if (not unexpected_error and not expected_error) then
-      local ok, msg = Lexical.Open(file_str)
+      ok, msg = Lexical.Open(file_str)
       if (not ok and valid.lexical) then
         unexpected_error = true
         print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on lexical. \n\t %s', num_files_read, num_files, valid.name, msg or ""))
@@ -446,7 +524,7 @@ local function Run ()
     -- TEST SYNTAX
     ------------------------------------------------
     if (not unexpected_error and not expected_error) then
-      local ok, msg = Syntactic.Open(Lexical.GetTags())
+      ok, msg = Syntactic.Open(Lexical.GetTags())
       if (not ok and valid.syntactic) then
         unexpected_error = true
         print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on syntactic. \n\t %s', num_files_read, num_files, valid.name, msg or ""))
@@ -461,7 +539,7 @@ local function Run ()
     -- TEST SEMANTIC
     ------------------------------------------------
     if (not unexpected_error and not expected_error) then
-      local ok, msg = Semantic.Open(Syntactic.GetTree())
+      ok, msg = Semantic.Open(Syntactic.GetTree())
       if (not ok and valid.semantic) then
         unexpected_error = true
         print(string.format('(%2s de %2s) FAILURE - File "%s" expected to PASS on semantic. \n\t %s', num_files_read, num_files, valid.name, msg or ""))
@@ -477,6 +555,9 @@ local function Run ()
     ------------------------------------------------
     if (not unexpected_error or expected_error) then
       print(string.format('(%2s de %2s) SUCCESS - File "%s".', num_files_read, num_files, valid.name))
+      if (expected_error and printFailMessage) then
+        print("    ", msg)
+      end
     end
     num_files_read = num_files_read + 1
   end

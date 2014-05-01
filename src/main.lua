@@ -4,7 +4,7 @@
 
 _DEBUG = false
 local printInput    = false
-local printASTTree  = true
+local printASTTree  = false
 
 
 --==============================================================================

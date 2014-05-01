@@ -1,0 +1,7 @@
+
+
+fun x ()
+  a:[][][]char
+  b:string
+  b = a
+end

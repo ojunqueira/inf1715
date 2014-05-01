@@ -1,0 +1,7 @@
+fun y (a:int, b:int)
+end
+
+fun x ()
+  a:int
+  y(a)
+end
