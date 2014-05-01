@@ -10,7 +10,7 @@
 -- Debug
 --==============================================================================
 
-local printTree = true
+local printTree = false
 
 
 --==============================================================================
@@ -45,21 +45,11 @@ local nodes_codes = NodesClass.GetNodesList()
 --    [1] $string
 --  Return:
 local function Error (msg, line)
-  local str = string.format("Semantic error: @%d %s", line or 0, msg)
+  local str = string.format("@%d semantic error: %s", line or 0, msg or "")
   error(str, 0)
 end
 
---ErrorDeclaredSymbol: Callback of errors that occurs during semantic analysis
---  Parameters:
---    [1] $string
---  Return:
-local function ErrorDeclaredSymbol (sym_prev, sym_new)
-  error(string.format("Semantic error: @%d Symbol '%s' was declared at line %d", sym_new.line, sym_prev.name, sym_prev.line), 0)
-end
-
-
-
---VerifyAttribution:
+--VerifyAttribution: Verify integrity of ATTRIBUTION node
 --  Parameters:
 --    [1] $table  = ATTRIBUTION node
 --  Return:
@@ -68,42 +58,23 @@ function Semantic.VerifyAttribution (node)
   assert(node.id == nodes_codes["ATTRIBUTION"])
   Semantic.VerifyVar(node.var)
   Semantic.VerifyExpression(node.exp)
-  if (node.var.sem_type ~= node.exp.sem_type) then
-    if (node.var.sem_type == "bool" or node.exp.sem_type == "bool") then
-      Error(string.format("Attribution of variable '%s' type '%s' cannot receive type '%s'.", node.var.name, node.var.sem_type, node.exp.sem_type), node.line)
-    elseif (node.var.sem_type == "char" or node.exp.sem_type == "string") then
-      if not (node.var.sem_dimension - 1 == node.exp.sem_dimension) then
-        Error(string.format("Attribution of '%s' 'char' dimension '%d' not compatible with expression 'string' dimension '%d'.", node.var.name, node.var.sem_dimension, node.exp.sem_dimension), node.line)
-      end
-    elseif (node.var.sem_type == "string" or node.exp.sem_type == "char") then
-      if not (node.var.sem_dimension == node.exp.sem_dimension - 1) then
-        Error(string.format("Attribution of '%s' 'string' dimension '%d' not compatible with expression 'char' dimension '%d'.", node.var.name, node.var.sem_dimension, node.exp.sem_dimension), node.line)
-      end
-    else
-      if (node.var.sem_dimension ~= node.exp.sem_dimension) then
-        Error(string.format("Attribution expects same dimension at both sides, but got '%d' and '%d'.", node.var.sem_dimension, node.exp.sem_dimension), node.line)
-      end
-    end
-  else
-    if (node.var.sem_dimension ~= node.exp.sem_dimension) then
-      Error(string.format("Attribution expects same dimension at both sides, but got '%d' and '%d'.", node.var.sem_dimension, node.exp.sem_dimension), node.line)
-    end
-  end
+  Semantic.VerifyCompatibleTypes(node.line, node.var.sem_type, node.var.sem_dimension, node.exp.sem_type, node.exp.sem_dimension)
   -- MUST UPDATE SYMBOL TABLE VALUE
 end
 
---VerifyBlock:
+--VerifyBlock: Verify integrity of BLOCK/COMMANDS nodes
 --  Parameters:
+--    [1] $table  = collection of ATTRIBUTION, CALL, DECLARE, IF, RETURN and WHILE nodes
 --  Return:
 function Semantic.VerifyBlock (block)
   if (_DEBUG) then print("SEM :: VerifyBlock") end
   for _, node in ipairs(block) do
-    if (node.id == nodes_codes["DECLARE"]) then
-      Semantic.VerifyDeclare(node)
-    elseif (node.id == nodes_codes["ATTRIBUTION"]) then
+    if (node.id == nodes_codes["ATTRIBUTION"]) then
       Semantic.VerifyAttribution(node)
     elseif (node.id == nodes_codes["CALL"]) then
       Semantic.VerifyCall(node)
+    elseif (node.id == nodes_codes["DECLARE"]) then
+      Semantic.VerifyDeclare(node)
     elseif (node.id == nodes_codes["IF"]) then
       Semantic.VerifyIf(node)
     elseif (node.id == nodes_codes["RETURN"]) then
@@ -111,12 +82,12 @@ function Semantic.VerifyBlock (block)
     elseif (node.id == nodes_codes["WHILE"]) then
       Semantic.VerifyWhile(node)
     else
-      Error("Unknown block node")
+      Error("unknown block node")
     end
   end
 end
 
---VerifyCall:
+--VerifyCall: Verify integrity of CALL node
 --  Parameters:
 --    [1] $table  = CALL node
 --  Return:
@@ -125,15 +96,15 @@ function Semantic.VerifyCall (node)
   assert(node.id == nodes_codes["CALL"])
   local symbol = SymbolClass.GetSymbol(node.name)
   if (not symbol) then
-    Error(string.format("Undeclared symbol '%s'.", node.name), node.line)
+    Error(string.format("symbol '%s' was not declared.", node.name), node.line)
   end
   if (symbol.id ~= "function") then
-    Error(string.format("Attempt to call %s '%s', but it is a '%s', not a 'function'.", symbol.id, symbol.name, symbol.type), node.line)
+    Error(string.format("attempt to call %s '%s', which is a '%s', not a 'function'.", symbol.id, symbol.name, symbol.type), node.line)
   end
   local num_func_params = symbol.params and #symbol.params or 0
   local num_call_params = node.exps and #node.exps or 0
   if (num_func_params ~= num_call_params) then
-    Error(string.format("Function '%s' expects '%d' parameters, but got '%d'.", symbol.name, num_func_params, num_call_params), node.line)
+    Error(string.format("attempt to call function '%s' with '%d' parameter(s), but it demands '%d'.", symbol.name, num_func_params, num_call_params), node.line)
   end
   for i = 1, num_func_params do
     Semantic.VerifyExpression(node.exps[i])
@@ -143,6 +114,14 @@ function Semantic.VerifyCall (node)
   node.sem_dimension = symbol.ret_dimension
 end
 
+--VerifyCompatibleTypes: Check if two different variables can be matched
+--  Parameters:
+--    [1] $number = line number
+--    [2] $string = type of first variable
+--    [3] $number = dimension of first variable
+--    [4] $string = type of second variable
+--    [5] $number = dimension of second variable
+--  Return:
 function Semantic.VerifyCompatibleTypes (line, first_type, first_dimension, second_type, second_dimension)
   local err = false
   if (first_type ~= second_type) then
@@ -167,14 +146,12 @@ function Semantic.VerifyCompatibleTypes (line, first_type, first_dimension, seco
     end
   end
   if (err) then
-    Error(string.format("Uncompatible types '%s' dimension '%d' and '%s' dimension '%d'.", first_type, first_dimension, second_type, second_dimension), line)
+    Error(string.format("uncompatible types '%s' dimension '%d' and '%s' dimension '%d'.", first_type, first_dimension, second_type, second_dimension), line)
   end
   return true
 end
 
---VerifyDeclare:
---    verify if symbol was already used
---    set new symbol
+--VerifyDeclare: Verify integrity of DECLARE node
 --  Parameters:
 --    [1] $table  = DECLARE node
 --  Return:
@@ -183,13 +160,13 @@ function Semantic.VerifyDeclare (node)
   assert(node.id == nodes_codes["DECLARE"])
   local symbol = SymbolClass.GetCurrentScopeSymbol(node.name)
   if (symbol) then
-    ErrorDeclaredSymbol(symbol, node)
+    Error(string.format("symbol '%s' was already declared at line %d.", symbol.name, symbol.line), node.line)
   else
     SymbolClass.SetSymbol(node)
   end
 end
 
---VerifyElseIf
+--VerifyElseIf: Verify integrity of ELSEIF node
 --  Parameters:
 --    [1] $table  = ELSEIF node
 --  Return:
@@ -199,100 +176,38 @@ function Semantic.VerifyElseIf (node)
   SymbolClass.AddScope()
   Semantic.VerifyExpression(node.cond)
   if (node.cond.sem_type ~= "bool" or node.cond.sem_dimension ~= 0) then
-    Error(string.format("Else if expects 'bool' expression with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
+    Error(string.format("'else if' expects expression of type 'bool' with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
   end
   Semantic.VerifyBlock(node.block)
   SymbolClass.RemoveScope()
 end
 
---VerifyExpression:
+--VerifyExpression: Verify integrity of EXPRESSION node
 --  Parameters:
+--    [1] $table  = CALL, NEGATE, NEWVAR, OPERATOR, UNARY, VALUE or VAR node
 --  Return:
 function Semantic.VerifyExpression (node)
   if (_DEBUG) then print("SEM :: VerifyExpression") end
   if (node.id == nodes_codes["CALL"]) then
     Semantic.VerifyCall(node)
   elseif (node.id == nodes_codes["NEGATE"]) then
-    Semantic.VerifyExpression(node.exp)
-    if (node.exp.sem_type ~= "bool" or node.exp.sem_dimension ~= 0) then
-      Error(string.format("Operation 'negate' must be done over type 'bool' with dimension '0', but got type '%s' with dimension '%d'.", node.exp.sem_type, node.exp.sem_dimension))
-    end
-    node.sem_type = "bool"
-    node.sem_dimension = 0
+    Semantic.VerifyNegate(node)
   elseif (node.id == nodes_codes["NEWVAR"]) then
-    Semantic.VerifyExpression(node.exp)
-    if (node.exp.sem_type ~= "int" and node.exp.sem_type ~= "char") then
-      Error(string.format("New var expression must have type 'int' or 'char', but got type '%s'.", node.exp.sem_type), node.line)
-    end
-    node.sem_type = node.type
-    node.sem_dimension = node.dimension + 1
+    Semantic.VerifyNewVar(node)
   elseif (node.id == nodes_codes["OPERATOR"]) then
-    Semantic.VerifyExpression(node[1])
-    Semantic.VerifyExpression(node[2])
-    if (node.op == "and" or node.op == "or") then
-      if (node[1].sem_type ~= "bool" or node[2].sem_type ~= "bool") then
-        Error(string.format(""))
-      end
-      if (node[1].sem_dimension ~= 0 or node[2].sem_dimension ~= 0) then
-        Error(string.format("Operation '%s' cannot be made over arrays values.", node.op))
-      end
-      node.sem_type = "bool"
-      node.sem_dimension = 0
-    elseif (node.op == "=" or node.op == "<>") then
-      if (node[1].sem_type ~= node[2].sem_type) then
-        if ((node[1].sem_type ~= "int" and node[1].sem_type ~= "char") or (node[2].sem_type ~= "int" and node[2].sem_type ~= "char")) then
-          Error(string.format("Operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type))
-        end
-      end
-      if (node[1].sem_dimension ~= node[2].sem_dimension) then
-        Error(string.format("Operation '%s' must have equal variables dimension, but got '%s' and '%s'.", node.op, node[1].sem_dimension, node[2].sem_dimension))
-      end
-      node.sem_type = "bool"
-      node.sem_dimension = 0
-    elseif (node.op == ">" or node.op == "<" or node.op == ">=" or node.op == "<=") then
-      if ((node[1].sem_type ~= "int" and node[1].sem_type ~= "char") or (node[2].sem_type ~= "int" and node[2].sem_type ~= "char")) then
-        Error(string.format("Operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type))
-      end
-      if (node[1].sem_dimension ~= 0 or node[2].sem_dimension ~= 0) then
-        Error(string.format("Operation '%s' cannot be made over arrays values.", node.op))
-      end
-      node.sem_type = "bool"
-      node.sem_dimension = 0
-    elseif (node.op == "+" or node.op == "-" or node.op == "*" or node.op == "/") then
-      if ((node[1].sem_type ~= "int" and node[1].sem_type ~= "char") or (node[2].sem_type ~= "int" and node[2].sem_type ~= "char")) then
-        Error(string.format("Operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type))
-      end
-      if (node[1].sem_dimension ~= 0 or node[2].sem_dimension ~= 0) then
-        Error(string.format("Operation '%s' cannot be made over arrays values.", node.op))
-      end
-      node.sem_type = "int"
-      node.sem_dimension = 0
-    else
-      Error("Unknown operation '%s'.", node.op)
-    end
+    Semantic.VerifyOperator(node)
   elseif (node.id == nodes_codes["UNARY"]) then
-    Semantic.VerifyExpression(node.exp)
-    if ((node.exp.sem_type ~= "int" and node.exp.sem_type ~= "char") or node.exp.sem_dimension ~= 0) then
-      Error(string.format("Operation 'unary' must be done over type 'char' or 'int' with dimension '0', but got type '%s' with dimension '%d'.", node.exp.sem_type, node.exp.sem_dimension))
-    end
-    node.sem_type = node.exp.sem_type
-    node.sem_dimension = node.exp.sem_dimension
+    Semantic.VerifyUnary(node)
   elseif (node.id == nodes_codes["VALUE"]) then
-    node.sem_type = node.type
-    node.sem_dimension = 0
+    Semantic.VerifyValue(node)
   elseif (node.id == nodes_codes["VAR"]) then
     Semantic.VerifyVar(node)
   else
-    Error("Unknown expression node")
+    Error("unknown expression node")
   end
 end
 
---VerifyFunction:
---    add scope
---    add function parameters as symbols
---    add function return as symbol '@ret'
---    call verifications for block
---    remove scope
+--VerifyFunction: Verify integrity of FUNCTION node
 --  Parameters:
 --    [1] $table  = FUNCTION node
 --  Return:
@@ -303,7 +218,7 @@ function Semantic.VerifyFunction (node)
   if (node.params) then
     for _, param in ipairs(node.params) do
       if (SymbolClass.GetCurrentScopeSymbol(param.name)) then
-        Error()
+        Error("")
       end
       SymbolClass.SetSymbol(param)
     end
@@ -322,8 +237,7 @@ function Semantic.VerifyFunction (node)
   SymbolClass.RemoveScope()
 end
 
---VerifyGlobals:
---    add global functions and variables to scope
+--VerifyGlobals: Add global functions and variables to scope
 --  Parameters:
 --    [1] $table  = PROGRAM node
 --  Return:
@@ -333,13 +247,13 @@ function Semantic.VerifyGlobals (t)
   for _, node in ipairs(t) do
     local symbol = SymbolClass.GetSymbol(node.name)
     if (symbol) then
-      ErrorDeclaredSymbol(symbol, node)
+      Error(string.format("global symbol '%s' was already declared at line %d.", symbol.name, symbol.line), node.line)
     end
     SymbolClass.SetSymbol(node)
   end
 end
 
---VerifyIf
+--VerifyIf: Verify integrity of IF node
 --  Parameters:
 --    [1] $table  = IF node
 --  Return:
@@ -349,7 +263,7 @@ function Semantic.VerifyIf (node)
   SymbolClass.AddScope()
   Semantic.VerifyExpression(node.cond)
   if (node.cond.sem_type ~= "bool" or node.cond.sem_dimension ~= 0) then
-    Error(string.format("If expects 'bool' expression with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
+    Error(string.format("'if' expects expression of type 'bool' with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
   end
   Semantic.VerifyBlock(node.block)
   if (node["elseif"]) then
@@ -365,8 +279,102 @@ function Semantic.VerifyIf (node)
   SymbolClass.RemoveScope()
 end
 
+--VerifyNewVar: Verify integrity of NEWVAR node
+--  Parameters:
+--    [1] $table  = NEWVAR node
+--  Return:
+function Semantic.VerifyNewVar (node)
+  if (_DEBUG) then print("SEM :: VerifyNewVar") end
+  assert(node.id == nodes_codes["NEWVAR"])
+  Semantic.VerifyExpression(node.exp)
+  if (node.exp.sem_type ~= "int" and node.exp.sem_type ~= "char") then
+    Error(string.format("'new var' expression must have type 'int' or 'char', but got type '%s'.", node.exp.sem_type), node.line)
+  end
+  node.sem_type = node.type
+  node.sem_dimension = node.dimension + 1
+end
 
---VerifyProgram:
+--VerifyNegate: Verify integrity of NEGATE node
+--  Parameters:
+--    [1] $table  = NEGATE node
+--  Return:
+function Semantic.VerifyNegate (node)
+  if (_DEBUG) then print("SEM :: VerifyNegate") end
+  assert(node.id == nodes_codes["NEGATE"])
+  Semantic.VerifyExpression(node.exp)
+  if (node.exp.sem_type ~= "bool" or node.exp.sem_dimension ~= 0) then
+    Error(string.format("'not' must be done over type 'bool' with dimension '0', but got type '%s' with dimension '%d'.", node.exp.sem_type, node.exp.sem_dimension))
+  end
+  node.sem_type = "bool"
+  node.sem_dimension = 0
+end
+
+--VerifyOperator: Verify integrity of OPERATOR node
+--  Parameters:
+--    [1] $table  = NEGATE node
+--  Return:
+function Semantic.VerifyOperator (node)
+  if (_DEBUG) then print("SEM :: VerifyOperator") end
+  assert(node.id == nodes_codes["OPERATOR"])
+  Semantic.VerifyExpression(node[1])
+  Semantic.VerifyExpression(node[2])
+  if (node.op == "and" or node.op == "or") then
+
+    if (node[1].sem_type ~= "bool") then
+      Error(string.format("Operation '%s' cannot be made over type '%s'.", node.op, node[1].sem_type), node.line)
+    elseif (node[2].sem_type ~= "bool") then
+      Error(string.format("Operation '%s' cannot be made over type '%s'.", node.op, node[2].sem_type), node.line)
+    end
+
+    if (node[1].sem_dimension ~= 0) then
+      Error(string.format("Operation '%s' cannot be made over arrays values, but left side of expression has dimension '%d'.", node.op, node[1].sem_dimension), node.line)
+    elseif (node[2].sem_dimension ~= 0) then
+      Error(string.format("Operation '%s' cannot be made over arrays values, but right side of expression has dimension '%d'.", node.op, node[2].sem_dimension), node.line)
+    end
+
+    node.sem_type = "bool"
+    node.sem_dimension = 0
+
+  elseif (node.op == "=" or node.op == "<>") then
+
+    if (node[1].sem_type ~= node[2].sem_type) then
+      if ((node[1].sem_type ~= "int" and node[1].sem_type ~= "char") or (node[2].sem_type ~= "int" and node[2].sem_type ~= "char")) then
+        Error(string.format("Operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type))
+      end
+    end
+    if (node[1].sem_dimension ~= node[2].sem_dimension) then
+      Error(string.format("Operation '%s' must have equal variables dimension, but got '%s' and '%s'.", node.op, node[1].sem_dimension, node[2].sem_dimension))
+    end
+    node.sem_type = "bool"
+    node.sem_dimension = 0
+
+  elseif (node.op == ">" or node.op == "<" or node.op == ">=" or node.op == "<=") then
+
+    if ((node[1].sem_type ~= "int" and node[1].sem_type ~= "char") or (node[2].sem_type ~= "int" and node[2].sem_type ~= "char")) then
+      Error(string.format("Operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type))
+    end
+    if (node[1].sem_dimension ~= 0 or node[2].sem_dimension ~= 0) then
+      Error(string.format("Operation '%s' cannot be made over arrays values.", node.op))
+    end
+    node.sem_type = "bool"
+    node.sem_dimension = 0
+
+  elseif (node.op == "+" or node.op == "-" or node.op == "*" or node.op == "/") then
+    if ((node[1].sem_type ~= "int" and node[1].sem_type ~= "char") or (node[2].sem_type ~= "int" and node[2].sem_type ~= "char")) then
+      Error(string.format("Operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type))
+    end
+    if (node[1].sem_dimension ~= 0 or node[2].sem_dimension ~= 0) then
+      Error(string.format("Operation '%s' cannot be made over arrays values.", node.op))
+    end
+    node.sem_type = "int"
+    node.sem_dimension = 0
+
+  else
+    Error("Unknown operation '%s'.", node.op)
+  end
+end
+
+--VerifyProgram: Verify integrity of PROGRAM node
 --  Parameters:
 --    [1] $table  = PROGRAM node
 --  Return:
@@ -381,16 +389,13 @@ function Semantic.VerifyProgram (t)
     elseif (node.id == nodes_codes["FUNCTION"]) then
       Semantic.VerifyFunction(node)
     else
-      Error("Unknown node")
+      Error("unknown program node.")
     end
   end
   SymbolClass.RemoveScope()
 end
 
---VerifyReturn:
---    verify if function is void and return value
---    verify if function return nil but expect value
---    verify if type and dimension of return equals function description
+--VerifyReturn: Verify integrity of RETURN node
 --  Parameters:
 --    [1] $table  = RETURN node
 --  Return:
@@ -399,22 +404,44 @@ function Semantic.VerifyReturn (node)
   assert(node.id == nodes_codes["RETURN"])
   local symbol = SymbolClass.GetSymbol("@ret")
   if (not symbol) then
-    Error(string.format("Void function must not return values at line '%s'.", node.line))
+    Error(string.format("function with return 'void' must not attempt to call 'return'."), node.line)
   elseif (node.exp) then
     Semantic.VerifyExpression(node.exp)
     Semantic.VerifyCompatibleTypes(node.line, symbol.type, symbol.dimension, node.exp.sem_type, node.exp.sem_dimension)
   elseif (symbol.type) then
-    Error(string.format("Function expected to return type '%s' but got 'nil'.", symbol.type), node.line)
+    Error(string.format("function expected to return type '%s' but got 'nil'.", symbol.type), node.line)
   else
-    Error("Unknown error.")
+    Error("unknown function return error.")
   end
 end
 
---VerifyVar:
---    verify if symbol was declared
---    verify if given dimension is greater than symbol dimension
---    verify if array expressions are 'int' or 'char'
---    verify if given dimension exists but symbol dimension is null
+--VerifyUnary: Verify integrity of UNARY node
+--  Parameters:
+--    [1] $table  = UNARY node
+--  Return:
+function Semantic.VerifyUnary (node)
+  if (_DEBUG) then print("SEM :: VerifyUnary") end
+  assert(node.id == nodes_codes["UNARY"])
+  Semantic.VerifyExpression(node.exp)
+  if ((node.exp.sem_type ~= "int" and node.exp.sem_type ~= "char") or node.exp.sem_dimension ~= 0) then
+    Error(string.format("'unary' must be done over type 'char' or 'int' with dimension '0', but got type '%s' with dimension '%d'.", node.exp.sem_type, node.exp.sem_dimension), node.line)
+  end
+  node.sem_type = node.exp.sem_type
+  node.sem_dimension = node.exp.sem_dimension
+end
+
+--VerifyValue: Verify integrity of VALUE node
+--  Parameters:
+--    [1] $table  = VALUE node
+--  Return:
+function Semantic.VerifyValue (node)
+  if (_DEBUG) then print("SEM :: VerifyValue") end
+  assert(node.id == nodes_codes["VALUE"])
+  node.sem_type = node.type
+  node.sem_dimension = 0
+end
+
+--VerifyVar: Verify integrity of VAR node
 --  Parameters:
 --    [1] $table  = VAR node
 --  Return:
@@ -423,30 +450,30 @@ function Semantic.VerifyVar (node)
   assert(node.id == nodes_codes["VAR"])
   local symbol = SymbolClass.GetSymbol(node.name)
   if (not symbol) then
-    Error(string.format("Undeclared symbol '%s'.", node.name), node.line)
+    Error(string.format("symbol '%s' was not declared.", node.name), node.line)
   end
   node.sem_type = symbol.type
   if (symbol.dimension and symbol.dimension > 0) then
     if (node.array) then
       if (#node.array > symbol.dimension) then
-        Error(string.format("Symbol '%s' dimension is '%d', but was called with dimension '%d'.", node.name, symbol.dimension, #node.array), node.line)
+        Error(string.format("symbol '%s' dimension is '%d', but was called with dimension '%d'.", node.name, symbol.dimension, #node.array), node.line)
       end
       for _, exp in ipairs(node.array) do
         Semantic.VerifyExpression(exp)
         if (exp.sem_type ~= "int" and exp.sem_type ~= "char") then
-          Error(string.format("Dimension of symbol '%s' must be a type 'int' or 'char', but got '%s'.", node.name, exp.sem_type), node.line)
+          Error(string.format("symbol '%s' dimension must be an 'int' or 'char', but was called with dimension '%s'.", node.name, exp.sem_type), node.line)
         end
       end
     end
     node.sem_dimension = symbol.dimension - #node.array
   elseif (node.array and #node.array > 0) then
-    Error(string.format("Symbol '%s' dimension is '0', but was called with dimension '%d'.", node.name, #node.array), node.line)
+    Error(string.format("symbol '%s' dimension is '0', but was called with dimension '%d'.", node.name, #node.array), node.line)
   else
     node.sem_dimension = 0
   end
 end
 
---VerifyWhile:
+--VerifyWhile: Verify integrity of WHILE node
 --  Parameters:
 --    [1] $table  = WHILE node
 --  Return:

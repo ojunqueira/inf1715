@@ -47,7 +47,7 @@ local tokens = TokensClass.GetTokensList()
 --    [1] $number - line number of grammar syntax error
 --  Return:
 local function Error (line)
-  error("Syntax error at line " .. line .. ".", 0)
+  error(string.format("@%d syntactic error.", line), 0)
 end
 
 --Match: Receives a token code number and compare with next avaiable token received from lexical
@@ -67,9 +67,9 @@ local function Match (code)
     return token.token, token.line
   else
     if (token) then
-      error("Expected " .. TokensClass.GetTokenName(code) .. " got " .. TokensClass.GetTokenName(token.code) .. " at line " .. token.line, 0)
+      error(string.format("@%d syntactic error: expected token '%s' got token '%s'.", token.line, TokensClass.GetTokenName(code), TokensClass.GetTokenName(token.code)), 0)
     else
-      error("Expected " .. TokensClass.GetTokenName(code) .. " got end of tokens.", 0)
+      error(string.format("@EOF syntactic error: expected token '%s' got 'END_OF_TOKENS'.", TokensClass.GetTokenName(code)), 0)
     end
   end
 end
@@ -250,10 +250,10 @@ function Grammar.Command ()
             token2.code == tokens["OP_["]) then
       return Grammar.CmdAttrib()
     else
-      Error(token.line or nil)
+      Error(token and token.line or 0)
     end
   else
-    Error(token.line or nil)
+    Error(token and token.line or 0)
   end
 end
 
@@ -272,7 +272,7 @@ function Grammar.Declare ()
   elseif (token and token.code == tokens.ID) then
     decl = Grammar.Global(parent_node)
   else
-    Error(token.line or nil)
+    Error(token and token.line or 0)
   end
   return decl
 end
@@ -441,7 +441,7 @@ function Grammar.ExpressionLevel7 ()
     Match(tokens["OP_-"])
     return ASTClass.NewUnaryNode(token.line, Grammar.ExpressionLevel7())
   else
-    Error(token.line or nil)
+    Error(token and token.line or 0)
   end
 end
 
@@ -618,7 +618,7 @@ function Grammar.Type (array_size)
     array_size = array_size + 1
     typebase, array_size = Grammar.Type(array_size)
   else
-    Error(token.line or nil)
+    Error(token and token.line or 0)
   end
   return typebase, array_size
 end
@@ -645,7 +645,7 @@ function Grammar.Typebase ()
     Match(tokens.K_STRING)
     return "string"
   else
-    Error(token.line or nil)
+    Error(token and token.line or 0)
   end
 end
 

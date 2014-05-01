@@ -39,7 +39,7 @@ local ret_codes = {
 print("\n== START TEST =======================================================")
 local args = {...}
 if (#args == 0) then
-   print("Nenhum arquivo de entrada foi informado.")
+   print("file error: no input file.")
    io.stderr:write(ret_codes.err_input)
    os.exit(ret_codes.err_input)
 end
@@ -47,7 +47,7 @@ for k, v in ipairs(args) do
 	print("\n== INPUT ============================================================")
   local f = io.open(args[k], "r")
   if (not f) then
-    print(string.format("Arquivo %s nao pode ser aberto", args[k]))
+    print(string.format("file error: could not be opened.", args[k]))
     io.stderr:write(ret_codes.err_open)
     os.exit(ret_codes.err_open)
   end

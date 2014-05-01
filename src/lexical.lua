@@ -328,7 +328,7 @@ function Lexical.Open (txt)
   lexer:run(txt, true)
   for _, tab in ipairs(tags) do
     if (tab.code == tokens.ERROR) then
-      return false, "Erro na identificação das tags na linha " .. tab.line
+      return false, string.format("@%d lexical error: could not recognize tags.", tab.line)
     end
   end
   return true

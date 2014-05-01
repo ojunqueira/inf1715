@@ -1,0 +1,6 @@
+a:bool
+
+fun x ()
+  b:int
+  b = -a
+end

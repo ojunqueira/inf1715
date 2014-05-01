@@ -3,7 +3,7 @@
 --==============================================================================
 
 _DEBUG = false
-local printFailMessage = false
+local printFailMessage = true
 
 
 --==============================================================================
@@ -119,6 +119,27 @@ local files = {
   }, 
   {
     name      = "sem_fail_elseif_condition",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_exp_negate_char",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_exp_sum_bool",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  },
+  {
+    name      = "sem_fail_exp_unary_bool",
     open      = true,
     lexical   = true,
     syntactic = true,
@@ -499,7 +520,7 @@ local function Run ()
         print(string.format('(%2s de %2s) FAILURE - File "%s" not expected to open.', num_files_read, num_files, valid.name))
       elseif (not f and not valid.open) then
         expected_error = true
-        msg = "File could not be opened"
+        msg = "file error: could not be opened."
       else
         file_str = f:read("*a")
         f:close()
@@ -556,7 +577,7 @@ local function Run ()
     if (not unexpected_error or expected_error) then
       print(string.format('(%2s de %2s) SUCCESS - File "%s".', num_files_read, num_files, valid.name))
       if (expected_error and printFailMessage) then
-        print("    ", msg)
+        print("        ", msg)
       end
     end
     num_files_read = num_files_read + 1
