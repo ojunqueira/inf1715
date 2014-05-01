@@ -520,7 +520,7 @@ local function Run ()
         print(string.format('(%2s de %2s) FAILURE - File "%s" not expected to open.', num_files_read, num_files, valid.name))
       elseif (not f and not valid.open) then
         expected_error = true
-        msg = "file error: could not be opened."
+        msg = "@0 file error: could not be opened."
       else
         file_str = f:read("*a")
         f:close()

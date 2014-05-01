@@ -111,6 +111,10 @@ function AbstractSyntaxTree.NewDeclVarNode (line, name, typebase, size)
     dimension = size,
     type      = typebase,
   }
+  if (node.type == "string") then
+    node.type = "char"
+    node.dimension = node.dimension + 1
+  end
   return node
 end
 

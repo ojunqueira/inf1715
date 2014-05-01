@@ -129,6 +129,7 @@ function Semantic.VerifyCompatibleTypes (line, first_type, first_dimension, seco
       if (first_dimension ~= second_dimension) then
         err = true
       end
+      --[[
     elseif (first_type == "string" and second_type == "char") then
       if (first_dimension + 1 ~= second_dimension) then
         err = true
@@ -137,6 +138,7 @@ function Semantic.VerifyCompatibleTypes (line, first_type, first_dimension, seco
       if (first_dimension ~= second_dimension + 1) then
         err = true
       end
+      --]]
     else
       err = true
     end
@@ -203,7 +205,7 @@ function Semantic.VerifyExpression (node)
   elseif (node.id == nodes_codes["VAR"]) then
     Semantic.VerifyVar(node)
   else
-    Error("unknown expression node")
+    Error("unknown expression node", node.line)
   end
 end
 
@@ -319,58 +321,48 @@ function Semantic.VerifyOperator (node)
   Semantic.VerifyExpression(node[1])
   Semantic.VerifyExpression(node[2])
   if (node.op == "and" or node.op == "or") then
-
     if (node[1].sem_type ~= "bool") then
-      Error(string.format("Operation '%s' cannot be made over type '%s'.", node.op, node[1].sem_type), node.line)
+      Error(string.format("operation '%s' cannot be made over left type '%s'.", node.op, node[1].sem_type), node.line)
     elseif (node[2].sem_type ~= "bool") then
-      Error(string.format("Operation '%s' cannot be made over type '%s'.", node.op, node[2].sem_type), node.line)
+      Error(string.format("operation '%s' cannot be made over right type '%s'.", node.op, node[2].sem_type), node.line)
     end
-
     if (node[1].sem_dimension ~= 0) then
-      Error(string.format("Operation '%s' cannot be made over arrays values, but left side of expression has dimension '%d'.", node.op, node[1].sem_dimension), node.line)
+      Error(string.format("operation '%s' cannot be made over arrays values, but left side of expression has dimension '%d'.", node.op, node[1].sem_dimension), node.line)
     elseif (node[2].sem_dimension ~= 0) then
-      Error(string.format("Operation '%s' cannot be made over arrays values, but right side of expression has dimension '%d'.", node.op, node[2].sem_dimension), node.line)
+      Error(string.format("operation '%s' cannot be made over arrays values, but right side of expression has dimension '%d'.", node.op, node[2].sem_dimension), node.line)
     end
-
     node.sem_type = "bool"
     node.sem_dimension = 0
-
   elseif (node.op == "=" or node.op == "<>") then
-
     if (node[1].sem_type ~= node[2].sem_type) then
       if ((node[1].sem_type ~= "int" and node[1].sem_type ~= "char") or (node[2].sem_type ~= "int" and node[2].sem_type ~= "char")) then
-        Error(string.format("Operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type))
+        Error(string.format("operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type), node.line)
       end
     end
     if (node[1].sem_dimension ~= node[2].sem_dimension) then
-      Error(string.format("Operation '%s' must have equal variables dimension, but got '%s' and '%s'.", node.op, node[1].sem_dimension, node[2].sem_dimension))
+      Error(string.format("operation '%s' require variables with same dimension, but got dimensions '%s' and '%s'.", node.op, node[1].sem_dimension, node[2].sem_dimension), node.line)
     end
     node.sem_type = "bool"
     node.sem_dimension = 0
-
-  elseif (node.op == ">" or node.op == "<" or node.op == ">=" or node.op == "<=") then
-
-    if ((node[1].sem_type ~= "int" and node[1].sem_type ~= "char") or (node[2].sem_type ~= "int" and node[2].sem_type ~= "char")) then
-      Error(string.format("Operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type))
+  elseif (node.op == ">" or node.op == "<" or node.op == ">=" or node.op == "<=" or 
+          node.op == "+" or node.op == "-" or node.op == "*" or node.op == "/") then
+    if (node[1].sem_type ~= "int" and node[1].sem_type ~= "char") then
+      Error(string.format("operation '%s' require 'int' or 'char' expression on both sides, but got type '%s' on left side.", node.op, node[1].sem_type), node.line)
+    elseif (node[2].sem_type ~= "int" and node[2].sem_type ~= "char") then
+      Error(string.format("operation '%s' require 'int' or 'char' expression on both sides, but got type '%s' on right side.", node.op, node[2].sem_type), node.line)
+    elseif (node[1].sem_dimension ~= 0) then
+      Error(string.format("operation '%s' require dimension '0' on both sides, but got dimension '%d' on left side.", node.op, node[1].sem_dimension), node.line)
+    elseif (node[2].sem_dimension ~= 0) then
+      Error(string.format("operation '%s' require dimension '0' on both sides, but got dimension '%d' on right side.", node.op, node[2].sem_dimension), node.line)
     end
-    if (node[1].sem_dimension ~= 0 or node[2].sem_dimension ~= 0) then
-      Error(string.format("Operation '%s' cannot be made over arrays values.", node.op))
-    end
-    node.sem_type = "bool"
     node.sem_dimension = 0
-
-  elseif (node.op == "+" or node.op == "-" or node.op == "*" or node.op == "/") then
-    if ((node[1].sem_type ~= "int" and node[1].sem_type ~= "char") or (node[2].sem_type ~= "int" and node[2].sem_type ~= "char")) then
-      Error(string.format("Operation '%s' require 'int' or 'char' expressions on both sides, but got '%s' and '%s'.", node.op, node[1].sem_type, node[2].sem_type))
+    if (node.op == ">" or node.op == "<" or node.op == ">=" or node.op == "<=") then
+      node.sem_type = "bool"
+    else
+      node.sem_type = "int"
     end
-    if (node[1].sem_dimension ~= 0 or node[2].sem_dimension ~= 0) then
-      Error(string.format("Operation '%s' cannot be made over arrays values.", node.op))
-    end
-    node.sem_type = "int"
-    node.sem_dimension = 0
-
   else
-    Error("Unknown operation '%s'.", node.op)
+    Error(string.format("unknown operation '%s'.", node.op), node.line)
   end
 end
 
@@ -411,7 +403,7 @@ function Semantic.VerifyReturn (node)
   elseif (symbol.type) then
     Error(string.format("function expected to return type '%s' but got 'nil'.", symbol.type), node.line)
   else
-    Error("unknown function return error.")
+    Error("unknown function return error.", node.line)
   end
 end
 

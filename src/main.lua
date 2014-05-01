@@ -39,7 +39,7 @@ local ret_codes = {
 print("\n== START TEST =======================================================")
 local args = {...}
 if (#args == 0) then
-   print("file error: no input file.")
+   print("@0 file error: no input file.")
    io.stderr:write(ret_codes.err_input)
    os.exit(ret_codes.err_input)
 end
