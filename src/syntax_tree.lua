@@ -47,6 +47,8 @@ local tree = {}
 --==============================================================================
 
 --GetTree:
+--  parameters:
+--  return:
 function AbstractSyntaxTree.GetTree ()
   --return util.TableCopy(tree)
   return tree

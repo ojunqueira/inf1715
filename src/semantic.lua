@@ -68,7 +68,7 @@ end
 --  Return:
 function Semantic.VerifyBlock (block)
   if (_DEBUG) then print("SEM :: VerifyBlock") end
-  for _, node in ipairs(block) do
+  for _, node in ipairs(block or {}) do
     if (node.id == nodes_codes["ATTRIBUTION"]) then
       Semantic.VerifyAttribution(node)
     elseif (node.id == nodes_codes["CALL"]) then
@@ -217,13 +217,11 @@ function Semantic.VerifyFunction (node)
   if (_DEBUG) then print("SEM :: VerifyFunction") end
   assert(node.id == nodes_codes["FUNCTION"])
   SymbolClass.AddScope()
-  if (node.params) then
-    for _, param in ipairs(node.params) do
-      if (SymbolClass.GetCurrentScopeSymbol(param.name)) then
-        Error("")
-      end
-      SymbolClass.SetSymbol(param)
+  for _, param in ipairs(node.params) do
+    if (SymbolClass.GetCurrentScopeSymbol(param.name)) then
+      Error(string.format("function parameter '%s' already declared.", param.name), node.line)
     end
+    SymbolClass.SetSymbol(param)
   end
   if (node.ret_type) then
     local ret = {
@@ -268,16 +266,12 @@ function Semantic.VerifyIf (node)
     Error(string.format("'if' expects expression of type 'bool' with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
   end
   Semantic.VerifyBlock(node.block)
-  if (node["elseif"]) then
-    for _, n in ipairs (node["elseif"]) do
-      Semantic.VerifyElseIf(n)
-    end
+  for _, n in ipairs (node["elseif"]) do
+    Semantic.VerifyElseIf(n)
   end
-  if (node["else"]) then
-    SymbolClass.AddScope()
-    Semantic.VerifyBlock(node["else"])
-    SymbolClass.RemoveScope()
-  end
+  SymbolClass.AddScope()
+  Semantic.VerifyBlock(node["else"])
+  SymbolClass.RemoveScope()
   SymbolClass.RemoveScope()
 end
 
@@ -446,15 +440,13 @@ function Semantic.VerifyVar (node)
   end
   node.sem_type = symbol.type
   if (symbol.dimension and symbol.dimension > 0) then
-    if (node.array) then
-      if (#node.array > symbol.dimension) then
-        Error(string.format("symbol '%s' dimension is '%d', but was called with dimension '%d'.", node.name, symbol.dimension, #node.array), node.line)
-      end
-      for _, exp in ipairs(node.array) do
-        Semantic.VerifyExpression(exp)
-        if (exp.sem_type ~= "int" and exp.sem_type ~= "char") then
-          Error(string.format("symbol '%s' dimension must be an 'int' or 'char', but was called with dimension '%s'.", node.name, exp.sem_type), node.line)
-        end
+    if (#node.array > symbol.dimension) then
+      Error(string.format("symbol '%s' dimension is '%d', but was called with dimension '%d'.", node.name, symbol.dimension, #node.array), node.line)
+    end
+    for _, exp in ipairs(node.array) do
+      Semantic.VerifyExpression(exp)
+      if (exp.sem_type ~= "int" and exp.sem_type ~= "char") then
+        Error(string.format("symbol '%s' dimension must be an 'int' or 'char', but was called with dimension '%s'.", node.name, exp.sem_type), node.line)
       end
     end
     node.sem_dimension = symbol.dimension - #node.array
@@ -475,7 +467,7 @@ function Semantic.VerifyWhile (node)
   SymbolClass.AddScope()
   Semantic.VerifyExpression(node.cond)
   if (node.cond.sem_type ~= "bool" or node.cond.sem_dimension ~= 0) then
-    Error(string.format("While expects 'bool' expression with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
+    Error(string.format("while expects 'bool' expression with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
   end
   Semantic.VerifyBlock(node.block)
   SymbolClass.RemoveScope()

@@ -12,9 +12,10 @@ local printASTTree  = false
 --==============================================================================
 
 require "lib/util"
-local Lexical     = require "src/lexical"
-local Syntactic   = require "src/syntactic"
-local Semantic    = require "src/semantic"
+local Lexical       = require "src/lexical"
+local Syntactic     = require "src/syntactic"
+local Semantic      = require "src/semantic"
+local InterCodeGen  = require "src/intermediate_code"
 
 
 --==============================================================================
@@ -29,6 +30,7 @@ local ret_codes = {
   err_lexical   = 3,
   err_syntactic = 4,
   err_semantic  = 5,
+  err_intercode = 6,
 }
 
 
@@ -44,7 +46,7 @@ if (#args == 0) then
    os.exit(ret_codes.err_input)
 end
 for k, v in ipairs(args) do
-	print("\n== INPUT ============================================================")
+	print("\n== INPUT ==========================================================")
   local f = io.open(args[k], "r")
   if (not f) then
     print(string.format("file error: could not be opened.", args[k]))
@@ -59,7 +61,7 @@ for k, v in ipairs(args) do
     print("FILE: SUCCESS")
   end
   local ok, msg
-  print("\n== LEXICAL ==========================================================")
+  print("\n== LEXICAL ========================================================")
   ok, msg = Lexical.Open(str)
   if (not ok) then
     print("LEX: FAILURE    ", msg)
@@ -68,7 +70,7 @@ for k, v in ipairs(args) do
   else
     print("LEX: SUCCESS")
   end
-  print("\n== SYNTACTIC ========================================================")
+  print("\n== SYNTACTIC ======================================================")
   ok, msg = Syntactic.Open(Lexical.GetTags())
   if (not ok) then
     print("SYN: FAILURE    ", msg)
@@ -77,12 +79,12 @@ for k, v in ipairs(args) do
   else
     print("SYN: SUCCESS")
   end
-  print("\n== SYNTACTIC AST TREE ===============================================")
+  print("\n== SYNTACTIC AST TREE =============================================")
   if (printASTTree) then
     Syntactic.PrintTree()
   end
   print("AST: SUCCESS")
-  print("\n== SEMANTIC =========================================================")
+  print("\n== SEMANTIC =======================================================")
   ok, msg = Semantic.Open(Syntactic.GetTree())
     if (not ok) then
     print("SEM: FAILURE    ", msg)
@@ -91,7 +93,16 @@ for k, v in ipairs(args) do
   else
     print("SEM: SUCCESS")
   end
-  print("\n== FINISH ===========================================================")
+  print("\n== INTERMEDIATE CODE ==============================================")
+  ok, msg = InterCodeGen.Open(Syntactic.GetTree())
+  if (not ok) then
+    print("ICG: FAILURE    ", msg)
+    io.stderr:write(ret_codes.err_intercode)
+    os.exit(ret_codes.err_intercode)
+  else
+    print("ICG: SUCCESS")
+  end
+  print("\n== FINISH =========================================================")
 end
 
 return ret_codes.ok
