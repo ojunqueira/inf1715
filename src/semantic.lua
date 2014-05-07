@@ -35,6 +35,9 @@ local Semantic = {}
 --  }
 local nodes_codes = NodesClass.GetNodesList()
 
+--  AST tree (structed nodes)
+local tree = {}
+
 
 --==============================================================================
 -- Private Methods
@@ -483,6 +486,14 @@ end
 -- Public Methods
 --==============================================================================
 
+--GetTree:
+--  parameters:
+--  return:
+--    [1] $boolean - false if found any problem, true otherwise
+function Semantic.GetTree ()
+  return tree
+end
+
 --Open:
 --  parameters:
 --    [1] $table   - table with AST tree nodes
@@ -497,6 +508,7 @@ function Semantic.Open (t)
   if (not ok) then
     return false, msg
   end
+  tree = t
   if (printTree) then
     Semantic.Print(t)
   end

@@ -37,6 +37,8 @@ local Syntactic = {}
 --==============================================================================
 
 --GetTree:
+--  parameters:
+--  return:
 function Syntactic.GetTree()
   if (_DEBUG) then print("SYN :: GetTree") end
   return ASTClass.GetTree()
