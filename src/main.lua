@@ -94,7 +94,7 @@ for k, v in ipairs(args) do
     print("SEM: SUCCESS")
   end
   print("\n== INTERMEDIATE CODE ==============================================")
-  ok, msg = InterCodeGen.Open("out/icg", Semantic.GetTree())
+  ok, msg = InterCodeGen.Open("out/compiler.icg", Semantic.GetTree())
   if (not ok) then
     print("ICG: FAILURE    ", msg)
     io.stderr:write(ret_codes.err_intercode)

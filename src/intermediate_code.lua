@@ -60,12 +60,13 @@ end
 function IntermediateCodeGen.Open (path, tree)
   if (_DEBUG) then print("ICG :: Open") end
   local ok, msg = pcall(function ()
+    -- GENERATE CODE
     local f = io.open(path, "w")
     if (not f) then
       Error(string.format("output file '%s' could not be opened"), path)
     end
     file = f
-    --  GENERATE CODE
+    --  PRINT CODE TO FILE
     f:close()
   end)
   if (not ok) then
