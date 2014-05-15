@@ -22,7 +22,7 @@ end
 --==============================================================================
 
 local function Lua_match(rule, input, at)
-   --if (_DEBUG) then print("Lul :: Lua_match") end
+   if (_DEBUG) then print("LLX :: Lua_match") end
    local match = string.match(input, "^"..rule[1], at)
    if match then
       return at + #match
@@ -30,7 +30,7 @@ local function Lua_match(rule, input, at)
 end
 
 local function Re_match(rule, input, at)
-   --if (_DEBUG) then print("Lul :: Re_match") end
+   if (_DEBUG) then print("LLX :: Re_match") end
    if not rule.pat then
       rule.pat = rex.new("^"..rule[1])
    end
@@ -41,7 +41,7 @@ local function Re_match(rule, input, at)
 end
 
 local function Run(self, input)
-   --if (_DEBUG) then print("Lul :: Run") end
+   if (_DEBUG) then print("LLX :: Run") end
    local at = 1
    while at <= #input do
       local lrule = nil
@@ -72,7 +72,7 @@ end
 --==============================================================================
 
 function Lulex.New(rules, use_lua)
-   --if (_DEBUG) then print("Lul :: New") end
+   if (_DEBUG) then print("LLX :: New") end
    return {
       match = (use_lua or not rex_ok) and Lua_match or Re_match,
       rules = rules,
