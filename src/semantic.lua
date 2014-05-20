@@ -393,7 +393,9 @@ function Semantic.VerifyReturn (node)
   assert(node.id == nodes_codes["RETURN"])
   local symbol = SymbolClass.GetSymbol("@ret")
   if (not symbol) then
-    Error(string.format("function with return 'void' must not attempt to call 'return'."), node.line)
+    if (node.exp) then
+      Error(string.format("function with return 'void' must not attempt to call 'return'."), node.line)
+    end
   elseif (node.exp) then
     Semantic.VerifyExpression(node.exp)
     Semantic.VerifyCompatibleTypes(node.line, symbol.type, symbol.dimension, node.exp.sem_type, node.exp.sem_dimension)
