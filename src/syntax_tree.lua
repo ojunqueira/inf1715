@@ -100,7 +100,7 @@ end
 --    line      = $number - line number
 --    name      = $string - var name
 --    dimension = $number - var dimension
---    type      = $string - [bool, char, int, string]
+--    type      = $string - [bool, char, int]
 --  }
 --  parameters:
 --  return:
@@ -147,7 +147,7 @@ end
 --    line          = $number - line number
 --    name          = $string - var name
 --    params        = $table  - list of PARAMETER nodes
---    ret_type      = $string - [bool, char, int, string], represents function return type
+--    ret_type      = $string - [bool, char, int], represents function return type
 --    ret_dimension = $number - function return dimension
 --  }
 --  parameters:
@@ -163,6 +163,10 @@ function AbstractSyntaxTree.NewFunctionNode (line, name, parameters, return_type
     ret_dimension = return_size,
     block         = block,
   }
+  if (node.ret_type == "string") then
+    node.ret_type = "char"
+    node.ret_dimension = node.ret_dimension + 1
+  end
   return node
 end
 
@@ -214,7 +218,7 @@ end
 --    dimension = $number - var dimension
 --    exp       = $table  - EXPRESSION node
 --    line      = $number - line number
---    type      = $string - [bool, char, int, string]
+--    type      = $string - [bool, char, int]
 --  }
 --  parameters:
 --  return:
@@ -227,6 +231,10 @@ function AbstractSyntaxTree.NewNewVarNode (line, expression, type, dimension)
     line      = line,
     type      = type,
   }
+  if (node.type == "string") then
+    node.type = "char"
+    node.dimension = node.dimension + 1
+  end
   return node
 end
 
@@ -258,7 +266,7 @@ end
 --    dimension = $number - var dimension
 --    line      = $number - line number
 --    name      = $string - var name
---    type      = $string - [bool, char, int, string]
+--    type      = $string - [bool, char, int]
 --  }
 --  parameters:
 --  return:
@@ -271,6 +279,10 @@ function AbstractSyntaxTree.NewParameterNode (line, name, typebase, size)
     dimension = size,
     type      = typebase,
   }
+  if (node.type == "string") then
+    node.type = "char"
+    node.dimension = node.dimension + 1
+  end
   return node
 end
 
@@ -345,23 +357,29 @@ end
 
 --NewValueNode:
 --  {
---    id    = $number   - VALUE code
---    line  = $number - line number
---    type  = $string   - [bool, char, int, string]
---    value = $string   - if type == char or string,
---            $number   - if type == int,
---            $boolean  - if type == bool,
+--    id        = $number   - VALUE code
+--    dimension = $number - var dimension
+--    line      = $number - line number
+--    type      = $string   - [bool, char, int, string]
+--    value     = $string   - if type == char or string, -- Value cannot be 'char' type.
+--                $number   - if type == int,
+--                $boolean  - if type == bool,
 --  }
 --  parameters:
 --  return:
 function AbstractSyntaxTree.NewValueNode (line, type, value)
   if (_DEBUG) then print("AST :: NewValueNode") end
   local node = {
-    id    = nodes_codes["VALUE"],
-    line  = line,
-    type  = type,
-    value = value,
+    id        = nodes_codes["VALUE"],
+    dimension = 0,
+    line      = line,
+    type      = type,
+    value     = value,
   }
+  if (node.type == "string") then
+    node.type = "char"
+    node.dimension = 1
+  end
   return node
 end
 
