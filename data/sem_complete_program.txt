@@ -22,7 +22,7 @@ end
 fun f_2 (x:int, y:bool)
   b0 = true
   b1[1] = not b0
-  i1 = c1
+  //i1 = c1
 end
 
 fun f_3 () :bool
@@ -60,12 +60,12 @@ end
 
 fun f_6 ()
   i0 = c0
-  i1 = c2[4]
-  i2 = c2
+  //i1 = c2[4]
+  //i2 = c2
   i2[1] = i1
   c0 = i0 - 17 * 32 / 15 + 1
-  c1 = i1
-  c2 = i2
+  //c1 = i1
+  //c2 = i2
   s0 = c1
   s1 = c2
   
