@@ -163,7 +163,8 @@ end
 function Semantic.VerifyDeclare (node)
   if (_DEBUG) then print("SEM :: VerifyDeclare") end
   assert(node.id == nodes_codes["DECLARE"])
-  local symbol = SymbolClass.GetCurrentScopeSymbol(node.name)
+  --local symbol = SymbolClass.GetCurrentScopeSymbol(node.name)
+  local symbol = SymbolClass.GetSymbol(node.name)
   if (symbol) then
     Error(string.format("symbol '%s' was already declared at line %d.", symbol.name, symbol.line), node.line)
   else
