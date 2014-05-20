@@ -129,7 +129,7 @@ function Semantic.VerifyCompatibleTypes (line, first_type, first_dimension, seco
   local err = false
   if (first_type ~= second_type) then
     if (first_type == "int" and second_type == "char") or (first_type == "char" and second_type == "int") then
-      if (first_dimension ~= second_dimension) then
+      if (first_dimension ~= 0 or second_dimension ~= 0) then
         err = true
       end
       --[[
@@ -429,7 +429,7 @@ function Semantic.VerifyValue (node)
   if (_DEBUG) then print("SEM :: VerifyValue") end
   assert(node.id == nodes_codes["VALUE"])
   node.sem_type = node.type
-  node.sem_dimension = 0
+  node.sem_dimension = node.dimension
 end
 
 --VerifyVar: Verify integrity of VAR node
