@@ -132,16 +132,6 @@ function Semantic.VerifyCompatibleTypes (line, first_type, first_dimension, seco
       if (first_dimension ~= 0 or second_dimension ~= 0) then
         err = true
       end
-      --[[
-    elseif (first_type == "string" and second_type == "char") then
-      if (first_dimension + 1 ~= second_dimension) then
-        err = true
-      end
-    elseif (first_type == "char" and second_type == "string") then
-      if (first_dimension ~= second_dimension + 1) then
-        err = true
-      end
-      --]]
     else
       err = true
     end
@@ -222,7 +212,8 @@ function Semantic.VerifyFunction (node)
   assert(node.id == nodes_codes["FUNCTION"])
   SymbolClass.AddScope()
   for _, param in ipairs(node.params) do
-    if (SymbolClass.GetCurrentScopeSymbol(param.name)) then
+    if (SymbolClass.GetSymbol(param.name)) then
+    --if (SymbolClass.GetCurrentScopeSymbol(param.name)) then
       Error(string.format("function parameter '%s' already declared.", param.name), node.line)
     end
     SymbolClass.SetSymbol(param)
