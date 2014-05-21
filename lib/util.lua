@@ -15,12 +15,12 @@ util = {}
 -- Public Methods
 --==============================================================================
 
---FileExists()
+--FileExists:
 --  parameters:
 --    [1] $string  [file path and name including extension to be evaluated]
 --  return:
 --    [1] $boolean [true if file exists, false otherwise]
-function util.FileExists(file)
+function util.FileExists (file)
   if (file == nil or type(file) ~= "string" or file == "") then
     return false
   end
@@ -32,12 +32,22 @@ function util.FileExists(file)
   return true
 end
 
---FileToTable()
+--FileRemoveExtension()
+--  parameters:
+--    [1] $string  [file path and name including extension to be evaluated]
+--  return:
+--    [1] 
+function util.FileRemoveExtension (file)
+  assert(file)
+  return string.gsub(file, "(.+)%.(.*)","%1")
+end
+
+--FileToTable:
 --  parameters:
 --    [1] 
 --  return:
 --    [1] 
-function util.FileToTable(file)
+function util.FileToTable (file)
   if (file == nil or type(file) ~= "string" or file == "") then
     return false, "Parameter 'file' is invalid"
   end
@@ -53,21 +63,21 @@ function util.FileToTable(file)
   return false, {}
 end
 
---StringIsNull()
+--StringIsNull:
 --  parameters:
 --    [1] $string  [string that is going to be evaluated]
 --  return:
 --    [1] $boolean [true if string is null]
-function util.StringIsNull(str)
+function util.StringIsNull (str)
   return (str == nil or str == "")
 end
 
---TableCopy()
+--TableCopy:
 --  parameters:
 --    [1] $table [table that is going to be duplicated]
 --  return:
 --    [1] $table [copy of incoming table]
-function util.TableCopy(t)
+function util.TableCopy (t)
   if (not t or type(t) ~= "table") then
     return
   end
@@ -87,13 +97,13 @@ function util.TableCopy(t)
   return ret
 end
 
---TableGetChanges()
+--TableGetChanges:
 --  required:
 --    [1] $table [old table]
 --    [2] $table [new table]
 --  return:
 --    [1] $table [fields that have been modified from old_table to new_table]
-function util.TableGetChanges(old_table, new_table)
+function util.TableGetChanges (old_table, new_table)
   if not old_table or not new_table then 
     return 
   end
@@ -112,7 +122,7 @@ function util.TableGetChanges(old_table, new_table)
   end
 end
 
---TableIsEmpty()
+--TableIsEmpty:
 --  parameters:
 --    [1] $table   [table that is going to be valuated]
 --  return:
@@ -125,7 +135,7 @@ function util.TableIsEmpty (t)
   return true
 end
 
---TablePrint()
+--TablePrint:
 --  parameters:
 --    [1] $table [table that is going to be printed]
 function util.TablePrint (t)
@@ -135,7 +145,7 @@ function util.TablePrint (t)
   print(TablePrintAux("", t, ""))
 end
 
---TableToFile()
+--TableToFile:
 --  parameters:
 --    [1] $table  [table that is going to be printed]
 --  return:
@@ -156,7 +166,7 @@ function util.TableToFile (file, t)
   return true
 end
 
---TableToString()
+--TableToString:
 --  parameters:
 --    [1] $table  [table that is going to be printed]
 --  return:
