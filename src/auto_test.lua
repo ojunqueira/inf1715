@@ -11,9 +11,10 @@ local printFailMessage = false
 --==============================================================================
 
 require "lib/util"
-local Lexical   = require "src/lexical"
-local Syntactic = require "src/syntactic"
-local Semantic  = require "src/semantic"
+local Lexical       = require "src/lexical"
+local Syntactic     = require "src/syntactic"
+local Semantic      = require "src/semantic"
+local InterCodeGen  = require "src/intermediate_code"
 
 
 --==============================================================================
@@ -111,12 +112,12 @@ local files = {
     semantic  = false,
   },
   {
-    name      = "sem_fail_declare_same_name_02",open      
-    = true,lexical   
-    = true,syntactic 
-    = true,semantic  
-    = false,}
-  , 
+    name      = "sem_fail_declare_same_name_02",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = false,
+  }, 
   {
     name      = "sem_fail_elseif_condition",
     open      = true,
@@ -335,7 +336,7 @@ local files = {
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "17-call",
@@ -776,21 +777,21 @@ local files = {
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "42-scope-localvsglobal",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "43-scope-localvslocal",
     open      = true,
     lexical   = true,
     syntactic = true,
-    semantic  = true,
+    semantic  = false,
   },
   {
     name      = "44-fail-global-redec",
@@ -2680,7 +2681,16 @@ local function Run ()
         expected_error = true
       end
     end
-    
+
+    -- TEST INTERMEDIATE CODE GENERATOR
+    ------------------------------------------------
+    if (not unexpected_error and not expected_error) then
+      ok, msg = InterCodeGen.Open("out/" .. valid.name, Semantic.GetTree())
+      if (not ok) then
+        print(string.format('(%3s de %3s) FAILURE - Unexpected error while writing intermediate code. \n\t', num_files_read, num_files))
+      end
+    end
+
     -- PASSED ALL TESTS
     ------------------------------------------------
     if (not unexpected_error or expected_error) then
