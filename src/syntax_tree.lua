@@ -358,8 +358,8 @@ end
 --NewValueNode:
 --  {
 --    id        = $number   - VALUE code
---    dimension = $number - var dimension
---    line      = $number - line number
+--    dimension = $number   - var dimension
+--    line      = $number   - line number
 --    type      = $string   - [bool, char, int, string]
 --    value     = $string   - if type == char or string, -- Value cannot be 'char' type.
 --                $number   - if type == int,
