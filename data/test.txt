@@ -1,0 +1,9 @@
+i0:int
+i1:[]int
+i2:[][]int
+
+fun f_1 () :int
+  return 4
+end
+
+
