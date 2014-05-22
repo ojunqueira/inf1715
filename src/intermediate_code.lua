@@ -3,6 +3,7 @@
 --==============================================================================
 
 local printStruct = false
+local _DEBUG = true
 
 
 --==============================================================================
@@ -24,6 +25,9 @@ local file
 --  count number of generated labels
 local label_counter = 0
 
+--  count number of generated variables
+local var_counter = 0
+
 --  list of nodes code
 --  {
 --    [name] = $number,
@@ -32,12 +36,8 @@ local nodes_codes = NodesClass.GetNodesList()
 
 -- avaiable operator codes of intermediate language
 local opcode = {
-  NOP       = 01, -- NO OPERATOR (EMPTY)
-  
-  DECLARE   = 03,
-
-
-  --LITSTRING = 02,
+  ["RETURN"]  = "RET",
+  ["ID=rval"] = "="
 }
 
 --  three address codes
@@ -64,7 +64,7 @@ function IntermediateCodeGen.Clear ()
     globals   = {},
     functions = {},
   }
-
+  var_counter = 0
   label_counter = 0
 end
 
@@ -82,10 +82,10 @@ function IntermediateCodeGen.Dump (path)
     -- WRITE STRINGS
   end
   for _, name in ipairs(struct.globals) do
-    f:write(string.format("%8s DECLARE %s", "", name))
+    f:write(string.format("%8s DECLARE %s\n", "", name))
   end
-  for _, var in ipairs(struct.functions) do
-    -- WRITE FUNCTIONS
+  for _, line in ipairs(struct.functions) do
+    f:write(line)
   end
   f:close()
 end
@@ -98,13 +98,84 @@ function IntermediateCodeGen.Error (msg)
   error(str, 0)
 end
 
+--GenAttribution:
+--  Parameters:
+--  Return:
+function IntermediateCodeGen.GenAttribution (node)
+  if (_DEBUG) then print("ICG :: GenAttribution") end
+  assert(node.id == nodes_codes["ATTRIBUTION"])
+  local label = IntermediateCodeGen.GetLabel()
+  -- COMPLETE write expression
+  -- WHICH OP CODE?
+  --local str = IntermediateCodeGen.NewInstruction(nil, )
+  --table.insert(struct.functions, str)
+end
+
+--GenBlock:
+--  Parameters:
+--  Return:
+function IntermediateCodeGen.GenBlock (block)
+  if (_DEBUG) then print("ICG :: GenBlock") end
+  for _, node in ipairs(block) do
+    if (node.id == nodes_codes["ATTRIBUTION"]) then
+      IntermediateCodeGen.GenAttribution(node)
+    elseif (node.id == nodes_codes["CALL"]) then
+      -- COMPLETE
+    elseif (node.id == nodes_codes["DECLARE"]) then
+      -- COMPLETE
+    elseif (node.id == nodes_codes["IF"]) then
+      -- COMPLETE
+    elseif (node.id == nodes_codes["RETURN"]) then
+      IntermediateCodeGen.GenReturn(node)
+    elseif (node.id == nodes_codes["WHILE"]) then
+      -- COMPLETE
+    end
+  end
+end
+
+--GenExpression:
+--  Parameters:
+--  Return:
+function IntermediateCodeGen.GenExpression (var, node)
+  local str = "expression here return at " .. var .. "\n"
+  print(node.id)
+  if (node.id == nodes_codes["CALL"]) then
+    
+  elseif (node.id == nodes_codes["NEGATE"]) then
+    
+  elseif (node.id == nodes_codes["NEWVAR"]) then
+    
+  elseif (node.id == nodes_codes["OPERATOR"]) then
+    
+  elseif (node.id == nodes_codes["UNARY"]) then
+    
+  elseif (node.id == nodes_codes["VALUE"]) then
+    local str = IntermediateCodeGen.NewInstruction(nil, "ID=rval", var, node.value)
+    table.insert(struct.functions, str)
+  elseif (node.id == nodes_codes["VAR"]) then
+    
+  end
+  
+end
+
 --GenFunction:
 --  Parameters:
 --  Return:
 function IntermediateCodeGen.GenFunction (node)
   if (_DEBUG) then print("ICG :: GenFunction") end
   assert(node.id == nodes_codes["FUNCTION"])
-  -- COMPLETE
+  local header = string.format("%8s FUN %s (", "", node.name)
+  if (node.params and node.params[1]) then
+    header = header .. node.params[1].name
+  end
+  if (node.params and #node.params > 1) then
+    for i = 2, #node.params do
+      header = header .. "," .. node.params[i].name
+    end
+  end
+  header = header .. ")\n"
+  table.insert(struct.functions, header)
+  IntermediateCodeGen.GenBlock(node.block)
 end
 
 --GenGlobal:
@@ -124,6 +195,21 @@ function IntermediateCodeGen.GenLiteralString (node)
   -- COMPLETE
 end
 
+--GenReturn:
+--  Parameters:
+--  Return:
+function IntermediateCodeGen.GenReturn (node)
+  if (_DEBUG) then print("ICG :: GenReturn") end
+  assert(node.id == nodes_codes["RETURN"])
+  local str, var
+  if (node.exp) then
+    var = IntermediateCodeGen.GetVariable()
+    IntermediateCodeGen.GenExpression(var, node.exp)
+  end
+  str = IntermediateCodeGen.NewInstruction(nil, "RETURN", var)
+  table.insert(struct.functions, str)
+end
+
 --GetLabel: Get a new string to use as a label
 --  Parameters:
 --  Return:
@@ -134,20 +220,29 @@ function IntermediateCodeGen.GetLabel ()
   return "$L" .. label_counter
 end
 
+--GetVariable: Get a new string to use as a variable
+--  Parameters:
+--  Return:
+--    [1] $string   - New unique label
+function IntermediateCodeGen.GetVariable ()
+  if (_DEBUG) then print("ICG :: GetVariable") end
+  var_counter = var_counter + 1
+  return "$t" .. var_counter
+end
+
 --NewInstruction:
 --  Parameters:
 --  Return:
-function IntermediateCodeGen.NewInstruction (label, opcode, op1, op2, op3)
+function IntermediateCodeGen.NewInstruction (label, code, op1, op2, op3)
   if (_DEBUG) then print("ICG :: NewInstruction") end
   assert (opcode) -- opcode[opcode]
-  local t = {
-    label   = label or "",
-    opcode  = opcode,
-    op1     = op1,
-    op2     = op2,
-    op3     = op3,
-  }
-  return t
+  local str
+  if (code == "RETURN") then
+    str = string.format("%14s   %s %s\n", label and ("LABEL: " .. label) or "", opcode[code], op1 or "")
+  elseif (code == "ID=rval") then
+    str = string.format("%14s   %s %s %s\n", label and ("LABEL: " .. label) or "", op1, opcode[code], op2)
+  end
+  return str
 end
 
 
