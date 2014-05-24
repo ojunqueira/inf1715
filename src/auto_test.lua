@@ -2610,6 +2610,20 @@ local files = {
     semantic  = true,
   },
   {
+    name      = "icg_expression_new",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_expression_new_byte",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
     name      = "icg_expression_unary",
     open      = true,
     lexical   = true,
@@ -2653,6 +2667,13 @@ local files = {
   },
   {
     name      = "icg_return_nil",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_while",
     open      = true,
     lexical   = true,
     syntactic = true,
@@ -2743,16 +2764,18 @@ local function Run ()
 
     -- TEST INTERMEDIATE CODE GENERATOR
     ------------------------------------------------
+    local icg_error = false
     if (not unexpected_error and not expected_error) then
       ok, msg = InterCodeGen.Open("out/" .. valid.name, Semantic.GetTree())
       if (not ok) then
-        print(string.format('(%3s de %3s) FAILURE - Unexpected error while writing intermediate code. \n\t', num_files_read, num_files))
+        icg_error = true
+        print(string.format('(%3s de %3s) FAILURE - Unexpected error while writing intermediate code.', num_files_read, num_files))
       end
     end
 
     -- PASSED ALL TESTS
     ------------------------------------------------
-    if (not unexpected_error or expected_error) then
+    if ((not unexpected_error or expected_error) and not icg_error) then
       print(string.format('(%3s de %3s) SUCCESS - File "%s".', num_files_read, num_files, valid.name))
       if (expected_error and printFailMessage) then
         print("        ", msg)

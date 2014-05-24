@@ -1,0 +1,6 @@
+fun f_1 ()
+  x:[]int
+  x = new [5] int
+end
+
+
