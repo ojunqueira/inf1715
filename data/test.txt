@@ -1,9 +1,6 @@
-i0:int
-i1:[]int
-i2:[][]int
-
-fun f_1 () :int
-  return 4
+fun f_1 ()
+  i:bool
+  i = not true
 end
 
 
