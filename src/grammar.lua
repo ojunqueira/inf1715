@@ -406,13 +406,13 @@ end
 function Grammar.ExpressionLevel7 ()
   local token = Parser.Peek()
   if (token and token.code == tokens.NUMBER) then
-    return ASTClass.NewValueNode(token.line, "int", Match(tokens.NUMBER))
+    return ASTClass.NewLiteralNode(token.line, "int", Match(tokens.NUMBER))
   elseif (token and token.code == tokens.STRING) then
-    return ASTClass.NewValueNode(token.line, "string", Match(tokens.STRING))
+    return ASTClass.NewLiteralNode(token.line, "string", Match(tokens.STRING))
   elseif (token and token.code == tokens.K_TRUE) then
-    return ASTClass.NewValueNode(token.line, "bool", Match(tokens.K_TRUE))
+    return ASTClass.NewLiteralNode(token.line, "bool", Match(tokens.K_TRUE))
   elseif (token and token.code == tokens.K_FALSE) then
-    return ASTClass.NewValueNode(token.line, "bool", Match(tokens.K_FALSE))
+    return ASTClass.NewLiteralNode(token.line, "bool", Match(tokens.K_FALSE))
   elseif (token and token.code == tokens.K_NEW) then
     Match(tokens.K_NEW)
     Match(tokens["OP_["])

@@ -194,8 +194,8 @@ function Semantic.VerifyExpression (node)
     Semantic.VerifyOperator(node)
   elseif (node.id == nodes_codes["UNARY"]) then
     Semantic.VerifyUnary(node)
-  elseif (node.id == nodes_codes["VALUE"]) then
-    Semantic.VerifyValue(node)
+  elseif (node.id == nodes_codes["LITERAL"]) then
+    Semantic.VerifyLiteral(node)
   elseif (node.id == nodes_codes["VAR"]) then
     Semantic.VerifyVar(node)
   else
@@ -261,13 +261,26 @@ function Semantic.VerifyIf (node)
     Error(string.format("'if' expects expression of type 'bool' with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
   end
   Semantic.VerifyBlock(node.block)
-  for _, n in ipairs (node["elseif"]) do
-    Semantic.VerifyElseIf(n)
+  if (node["elseif"]) then
+    for _, n in ipairs (node["elseif"]) do
+      Semantic.VerifyElseIf(n)
+    end
   end
   SymbolClass.AddScope()
   Semantic.VerifyBlock(node["else"])
   SymbolClass.RemoveScope()
   SymbolClass.RemoveScope()
+end
+
+--VerifyLiteral: Verify integrity of LITERAL node
+--  Parameters:
+--    [1] $table  = LITERAL node
+--  Return:
+function Semantic.VerifyLiteral (node)
+  if (_DEBUG) then print("SEM :: VerifyLiteral") end
+  assert(node.id == nodes_codes["LITERAL"])
+  node.sem_type = node.type
+  node.sem_dimension = node.dimension
 end
 
 --VerifyNewVar: Verify integrity of NEWVAR node
@@ -411,17 +424,6 @@ function Semantic.VerifyUnary (node)
   end
   node.sem_type = node.exp.sem_type
   node.sem_dimension = node.exp.sem_dimension
-end
-
---VerifyValue: Verify integrity of VALUE node
---  Parameters:
---    [1] $table  = VALUE node
---  Return:
-function Semantic.VerifyValue (node)
-  if (_DEBUG) then print("SEM :: VerifyValue") end
-  assert(node.id == nodes_codes["VALUE"])
-  node.sem_type = node.type
-  node.sem_dimension = node.dimension
 end
 
 --VerifyVar: Verify integrity of VAR node

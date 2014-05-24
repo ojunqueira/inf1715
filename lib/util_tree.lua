@@ -133,7 +133,7 @@ function Print.Expression (t)
     str = str .. " - " .. Print.Expression(t.exp)
   elseif (t.id == nodes_codes["OPERATOR"]) then
     str = str .. Print.Expression(t[1]) .. " " .. t.op .. " " .. Print.Expression(t[2])
-  elseif (t.id == nodes_codes["VALUE"]) then
+  elseif (t.id == nodes_codes["LITERAL"]) then
     str = str .. " " .. t.value
   elseif (t.id == nodes_codes["CALL"]) then
     str = str .. " " .. t.name .. "("

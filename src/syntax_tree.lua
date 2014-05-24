@@ -183,6 +183,9 @@ end
 --  return:
 function AbstractSyntaxTree.NewIfNode (line, condition, block, elseif_node, else_block)
   if (_DEBUG) then print("AST :: NewIfNode") end
+  if (elseif_node and util.TableIsEmpty(elseif_node)) then
+    elseif_node = nil
+  end
   local node = {
     id          = nodes_codes["IF"],
     block       = block,
@@ -191,6 +194,34 @@ function AbstractSyntaxTree.NewIfNode (line, condition, block, elseif_node, else
     ["elseif"]  = elseif_node,
     line        = line,
   }
+  return node
+end
+
+--NewLiteralNode:
+--  {
+--    id        = $number   - LITERAL code
+--    dimension = $number   - var dimension
+--    line      = $number   - line number
+--    type      = $string   - [bool, char, int, string]
+--    value     = $string   - if type == char or string, -- Value cannot be 'char' type.
+--                $number   - if type == int,
+--                $boolean  - if type == bool,
+--  }
+--  parameters:
+--  return:
+function AbstractSyntaxTree.NewLiteralNode (line, type, value)
+  if (_DEBUG) then print("AST :: NewLiteralNode") end
+  local node = {
+    id        = nodes_codes["LITERAL"],
+    dimension = 0,
+    line      = line,
+    type      = type,
+    value     = value,
+  }
+  if (node.type == "string") then
+    node.type = "char"
+    node.dimension = 1
+  end
   return node
 end
 
@@ -286,24 +317,6 @@ function AbstractSyntaxTree.NewParameterNode (line, name, typebase, size)
   return node
 end
 
---NewParenthesisNode:
---  {
---    id    = $number - PARENTHESIS code
---    exp   = $table  - EXPRESSION node
---    line  = $number - line number
---  }
---  parameters:
---  return:
-function AbstractSyntaxTree.NewParenthesisNode (line, expression)
-  if (_DEBUG) then print("AST :: NewParenthesisNode") end
-  local node = {
-    id    = nodes_codes["PARENTHESIS"],
-    exp   = expression,
-    line  = line,
-  }
-  return node
-end
-
 --NewProgramNode:
 --  {
 --    id       = $number - PROGRAM code
@@ -352,34 +365,6 @@ function AbstractSyntaxTree.NewUnaryNode (line, expression)
     exp   = expression,
     line  = line,
   }
-  return node
-end
-
---NewValueNode:
---  {
---    id        = $number   - VALUE code
---    dimension = $number   - var dimension
---    line      = $number   - line number
---    type      = $string   - [bool, char, int, string]
---    value     = $string   - if type == char or string, -- Value cannot be 'char' type.
---                $number   - if type == int,
---                $boolean  - if type == bool,
---  }
---  parameters:
---  return:
-function AbstractSyntaxTree.NewValueNode (line, type, value)
-  if (_DEBUG) then print("AST :: NewValueNode") end
-  local node = {
-    id        = nodes_codes["VALUE"],
-    dimension = 0,
-    line      = line,
-    type      = type,
-    value     = value,
-  }
-  if (node.type == "string") then
-    node.type = "char"
-    node.dimension = 1
-  end
   return node
 end
 
