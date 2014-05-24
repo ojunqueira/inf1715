@@ -1,0 +1,6 @@
+fun f_1 ()
+  i:bool
+  i = not true
+end
+
+

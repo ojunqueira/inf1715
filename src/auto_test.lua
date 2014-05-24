@@ -2599,6 +2599,65 @@ local files = {
     syntactic = true,
     semantic  = true,
   },
+
+
+  -- ITERATION 5
+  {
+    name      = "icg_expression_negate",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_expression_unary",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_if",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_if_else",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_if_elseif",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_if_elseif_else",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_return",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_return_nil",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
 }
 
 

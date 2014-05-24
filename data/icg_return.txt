@@ -1,0 +1,5 @@
+fun f_1 () :string
+  return "hello"
+end
+
+

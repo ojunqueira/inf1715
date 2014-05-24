@@ -1,0 +1,8 @@
+fun f_1 ()
+  if false
+  else if true
+  else if false
+  end
+end
+
+
