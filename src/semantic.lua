@@ -62,7 +62,6 @@ function Semantic.VerifyAttribution (node)
   Semantic.VerifyVar(node.var)
   Semantic.VerifyExpression(node.exp)
   Semantic.VerifyCompatibleTypes(node.line, node.var.sem_type, node.var.sem_dimension, node.exp.sem_type, node.exp.sem_dimension)
-  -- MUST UPDATE SYMBOL TABLE VALUE
 end
 
 --VerifyBlock: Verify integrity of BLOCK/COMMANDS nodes
@@ -141,7 +140,7 @@ function Semantic.VerifyCompatibleTypes (line, first_type, first_dimension, seco
     end
   end
   if (err) then
-    Error(string.format("uncompatible types '%s' dimension '%d' and '%s' dimension '%d'.", first_type, first_dimension, second_type, second_dimension), line)
+    Error(string.format("uncompatible types '%s' dimension '%d' and '%s' dimension '%d'.", first_type, first_dimension, second_type or "void", second_dimension or 0), line)
   end
   return true
 end
@@ -379,7 +378,7 @@ function Semantic.VerifyProgram (t)
   Semantic.VerifyGlobals(t)
   for _, node in ipairs(t) do
     if (node.id == nodes_codes["DECLARE"]) then
-      -- DO NOT VERIFY. SYMBOL ADDED IN GLOBALS
+      -- node already saved in symbol table while verifying globals
     elseif (node.id == nodes_codes["FUNCTION"]) then
       Semantic.VerifyFunction(node)
     else
