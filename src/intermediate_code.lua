@@ -19,23 +19,6 @@ local NodesClass = require "lib/node_codes"
 
 local InterCodeGen = {}
 
---  store file path
-local file
-
---  count number of generated labels
-local label_counter = 0
-
---  count number of generated variables
-local var_counter = 0
-
-local function_counter = 0
-
---  list of nodes code
---  {
---    [name] = $number,
---  }
-local nodes_codes = NodesClass.GetNodesList()
-
 -- avaiable operator codes of intermediate language
 local enum_opcodes = {
   ["GOTO"]              = 01,
@@ -58,10 +41,30 @@ local enum_opcodes = {
   ["ID[rval]=rval"]     = 35,
   ["ID[rval]=BYTErval"] = 36,
 
-  ["IFFALSEGOTO"]       = 70,
-  ["LABEL"]             = 80,
+  ["CALLID"]            = 50,
+  ["IFFALSEGOTO"]       = 60,
+  ["LABEL"]             = 70,
+  ["PARAMrval"]         = 80,
   ["RETURN"]            = 90,
 }
+
+--  store file path
+local file
+
+--  count number of generated labels
+local label_counter = 0
+
+--  count number of generated variables
+local var_counter = 0
+
+--  count number of functions
+local function_counter = 0
+
+--  list of nodes code
+--  {
+--    [name] = $number,
+--  }
+local nodes_codes = NodesClass.GetNodesList()
 
 --  three address codes
 --  {
@@ -125,10 +128,10 @@ end
 function InterCodeGen.Dump (output)
   if (_DEBUG) then print("ICG :: Dump") end
   for _, str_node in ipairs(struct.strings) do
-    output:write(string.format('%8s STRING  %s = "%s"\n', "", str_node.var, str_node.str))
+    output:write(string.format('%8s string  %s = "%s"\n', "", str_node.var, str_node.str))
   end
   for _, name in ipairs(struct.globals) do
-    output:write(string.format('%8s GLOBAL %s\n', "", name))
+    output:write(string.format('%8s global %s\n', "", name))
   end
   for _, func in ipairs(struct.functions) do
     output:write(func.header)
@@ -144,68 +147,75 @@ end
 --    [2] $table  - Table created by 'AddInstruction' function
 --  Return:
 function InterCodeGen.DumpInstruction (output, inst)
-  if ((inst.code == enum_opcodes["LABEL"])) then
-    output:write(string.format('%14s\n', inst.label and ("LABEL: " .. inst.label) or ""))
+
+  if ((inst.code == enum_opcodes["CALLID"])) then
+    output:write(string.format('%14s   call %s\n', inst.label or "", inst.op1))
+
+  elseif ((inst.code == enum_opcodes["LABEL"])) then
+    output:write(string.format('%14s\n', inst.label .. ":" or ""))
+
+  elseif (inst.code == enum_opcodes["PARAMrval"]) then
+    output:write(string.format('%14s   param %s\n', inst.label or "", inst.op1))
 
   elseif (inst.code == enum_opcodes["RETURN"]) then
-    output:write(string.format('%14s   RET %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1 or ""))
+    output:write(string.format('%14s   ret %s\n', inst.label or "", inst.op1 or ""))
 
   elseif (inst.code == enum_opcodes["ID=rval"]) then
-    output:write(string.format('%14s   %s = %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2))
+    output:write(string.format('%14s   %s = %s\n', inst.label or "", inst.op1, inst.op2))
 
   elseif (inst.code == enum_opcodes["ID=BYTErval"]) then
-    output:write(string.format('%14s   %s = BYTE %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2))
+    output:write(string.format('%14s   %s = byte %s\n', inst.label or "", inst.op1, inst.op2))
 
   elseif (inst.code == enum_opcodes["ID=ID[rval]"]) then
-    output:write(string.format('%14s   %s = %s[%s]\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s[%s]\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=BYTEID[rval]"]) then
-    output:write(string.format('%14s   %s = BYTE %s[%s]\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = byte %s[%s]\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=unoprval"]) then
-    output:write(string.format('%14s   %s = %s %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rvalEQrval"]) then
-    output:write(string.format('%14s   %s = %s == %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s == %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rvalNEval"]) then
-    output:write(string.format('%14s   %s = %s != %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s != %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rvalGErval"]) then
-    output:write(string.format('%14s   %s = %s >= %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s >= %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rvalLErval"]) then
-    output:write(string.format('%14s   %s = %s <= %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s <= %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rval<rval"]) then
-    output:write(string.format('%14s   %s = %s < %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s < %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rval>rval"]) then
-    output:write(string.format('%14s   %s = %s > %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s > %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rval+rval"]) then
-    output:write(string.format('%14s   %s = %s + %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s + %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rval-rval"]) then
-    output:write(string.format('%14s   %s = %s - %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s - %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rval*rval"]) then
-    output:write(string.format('%14s   %s = %s * %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s * %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rval/rval"]) then
-    output:write(string.format('%14s   %s = %s / %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s = %s / %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID[rval]=rval"]) then
-    output:write(string.format('%14s   %s[%s] = %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s[%s] = %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID[rval]=BYTErval"]) then
-    output:write(string.format('%14s   %s[%s] = BYTE %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2, inst.op3))
+    output:write(string.format('%14s   %s[%s] = byte %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["IFFALSEGOTO"]) then
-    output:write(string.format('%14s   IFFALSE %s GOTO %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1, inst.op2))
+    output:write(string.format('%14s   ifFalse %s goto %s\n', inst.label or "", inst.op1, inst.op2))
 
   elseif (inst.code == enum_opcodes["GOTO"]) then
-    output:write(string.format('%14s   GOTO %s\n', inst.label and ("LABEL: " .. inst.label) or "", inst.op1))
+    output:write(string.format('%14s   goto %s\n', inst.label or "", inst.op1))
   else
     InterCodeGen.Error("unknown instruction node.")
   end
@@ -289,7 +299,12 @@ end
 function InterCodeGen.GenCall (node)
   if (_DEBUG) then print("ICG :: GenCall") end
   assert(node.id == nodes_codes["CALL"])
-  -- COMPLETE
+  if (node.exps) then
+    for i=#node.exps, 1, -1 do
+      InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "PARAMrval", InterCodeGen.GenExpression(node.exps[i])))
+    end
+  end
+  InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "CALLID", node.name))
 end
 
 --GenDeclare: Create a new instruction and add it to current function
@@ -332,7 +347,11 @@ function InterCodeGen.GenExpression (node)
 end
 
 function InterCodeGen.GenExpressionCall (node)
-  -- COMPLETE
+  InterCodeGen.GenCall(node)
+  local op = InterCodeGen.GetVariable()
+  local ret = "$ret"
+  InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "ID=rval", op, ret))
+  return op
 end
 
 function InterCodeGen.GenExpressionLiteral (node)
@@ -361,9 +380,9 @@ end
 function InterCodeGen.GenExpressionNewVar (node)
   local op = InterCodeGen.GetVariable()
   if ((node.sem_type == "bool" or node.sem_type == "char") and node.exp.sem_dimension == 0) then
-    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "ID=unoprval", op, "NEW BYTE", InterCodeGen.GenExpression(node.exp)))
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "ID=unoprval", op, "new byte", InterCodeGen.GenExpression(node.exp)))
   else
-    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "ID=unoprval", op, "NEW", InterCodeGen.GenExpression(node.exp)))
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "ID=unoprval", op, "new", InterCodeGen.GenExpression(node.exp)))
   end
   return op
 end
@@ -466,7 +485,7 @@ function InterCodeGen.GenFunction (node)
   if (_DEBUG) then print("ICG :: GenFunction") end
   assert(node.id == nodes_codes["FUNCTION"])
   function_counter = function_counter + 1
-  local header = string.format("%8s FUN %s (", "", node.name)
+  local header = string.format("%8s fun %s (", "", node.name)
   if (node.params and node.params[1]) then
     header = header .. node.params[1].name
   end
@@ -480,6 +499,7 @@ function InterCodeGen.GenFunction (node)
     header = header,
   }
   InterCodeGen.GenBlock(node.block)
+  InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "RETURN"))
 end
 
 --GenGlobal:
@@ -654,6 +674,7 @@ function InterCodeGen.Open (path, tree)
     if (printStruct) then
       util.TablePrint(struct)
     end
+    os.execute("./cte/cte " .. util.FileRemoveExtension(path) .. ".icg")
   end)
   if (not ok) then
     return false, msg
