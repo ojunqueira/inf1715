@@ -1,0 +1,1091 @@
+Terminals which are not used
+
+   ERROR
+
+
+Grammar
+
+    0 $accept: program $end
+
+    1 program: strings globals functions
+
+    2 strings: string strings
+    3        | /* empty */
+
+    4 globals: global globals
+    5        | /* empty */
+
+    6 functions: function functions
+    7          | /* empty */
+
+    8 nl: NL opt_nl
+
+    9 opt_nl: NL opt_nl
+   10       | /* empty */
+
+   11 string: STRING ID '=' LITSTRING nl
+
+   12 global: GLOBAL ID nl
+
+   13 function: FUN ID '(' args ')' nl commands
+
+   14 args: arg more_args
+   15     | /* empty */
+
+   16 more_args: ',' args
+   17          | /* empty */
+
+   18 arg: ID
+
+   19 commands: label command nl commands
+   20         | /* empty */
+
+   21 label: LABEL ':' opt_nl label
+   22      | /* empty */
+
+   23 rval: LITNUM
+   24     | ID
+
+   25 command: ID '=' rval
+   26        | ID '=' BYTE rval
+   27        | ID '=' rval binop rval
+   28        | ID '=' unop rval
+   29        | ID '=' ID '[' rval ']'
+   30        | ID '[' rval ']' '=' rval
+   31        | ID '=' BYTE ID '[' rval ']'
+   32        | ID '[' rval ']' '=' BYTE rval
+   33        | IF rval GOTO LABEL
+   34        | IFFALSE rval GOTO LABEL
+   35        | GOTO LABEL
+   36        | call
+   37        | RET rval
+   38        | RET
+
+   39 binop: EQ
+   40      | NE
+   41      | '<'
+   42      | '>'
+   43      | GE
+   44      | LE
+   45      | '+'
+   46      | '-'
+   47      | '*'
+   48      | '/'
+
+   49 unop: '-'
+   50     | NEW
+   51     | NEW BYTE
+
+   52 call: params CALL ID
+
+   53 params: param nl params
+   54       | /* empty */
+
+   55 param: PARAM rval
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+'(' (40) 13
+')' (41) 13
+'*' (42) 47
+'+' (43) 45
+',' (44) 16
+'-' (45) 46 49
+'/' (47) 48
+':' (58) 21
+'<' (60) 41
+'=' (61) 11 25 26 27 28 29 30 31 32
+'>' (62) 42
+'[' (91) 29 30 31 32
+']' (93) 29 30 31 32
+error (256)
+ERROR (258)
+FUN (259) 13
+GLOBAL (260) 12
+STRING (261) 11
+BYTE (262) 26 31 32 51
+LABEL (263) 21 33 34 35
+ID (264) 11 12 13 18 24 25 26 27 28 29 30 31 32 52
+NEW (265) 50 51
+IF (266) 33
+IFFALSE (267) 34
+GOTO (268) 33 34 35
+PARAM (269) 55
+CALL (270) 52
+RET (271) 37 38
+NL (272) 8 9
+LITSTRING (273) 11
+LITNUM (274) 23
+EQ (275) 39
+NE (276) 40
+LE (277) 44
+GE (278) 43
+
+
+Nonterminals, with rules where they appear
+
+$accept (37)
+    on left: 0
+program (38)
+    on left: 1, on right: 0
+strings (39)
+    on left: 2 3, on right: 1 2
+globals (40)
+    on left: 4 5, on right: 1 4
+functions (41)
+    on left: 6 7, on right: 1 6
+nl (42)
+    on left: 8, on right: 11 12 13 19 53
+opt_nl (43)
+    on left: 9 10, on right: 8 9 21
+string (44)
+    on left: 11, on right: 2
+global (45)
+    on left: 12, on right: 4
+function (46)
+    on left: 13, on right: 6
+args (47)
+    on left: 14 15, on right: 13 16
+more_args (48)
+    on left: 16 17, on right: 14
+arg (49)
+    on left: 18, on right: 14
+commands (50)
+    on left: 19 20, on right: 13 19
+label (51)
+    on left: 21 22, on right: 19 21
+rval (52)
+    on left: 23 24, on right: 25 26 27 28 29 30 31 32 33 34 37 55
+command (53)
+    on left: 25 26 27 28 29 30 31 32 33 34 35 36 37 38,
+    on right: 19
+binop (54)
+    on left: 39 40 41 42 43 44 45 46 47 48, on right: 27
+unop (55)
+    on left: 49 50 51, on right: 28
+call (56)
+    on left: 52, on right: 36
+params (57)
+    on left: 53 54, on right: 52 53
+param (58)
+    on left: 55, on right: 53
+
+
+state 0
+
+    0 $accept: . program $end
+
+    STRING  shift, and go to state 1
+
+    $default  reduce using rule 3 (strings)
+
+    program  go to state 2
+    strings  go to state 3
+    string   go to state 4
+
+
+state 1
+
+   11 string: STRING . ID '=' LITSTRING nl
+
+    ID  shift, and go to state 5
+
+
+state 2
+
+    0 $accept: program . $end
+
+    $end  shift, and go to state 6
+
+
+state 3
+
+    1 program: strings . globals functions
+
+    GLOBAL  shift, and go to state 7
+
+    $default  reduce using rule 5 (globals)
+
+    globals  go to state 8
+    global   go to state 9
+
+
+state 4
+
+    2 strings: string . strings
+
+    STRING  shift, and go to state 1
+
+    $default  reduce using rule 3 (strings)
+
+    strings  go to state 10
+    string   go to state 4
+
+
+state 5
+
+   11 string: STRING ID . '=' LITSTRING nl
+
+    '='  shift, and go to state 11
+
+
+state 6
+
+    0 $accept: program $end .
+
+    $default  accept
+
+
+state 7
+
+   12 global: GLOBAL . ID nl
+
+    ID  shift, and go to state 12
+
+
+state 8
+
+    1 program: strings globals . functions
+
+    FUN  shift, and go to state 13
+
+    $default  reduce using rule 7 (functions)
+
+    functions  go to state 14
+    function   go to state 15
+
+
+state 9
+
+    4 globals: global . globals
+
+    GLOBAL  shift, and go to state 7
+
+    $default  reduce using rule 5 (globals)
+
+    globals  go to state 16
+    global   go to state 9
+
+
+state 10
+
+    2 strings: string strings .
+
+    $default  reduce using rule 2 (strings)
+
+
+state 11
+
+   11 string: STRING ID '=' . LITSTRING nl
+
+    LITSTRING  shift, and go to state 17
+
+
+state 12
+
+   12 global: GLOBAL ID . nl
+
+    NL  shift, and go to state 18
+
+    nl  go to state 19
+
+
+state 13
+
+   13 function: FUN . ID '(' args ')' nl commands
+
+    ID  shift, and go to state 20
+
+
+state 14
+
+    1 program: strings globals functions .
+
+    $default  reduce using rule 1 (program)
+
+
+state 15
+
+    6 functions: function . functions
+
+    FUN  shift, and go to state 13
+
+    $default  reduce using rule 7 (functions)
+
+    functions  go to state 21
+    function   go to state 15
+
+
+state 16
+
+    4 globals: global globals .
+
+    $default  reduce using rule 4 (globals)
+
+
+state 17
+
+   11 string: STRING ID '=' LITSTRING . nl
+
+    NL  shift, and go to state 18
+
+    nl  go to state 22
+
+
+state 18
+
+    8 nl: NL . opt_nl
+
+    NL  shift, and go to state 23
+
+    $default  reduce using rule 10 (opt_nl)
+
+    opt_nl  go to state 24
+
+
+state 19
+
+   12 global: GLOBAL ID nl .
+
+    $default  reduce using rule 12 (global)
+
+
+state 20
+
+   13 function: FUN ID . '(' args ')' nl commands
+
+    '('  shift, and go to state 25
+
+
+state 21
+
+    6 functions: function functions .
+
+    $default  reduce using rule 6 (functions)
+
+
+state 22
+
+   11 string: STRING ID '=' LITSTRING nl .
+
+    $default  reduce using rule 11 (string)
+
+
+state 23
+
+    9 opt_nl: NL . opt_nl
+
+    NL  shift, and go to state 23
+
+    $default  reduce using rule 10 (opt_nl)
+
+    opt_nl  go to state 26
+
+
+state 24
+
+    8 nl: NL opt_nl .
+
+    $default  reduce using rule 8 (nl)
+
+
+state 25
+
+   13 function: FUN ID '(' . args ')' nl commands
+
+    ID  shift, and go to state 27
+
+    $default  reduce using rule 15 (args)
+
+    args  go to state 28
+    arg   go to state 29
+
+
+state 26
+
+    9 opt_nl: NL opt_nl .
+
+    $default  reduce using rule 9 (opt_nl)
+
+
+state 27
+
+   18 arg: ID .
+
+    $default  reduce using rule 18 (arg)
+
+
+state 28
+
+   13 function: FUN ID '(' args . ')' nl commands
+
+    ')'  shift, and go to state 30
+
+
+state 29
+
+   14 args: arg . more_args
+
+    ','  shift, and go to state 31
+
+    $default  reduce using rule 17 (more_args)
+
+    more_args  go to state 32
+
+
+state 30
+
+   13 function: FUN ID '(' args ')' . nl commands
+
+    NL  shift, and go to state 18
+
+    nl  go to state 33
+
+
+state 31
+
+   16 more_args: ',' . args
+
+    ID  shift, and go to state 27
+
+    $default  reduce using rule 15 (args)
+
+    args  go to state 34
+    arg   go to state 29
+
+
+state 32
+
+   14 args: arg more_args .
+
+    $default  reduce using rule 14 (args)
+
+
+state 33
+
+   13 function: FUN ID '(' args ')' nl . commands
+
+    LABEL  shift, and go to state 35
+
+    $end      reduce using rule 20 (commands)
+    FUN       reduce using rule 20 (commands)
+    $default  reduce using rule 22 (label)
+
+    commands  go to state 36
+    label     go to state 37
+
+
+state 34
+
+   16 more_args: ',' args .
+
+    $default  reduce using rule 16 (more_args)
+
+
+state 35
+
+   21 label: LABEL . ':' opt_nl label
+
+    ':'  shift, and go to state 38
+
+
+state 36
+
+   13 function: FUN ID '(' args ')' nl commands .
+
+    $default  reduce using rule 13 (function)
+
+
+state 37
+
+   19 commands: label . command nl commands
+
+    ID       shift, and go to state 39
+    IF       shift, and go to state 40
+    IFFALSE  shift, and go to state 41
+    GOTO     shift, and go to state 42
+    PARAM    shift, and go to state 43
+    RET      shift, and go to state 44
+
+    $default  reduce using rule 54 (params)
+
+    command  go to state 45
+    call     go to state 46
+    params   go to state 47
+    param    go to state 48
+
+
+state 38
+
+   21 label: LABEL ':' . opt_nl label
+
+    NL  shift, and go to state 23
+
+    $default  reduce using rule 10 (opt_nl)
+
+    opt_nl  go to state 49
+
+
+state 39
+
+   25 command: ID . '=' rval
+   26        | ID . '=' BYTE rval
+   27        | ID . '=' rval binop rval
+   28        | ID . '=' unop rval
+   29        | ID . '=' ID '[' rval ']'
+   30        | ID . '[' rval ']' '=' rval
+   31        | ID . '=' BYTE ID '[' rval ']'
+   32        | ID . '[' rval ']' '=' BYTE rval
+
+    '='  shift, and go to state 50
+    '['  shift, and go to state 51
+
+
+state 40
+
+   33 command: IF . rval GOTO LABEL
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 54
+
+
+state 41
+
+   34 command: IFFALSE . rval GOTO LABEL
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 55
+
+
+state 42
+
+   35 command: GOTO . LABEL
+
+    LABEL  shift, and go to state 56
+
+
+state 43
+
+   55 param: PARAM . rval
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 57
+
+
+state 44
+
+   37 command: RET . rval
+   38        | RET .
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    $default  reduce using rule 38 (command)
+
+    rval  go to state 58
+
+
+state 45
+
+   19 commands: label command . nl commands
+
+    NL  shift, and go to state 18
+
+    nl  go to state 59
+
+
+state 46
+
+   36 command: call .
+
+    $default  reduce using rule 36 (command)
+
+
+state 47
+
+   52 call: params . CALL ID
+
+    CALL  shift, and go to state 60
+
+
+state 48
+
+   53 params: param . nl params
+
+    NL  shift, and go to state 18
+
+    nl  go to state 61
+
+
+state 49
+
+   21 label: LABEL ':' opt_nl . label
+
+    LABEL  shift, and go to state 35
+
+    $default  reduce using rule 22 (label)
+
+    label  go to state 62
+
+
+state 50
+
+   25 command: ID '=' . rval
+   26        | ID '=' . BYTE rval
+   27        | ID '=' . rval binop rval
+   28        | ID '=' . unop rval
+   29        | ID '=' . ID '[' rval ']'
+   31        | ID '=' . BYTE ID '[' rval ']'
+
+    BYTE    shift, and go to state 63
+    ID      shift, and go to state 64
+    NEW     shift, and go to state 65
+    LITNUM  shift, and go to state 53
+    '-'     shift, and go to state 66
+
+    rval  go to state 67
+    unop  go to state 68
+
+
+state 51
+
+   30 command: ID '[' . rval ']' '=' rval
+   32        | ID '[' . rval ']' '=' BYTE rval
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 69
+
+
+state 52
+
+   24 rval: ID .
+
+    $default  reduce using rule 24 (rval)
+
+
+state 53
+
+   23 rval: LITNUM .
+
+    $default  reduce using rule 23 (rval)
+
+
+state 54
+
+   33 command: IF rval . GOTO LABEL
+
+    GOTO  shift, and go to state 70
+
+
+state 55
+
+   34 command: IFFALSE rval . GOTO LABEL
+
+    GOTO  shift, and go to state 71
+
+
+state 56
+
+   35 command: GOTO LABEL .
+
+    $default  reduce using rule 35 (command)
+
+
+state 57
+
+   55 param: PARAM rval .
+
+    $default  reduce using rule 55 (param)
+
+
+state 58
+
+   37 command: RET rval .
+
+    $default  reduce using rule 37 (command)
+
+
+state 59
+
+   19 commands: label command nl . commands
+
+    LABEL  shift, and go to state 35
+
+    $end      reduce using rule 20 (commands)
+    FUN       reduce using rule 20 (commands)
+    $default  reduce using rule 22 (label)
+
+    commands  go to state 72
+    label     go to state 37
+
+
+state 60
+
+   52 call: params CALL . ID
+
+    ID  shift, and go to state 73
+
+
+state 61
+
+   53 params: param nl . params
+
+    PARAM  shift, and go to state 43
+
+    $default  reduce using rule 54 (params)
+
+    params  go to state 74
+    param   go to state 48
+
+
+state 62
+
+   21 label: LABEL ':' opt_nl label .
+
+    $default  reduce using rule 21 (label)
+
+
+state 63
+
+   26 command: ID '=' BYTE . rval
+   31        | ID '=' BYTE . ID '[' rval ']'
+
+    ID      shift, and go to state 75
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 76
+
+
+state 64
+
+   24 rval: ID .
+   29 command: ID '=' ID . '[' rval ']'
+
+    '['  shift, and go to state 77
+
+    $default  reduce using rule 24 (rval)
+
+
+state 65
+
+   50 unop: NEW .
+   51     | NEW . BYTE
+
+    BYTE  shift, and go to state 78
+
+    $default  reduce using rule 50 (unop)
+
+
+state 66
+
+   49 unop: '-' .
+
+    $default  reduce using rule 49 (unop)
+
+
+state 67
+
+   25 command: ID '=' rval .
+   27        | ID '=' rval . binop rval
+
+    EQ   shift, and go to state 79
+    NE   shift, and go to state 80
+    LE   shift, and go to state 81
+    GE   shift, and go to state 82
+    '<'  shift, and go to state 83
+    '>'  shift, and go to state 84
+    '+'  shift, and go to state 85
+    '-'  shift, and go to state 86
+    '*'  shift, and go to state 87
+    '/'  shift, and go to state 88
+
+    $default  reduce using rule 25 (command)
+
+    binop  go to state 89
+
+
+state 68
+
+   28 command: ID '=' unop . rval
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 90
+
+
+state 69
+
+   30 command: ID '[' rval . ']' '=' rval
+   32        | ID '[' rval . ']' '=' BYTE rval
+
+    ']'  shift, and go to state 91
+
+
+state 70
+
+   33 command: IF rval GOTO . LABEL
+
+    LABEL  shift, and go to state 92
+
+
+state 71
+
+   34 command: IFFALSE rval GOTO . LABEL
+
+    LABEL  shift, and go to state 93
+
+
+state 72
+
+   19 commands: label command nl commands .
+
+    $default  reduce using rule 19 (commands)
+
+
+state 73
+
+   52 call: params CALL ID .
+
+    $default  reduce using rule 52 (call)
+
+
+state 74
+
+   53 params: param nl params .
+
+    $default  reduce using rule 53 (params)
+
+
+state 75
+
+   24 rval: ID .
+   31 command: ID '=' BYTE ID . '[' rval ']'
+
+    '['  shift, and go to state 94
+
+    $default  reduce using rule 24 (rval)
+
+
+state 76
+
+   26 command: ID '=' BYTE rval .
+
+    $default  reduce using rule 26 (command)
+
+
+state 77
+
+   29 command: ID '=' ID '[' . rval ']'
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 95
+
+
+state 78
+
+   51 unop: NEW BYTE .
+
+    $default  reduce using rule 51 (unop)
+
+
+state 79
+
+   39 binop: EQ .
+
+    $default  reduce using rule 39 (binop)
+
+
+state 80
+
+   40 binop: NE .
+
+    $default  reduce using rule 40 (binop)
+
+
+state 81
+
+   44 binop: LE .
+
+    $default  reduce using rule 44 (binop)
+
+
+state 82
+
+   43 binop: GE .
+
+    $default  reduce using rule 43 (binop)
+
+
+state 83
+
+   41 binop: '<' .
+
+    $default  reduce using rule 41 (binop)
+
+
+state 84
+
+   42 binop: '>' .
+
+    $default  reduce using rule 42 (binop)
+
+
+state 85
+
+   45 binop: '+' .
+
+    $default  reduce using rule 45 (binop)
+
+
+state 86
+
+   46 binop: '-' .
+
+    $default  reduce using rule 46 (binop)
+
+
+state 87
+
+   47 binop: '*' .
+
+    $default  reduce using rule 47 (binop)
+
+
+state 88
+
+   48 binop: '/' .
+
+    $default  reduce using rule 48 (binop)
+
+
+state 89
+
+   27 command: ID '=' rval binop . rval
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 96
+
+
+state 90
+
+   28 command: ID '=' unop rval .
+
+    $default  reduce using rule 28 (command)
+
+
+state 91
+
+   30 command: ID '[' rval ']' . '=' rval
+   32        | ID '[' rval ']' . '=' BYTE rval
+
+    '='  shift, and go to state 97
+
+
+state 92
+
+   33 command: IF rval GOTO LABEL .
+
+    $default  reduce using rule 33 (command)
+
+
+state 93
+
+   34 command: IFFALSE rval GOTO LABEL .
+
+    $default  reduce using rule 34 (command)
+
+
+state 94
+
+   31 command: ID '=' BYTE ID '[' . rval ']'
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 98
+
+
+state 95
+
+   29 command: ID '=' ID '[' rval . ']'
+
+    ']'  shift, and go to state 99
+
+
+state 96
+
+   27 command: ID '=' rval binop rval .
+
+    $default  reduce using rule 27 (command)
+
+
+state 97
+
+   30 command: ID '[' rval ']' '=' . rval
+   32        | ID '[' rval ']' '=' . BYTE rval
+
+    BYTE    shift, and go to state 100
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 101
+
+
+state 98
+
+   31 command: ID '=' BYTE ID '[' rval . ']'
+
+    ']'  shift, and go to state 102
+
+
+state 99
+
+   29 command: ID '=' ID '[' rval ']' .
+
+    $default  reduce using rule 29 (command)
+
+
+state 100
+
+   32 command: ID '[' rval ']' '=' BYTE . rval
+
+    ID      shift, and go to state 52
+    LITNUM  shift, and go to state 53
+
+    rval  go to state 103
+
+
+state 101
+
+   30 command: ID '[' rval ']' '=' rval .
+
+    $default  reduce using rule 30 (command)
+
+
+state 102
+
+   31 command: ID '=' BYTE ID '[' rval ']' .
+
+    $default  reduce using rule 31 (command)
+
+
+state 103
+
+   32 command: ID '[' rval ']' '=' BYTE rval .
+
+    $default  reduce using rule 32 (command)

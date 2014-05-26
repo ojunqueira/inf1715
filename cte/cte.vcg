@@ -1,0 +1,1433 @@
+graph: {
+	display_edge_labels:	yes
+	priority_phase:	yes
+	port_sharing:	no
+	crossing_weight:	median
+	splines:	yes
+	node: {
+		title:	"0"
+		label:	"state  0\n $accept -> . program $end"
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"1"
+		label:	"STRING"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"2"
+		label:	"program"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"3"
+		label:	"strings"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"0"
+		targetname:	"4"
+		label:	"string"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"1"
+		label:	"state  1\n string -> STRING . ID '=' LITSTRING nl"
+	}
+	edge: {
+		sourcename:	"1"
+		targetname:	"5"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"2"
+		label:	"state  2\n $accept -> program . $end"
+	}
+	edge: {
+		sourcename:	"2"
+		targetname:	"6"
+		label:	"$end"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"3"
+		label:	"state  3\n program -> strings . globals functions"
+	}
+	edge: {
+		sourcename:	"3"
+		targetname:	"7"
+		label:	"GLOBAL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"3"
+		targetname:	"8"
+		label:	"globals"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"3"
+		targetname:	"9"
+		label:	"global"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"4"
+		label:	"state  4\n strings -> string . strings"
+	}
+	backedge: {
+		sourcename:	"4"
+		targetname:	"1"
+		label:	"STRING"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"10"
+		label:	"strings"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"4"
+		targetname:	"4"
+		label:	"string"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"5"
+		label:	"state  5\n string -> STRING ID . '=' LITSTRING nl"
+	}
+	edge: {
+		sourcename:	"5"
+		targetname:	"11"
+		label:	"'='"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"6"
+		label:	"state  6\n $accept -> program $end ."
+	}
+	node: {
+		title:	"7"
+		label:	"state  7\n global -> GLOBAL . ID nl"
+	}
+	edge: {
+		sourcename:	"7"
+		targetname:	"12"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"8"
+		label:	"state  8\n program -> strings globals . functions"
+	}
+	edge: {
+		sourcename:	"8"
+		targetname:	"13"
+		label:	"FUN"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"8"
+		targetname:	"14"
+		label:	"functions"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"8"
+		targetname:	"15"
+		label:	"function"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"9"
+		label:	"state  9\n globals -> global . globals"
+	}
+	backedge: {
+		sourcename:	"9"
+		targetname:	"7"
+		label:	"GLOBAL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"9"
+		targetname:	"16"
+		label:	"globals"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"9"
+		targetname:	"9"
+		label:	"global"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"10"
+		label:	"state 10\n strings -> string strings ."
+	}
+	node: {
+		title:	"11"
+		label:	"state 11\n string -> STRING ID '=' . LITSTRING nl"
+	}
+	edge: {
+		sourcename:	"11"
+		targetname:	"17"
+		label:	"LITSTRING"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"12"
+		label:	"state 12\n global -> GLOBAL ID . nl"
+	}
+	edge: {
+		sourcename:	"12"
+		targetname:	"18"
+		label:	"NL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"12"
+		targetname:	"19"
+		label:	"nl"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"13"
+		label:	"state 13\n function -> FUN . ID '(' args ')' nl commands"
+	}
+	edge: {
+		sourcename:	"13"
+		targetname:	"20"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"14"
+		label:	"state 14\n program -> strings globals functions ."
+	}
+	node: {
+		title:	"15"
+		label:	"state 15\n functions -> function . functions"
+	}
+	backedge: {
+		sourcename:	"15"
+		targetname:	"13"
+		label:	"FUN"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"15"
+		targetname:	"21"
+		label:	"functions"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"15"
+		targetname:	"15"
+		label:	"function"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"16"
+		label:	"state 16\n globals -> global globals ."
+	}
+	node: {
+		title:	"17"
+		label:	"state 17\n string -> STRING ID '=' LITSTRING . nl"
+	}
+	edge: {
+		sourcename:	"17"
+		targetname:	"18"
+		label:	"NL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"17"
+		targetname:	"22"
+		label:	"nl"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"18"
+		label:	"state 18\n nl -> NL . opt_nl"
+	}
+	edge: {
+		sourcename:	"18"
+		targetname:	"23"
+		label:	"NL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"18"
+		targetname:	"24"
+		label:	"opt_nl"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"19"
+		label:	"state 19\n global -> GLOBAL ID nl ."
+	}
+	node: {
+		title:	"20"
+		label:	"state 20\n function -> FUN ID . '(' args ')' nl commands"
+	}
+	edge: {
+		sourcename:	"20"
+		targetname:	"25"
+		label:	"'('"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"21"
+		label:	"state 21\n functions -> function functions ."
+	}
+	node: {
+		title:	"22"
+		label:	"state 22\n string -> STRING ID '=' LITSTRING nl ."
+	}
+	node: {
+		title:	"23"
+		label:	"state 23\n opt_nl -> NL . opt_nl"
+	}
+	edge: {
+		sourcename:	"23"
+		targetname:	"23"
+		label:	"NL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"23"
+		targetname:	"26"
+		label:	"opt_nl"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"24"
+		label:	"state 24\n nl -> NL opt_nl ."
+	}
+	node: {
+		title:	"25"
+		label:	"state 25\n function -> FUN ID '(' . args ')' nl commands"
+	}
+	edge: {
+		sourcename:	"25"
+		targetname:	"27"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"25"
+		targetname:	"28"
+		label:	"args"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"25"
+		targetname:	"29"
+		label:	"arg"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"26"
+		label:	"state 26\n opt_nl -> NL opt_nl ."
+	}
+	node: {
+		title:	"27"
+		label:	"state 27\n arg -> ID ."
+	}
+	node: {
+		title:	"28"
+		label:	"state 28\n function -> FUN ID '(' args . ')' nl commands"
+	}
+	edge: {
+		sourcename:	"28"
+		targetname:	"30"
+		label:	"')'"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"29"
+		label:	"state 29\n args -> arg . more_args"
+	}
+	edge: {
+		sourcename:	"29"
+		targetname:	"31"
+		label:	"','"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"29"
+		targetname:	"32"
+		label:	"more_args"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"30"
+		label:	"state 30\n function -> FUN ID '(' args ')' . nl commands"
+	}
+	backedge: {
+		sourcename:	"30"
+		targetname:	"18"
+		label:	"NL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"30"
+		targetname:	"33"
+		label:	"nl"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"31"
+		label:	"state 31\n more_args -> ',' . args"
+	}
+	backedge: {
+		sourcename:	"31"
+		targetname:	"27"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"31"
+		targetname:	"34"
+		label:	"args"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"31"
+		targetname:	"29"
+		label:	"arg"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"32"
+		label:	"state 32\n args -> arg more_args ."
+	}
+	node: {
+		title:	"33"
+		label:	"state 33\n function -> FUN ID '(' args ')' nl . commands"
+	}
+	edge: {
+		sourcename:	"33"
+		targetname:	"35"
+		label:	"LABEL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"33"
+		targetname:	"36"
+		label:	"commands"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"33"
+		targetname:	"37"
+		label:	"label"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"34"
+		label:	"state 34\n more_args -> ',' args ."
+	}
+	node: {
+		title:	"35"
+		label:	"state 35\n label -> LABEL . ':' opt_nl label"
+	}
+	edge: {
+		sourcename:	"35"
+		targetname:	"38"
+		label:	"':'"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"36"
+		label:	"state 36\n function -> FUN ID '(' args ')' nl commands ."
+	}
+	node: {
+		title:	"37"
+		label:	"state 37\n commands -> label . command nl commands"
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"39"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"40"
+		label:	"IF"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"41"
+		label:	"IFFALSE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"42"
+		label:	"GOTO"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"43"
+		label:	"PARAM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"44"
+		label:	"RET"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"45"
+		label:	"command"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"46"
+		label:	"call"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"47"
+		label:	"params"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"37"
+		targetname:	"48"
+		label:	"param"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"38"
+		label:	"state 38\n label -> LABEL ':' . opt_nl label"
+	}
+	backedge: {
+		sourcename:	"38"
+		targetname:	"23"
+		label:	"NL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"38"
+		targetname:	"49"
+		label:	"opt_nl"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"39"
+		label:	"state 39\n command -> ID . '=' rval\n command -> ID . '=' BYTE rval\n command -> ID . '=' rval binop rval\n command -> ID . '=' unop rval\n command -> ID . '=' ID '[' rval ']'\n command -> ID . '[' rval ']' '=' rval\n command -> ID . '=' BYTE ID '[' rval ']'\n command -> ID . '[' rval ']' '=' BYTE rval"
+	}
+	edge: {
+		sourcename:	"39"
+		targetname:	"50"
+		label:	"'='"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"39"
+		targetname:	"51"
+		label:	"'['"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"40"
+		label:	"state 40\n command -> IF . rval GOTO LABEL"
+	}
+	edge: {
+		sourcename:	"40"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"40"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"40"
+		targetname:	"54"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"41"
+		label:	"state 41\n command -> IFFALSE . rval GOTO LABEL"
+	}
+	edge: {
+		sourcename:	"41"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"41"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"41"
+		targetname:	"55"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"42"
+		label:	"state 42\n command -> GOTO . LABEL"
+	}
+	edge: {
+		sourcename:	"42"
+		targetname:	"56"
+		label:	"LABEL"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"43"
+		label:	"state 43\n param -> PARAM . rval"
+	}
+	edge: {
+		sourcename:	"43"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"43"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"43"
+		targetname:	"57"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"44"
+		label:	"state 44\n command -> RET . rval\n command -> RET ."
+	}
+	edge: {
+		sourcename:	"44"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"44"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"44"
+		targetname:	"58"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"45"
+		label:	"state 45\n commands -> label command . nl commands"
+	}
+	backedge: {
+		sourcename:	"45"
+		targetname:	"18"
+		label:	"NL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"45"
+		targetname:	"59"
+		label:	"nl"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"46"
+		label:	"state 46\n command -> call ."
+	}
+	node: {
+		title:	"47"
+		label:	"state 47\n call -> params . CALL ID"
+	}
+	edge: {
+		sourcename:	"47"
+		targetname:	"60"
+		label:	"CALL"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"48"
+		label:	"state 48\n params -> param . nl params"
+	}
+	backedge: {
+		sourcename:	"48"
+		targetname:	"18"
+		label:	"NL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"48"
+		targetname:	"61"
+		label:	"nl"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"49"
+		label:	"state 49\n label -> LABEL ':' opt_nl . label"
+	}
+	backedge: {
+		sourcename:	"49"
+		targetname:	"35"
+		label:	"LABEL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"49"
+		targetname:	"62"
+		label:	"label"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"50"
+		label:	"state 50\n command -> ID '=' . rval\n command -> ID '=' . BYTE rval\n command -> ID '=' . rval binop rval\n command -> ID '=' . unop rval\n command -> ID '=' . ID '[' rval ']'\n command -> ID '=' . BYTE ID '[' rval ']'"
+	}
+	edge: {
+		sourcename:	"50"
+		targetname:	"63"
+		label:	"BYTE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"50"
+		targetname:	"64"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"50"
+		targetname:	"65"
+		label:	"NEW"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"50"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"50"
+		targetname:	"66"
+		label:	"'-'"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"50"
+		targetname:	"67"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"50"
+		targetname:	"68"
+		label:	"unop"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"51"
+		label:	"state 51\n command -> ID '[' . rval ']' '=' rval\n command -> ID '[' . rval ']' '=' BYTE rval"
+	}
+	edge: {
+		sourcename:	"51"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"51"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"51"
+		targetname:	"69"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"52"
+		label:	"state 52\n rval -> ID ."
+	}
+	node: {
+		title:	"53"
+		label:	"state 53\n rval -> LITNUM ."
+	}
+	node: {
+		title:	"54"
+		label:	"state 54\n command -> IF rval . GOTO LABEL"
+	}
+	edge: {
+		sourcename:	"54"
+		targetname:	"70"
+		label:	"GOTO"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"55"
+		label:	"state 55\n command -> IFFALSE rval . GOTO LABEL"
+	}
+	edge: {
+		sourcename:	"55"
+		targetname:	"71"
+		label:	"GOTO"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"56"
+		label:	"state 56\n command -> GOTO LABEL ."
+	}
+	node: {
+		title:	"57"
+		label:	"state 57\n param -> PARAM rval ."
+	}
+	node: {
+		title:	"58"
+		label:	"state 58\n command -> RET rval ."
+	}
+	node: {
+		title:	"59"
+		label:	"state 59\n commands -> label command nl . commands"
+	}
+	backedge: {
+		sourcename:	"59"
+		targetname:	"35"
+		label:	"LABEL"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"59"
+		targetname:	"72"
+		label:	"commands"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"59"
+		targetname:	"37"
+		label:	"label"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"60"
+		label:	"state 60\n call -> params CALL . ID"
+	}
+	edge: {
+		sourcename:	"60"
+		targetname:	"73"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"61"
+		label:	"state 61\n params -> param nl . params"
+	}
+	backedge: {
+		sourcename:	"61"
+		targetname:	"43"
+		label:	"PARAM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"61"
+		targetname:	"74"
+		label:	"params"
+		color:	green
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"61"
+		targetname:	"48"
+		label:	"param"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"62"
+		label:	"state 62\n label -> LABEL ':' opt_nl label ."
+	}
+	node: {
+		title:	"63"
+		label:	"state 63\n command -> ID '=' BYTE . rval\n command -> ID '=' BYTE . ID '[' rval ']'"
+	}
+	edge: {
+		sourcename:	"63"
+		targetname:	"75"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"63"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"63"
+		targetname:	"76"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"64"
+		label:	"state 64\n rval -> ID .\n command -> ID '=' ID . '[' rval ']'"
+	}
+	edge: {
+		sourcename:	"64"
+		targetname:	"77"
+		label:	"'['"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"65"
+		label:	"state 65\n unop -> NEW .\n unop -> NEW . BYTE"
+	}
+	edge: {
+		sourcename:	"65"
+		targetname:	"78"
+		label:	"BYTE"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"66"
+		label:	"state 66\n unop -> '-' ."
+	}
+	node: {
+		title:	"67"
+		label:	"state 67\n command -> ID '=' rval .\n command -> ID '=' rval . binop rval"
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"79"
+		label:	"EQ"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"80"
+		label:	"NE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"81"
+		label:	"LE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"82"
+		label:	"GE"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"83"
+		label:	"'<'"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"84"
+		label:	"'>'"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"85"
+		label:	"'+'"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"86"
+		label:	"'-'"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"87"
+		label:	"'*'"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"88"
+		label:	"'/'"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"67"
+		targetname:	"89"
+		label:	"binop"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"68"
+		label:	"state 68\n command -> ID '=' unop . rval"
+	}
+	backedge: {
+		sourcename:	"68"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"68"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"68"
+		targetname:	"90"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"69"
+		label:	"state 69\n command -> ID '[' rval . ']' '=' rval\n command -> ID '[' rval . ']' '=' BYTE rval"
+	}
+	edge: {
+		sourcename:	"69"
+		targetname:	"91"
+		label:	"']'"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"70"
+		label:	"state 70\n command -> IF rval GOTO . LABEL"
+	}
+	edge: {
+		sourcename:	"70"
+		targetname:	"92"
+		label:	"LABEL"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"71"
+		label:	"state 71\n command -> IFFALSE rval GOTO . LABEL"
+	}
+	edge: {
+		sourcename:	"71"
+		targetname:	"93"
+		label:	"LABEL"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"72"
+		label:	"state 72\n commands -> label command nl commands ."
+	}
+	node: {
+		title:	"73"
+		label:	"state 73\n call -> params CALL ID ."
+	}
+	node: {
+		title:	"74"
+		label:	"state 74\n params -> param nl params ."
+	}
+	node: {
+		title:	"75"
+		label:	"state 75\n rval -> ID .\n command -> ID '=' BYTE ID . '[' rval ']'"
+	}
+	edge: {
+		sourcename:	"75"
+		targetname:	"94"
+		label:	"'['"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"76"
+		label:	"state 76\n command -> ID '=' BYTE rval ."
+	}
+	node: {
+		title:	"77"
+		label:	"state 77\n command -> ID '=' ID '[' . rval ']'"
+	}
+	backedge: {
+		sourcename:	"77"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"77"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"77"
+		targetname:	"95"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"78"
+		label:	"state 78\n unop -> NEW BYTE ."
+	}
+	node: {
+		title:	"79"
+		label:	"state 79\n binop -> EQ ."
+	}
+	node: {
+		title:	"80"
+		label:	"state 80\n binop -> NE ."
+	}
+	node: {
+		title:	"81"
+		label:	"state 81\n binop -> LE ."
+	}
+	node: {
+		title:	"82"
+		label:	"state 82\n binop -> GE ."
+	}
+	node: {
+		title:	"83"
+		label:	"state 83\n binop -> '<' ."
+	}
+	node: {
+		title:	"84"
+		label:	"state 84\n binop -> '>' ."
+	}
+	node: {
+		title:	"85"
+		label:	"state 85\n binop -> '+' ."
+	}
+	node: {
+		title:	"86"
+		label:	"state 86\n binop -> '-' ."
+	}
+	node: {
+		title:	"87"
+		label:	"state 87\n binop -> '*' ."
+	}
+	node: {
+		title:	"88"
+		label:	"state 88\n binop -> '/' ."
+	}
+	node: {
+		title:	"89"
+		label:	"state 89\n command -> ID '=' rval binop . rval"
+	}
+	backedge: {
+		sourcename:	"89"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"89"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"89"
+		targetname:	"96"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"90"
+		label:	"state 90\n command -> ID '=' unop rval ."
+	}
+	node: {
+		title:	"91"
+		label:	"state 91\n command -> ID '[' rval ']' . '=' rval\n command -> ID '[' rval ']' . '=' BYTE rval"
+	}
+	edge: {
+		sourcename:	"91"
+		targetname:	"97"
+		label:	"'='"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"92"
+		label:	"state 92\n command -> IF rval GOTO LABEL ."
+	}
+	node: {
+		title:	"93"
+		label:	"state 93\n command -> IFFALSE rval GOTO LABEL ."
+	}
+	node: {
+		title:	"94"
+		label:	"state 94\n command -> ID '=' BYTE ID '[' . rval ']'"
+	}
+	backedge: {
+		sourcename:	"94"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"94"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"94"
+		targetname:	"98"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"95"
+		label:	"state 95\n command -> ID '=' ID '[' rval . ']'"
+	}
+	edge: {
+		sourcename:	"95"
+		targetname:	"99"
+		label:	"']'"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"96"
+		label:	"state 96\n command -> ID '=' rval binop rval ."
+	}
+	node: {
+		title:	"97"
+		label:	"state 97\n command -> ID '[' rval ']' '=' . rval\n command -> ID '[' rval ']' '=' . BYTE rval"
+	}
+	edge: {
+		sourcename:	"97"
+		targetname:	"100"
+		label:	"BYTE"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"97"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"97"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"97"
+		targetname:	"101"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"98"
+		label:	"state 98\n command -> ID '=' BYTE ID '[' rval . ']'"
+	}
+	edge: {
+		sourcename:	"98"
+		targetname:	"102"
+		label:	"']'"
+		color:	blue
+		textcolor:	black
+	}
+	node: {
+		title:	"99"
+		label:	"state 99\n command -> ID '=' ID '[' rval ']' ."
+	}
+	node: {
+		title:	"100"
+		label:	"state 100\n command -> ID '[' rval ']' '=' BYTE . rval"
+	}
+	backedge: {
+		sourcename:	"100"
+		targetname:	"52"
+		label:	"ID"
+		color:	blue
+		textcolor:	black
+	}
+	backedge: {
+		sourcename:	"100"
+		targetname:	"53"
+		label:	"LITNUM"
+		color:	blue
+		textcolor:	black
+	}
+	edge: {
+		sourcename:	"100"
+		targetname:	"103"
+		label:	"rval"
+		color:	green
+		textcolor:	black
+	}
+	node: {
+		title:	"101"
+		label:	"state 101\n command -> ID '[' rval ']' '=' rval ."
+	}
+	node: {
+		title:	"102"
+		label:	"state 102\n command -> ID '=' BYTE ID '[' rval ']' ."
+	}
+	node: {
+		title:	"103"
+		label:	"state 103\n command -> ID '[' rval ']' '=' BYTE rval ."
+	}
+
+
+}
