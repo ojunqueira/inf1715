@@ -47,8 +47,9 @@ local tree = {}
 --==============================================================================
 
 --GetTree:
---  parameters:
---  return:
+--  Parameters:
+--  Return:
+--    [1] $table  - Tree structure
 function AbstractSyntaxTree.GetTree ()
   --return util.TableCopy(tree)
   return tree
@@ -61,8 +62,8 @@ end
 --    line  = $number - line number
 --    var   = $table  - VAR node
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewAttributionNode (var, expression)
   if (_DEBUG) then print("AST :: NewAttributionNode") end
   local node = {
@@ -74,15 +75,15 @@ function AbstractSyntaxTree.NewAttributionNode (var, expression)
   return node
 end
 
---NewCallNode:
+--NewCallNode: Create a new node
 --  {
 --    id    = $number - CALL code
 --    line  = $number - line number
 --    name  = $string - var name
 --    exps  = $table  - list of EXPRESSION nodes
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewCallNode (line, name, expressions)
   if (_DEBUG) then print("AST :: NewCallNode") end
   local node = {
@@ -94,7 +95,7 @@ function AbstractSyntaxTree.NewCallNode (line, name, expressions)
   return node
 end
 
---NewDeclVarNode:
+--NewDeclVarNode: Create a new node
 --  {
 --    id        = $number - DECLARE code
 --    line      = $number - line number
@@ -102,8 +103,8 @@ end
 --    dimension = $number - var dimension
 --    type      = $string - [bool, char, int]
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewDeclVarNode (line, name, typebase, size)
   if (_DEBUG) then print("AST :: NewDeclVarNode") end
   local node = {
@@ -120,15 +121,15 @@ function AbstractSyntaxTree.NewDeclVarNode (line, name, typebase, size)
   return node
 end
 
---NewElseIfNode:
+--NewElseIfNode: Create a new node
 --  {
 --    id    = $number - ELSEIF code
 --    block = $table  - list of COMMANDS that will be executed if [cond] is true
 --    cond  = $table  - EXPRESSION NODE, represents condition
 --    line  = $number - line number
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewElseIfNode (line, condition, block)
   if (_DEBUG) then print("AST :: NewElseIfNode") end
   local node = {
@@ -140,18 +141,18 @@ function AbstractSyntaxTree.NewElseIfNode (line, condition, block)
   return node
 end
 
---NewFunctionNode:
+--NewFunctionNode: Create a new node
 --  {
---    id            = $number - FUNCTION code
---    block         = $table  - list of COMMANDS that will be executed
---    line          = $number - line number
---    name          = $string - var name
---    params        = $table  - list of PARAMETER nodes
---    ret_type      = $string - [bool, char, int], represents function return type
---    ret_dimension = $number - function return dimension
+--    id            = $number         - FUNCTION code
+--    block         = $table          - list of COMMANDS that will be executed
+--    line          = $number         - line number
+--    name          = $string         - var name
+--    params        = $table          - list of PARAMETER nodes
+--    ret_type      = $string or $nil - [bool, char, int], represents function return type
+--    ret_dimension = $number or $nil - function return dimension
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewFunctionNode (line, name, parameters, return_type, return_size, block)
   if (_DEBUG) then print("AST :: NewFunctionNode") end
   local node = {
@@ -170,7 +171,7 @@ function AbstractSyntaxTree.NewFunctionNode (line, name, parameters, return_type
   return node
 end
 
---NewIfNode:
+--NewIfNode: Create a new node
 --  {
 --    id      = $number - IF code
 --    block   = $table  - list of COMMANDS that will be executed if [cond] is true
@@ -179,8 +180,8 @@ end
 --    elseif  = $table  - list of ELSEIF nodes
 --    line    = $number - line number
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewIfNode (line, condition, block, elseif_node, else_block)
   if (_DEBUG) then print("AST :: NewIfNode") end
   if (elseif_node and util.TableIsEmpty(elseif_node)) then
@@ -197,7 +198,7 @@ function AbstractSyntaxTree.NewIfNode (line, condition, block, elseif_node, else
   return node
 end
 
---NewLiteralNode:
+--NewLiteralNode: Create a new node
 --  {
 --    id        = $number   - LITERAL code
 --    dimension = $number   - var dimension
@@ -207,8 +208,8 @@ end
 --                $number   - if type == int,
 --                $boolean  - if type == bool,
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewLiteralNode (line, type, value)
   if (_DEBUG) then print("AST :: NewLiteralNode") end
   local node = {
@@ -225,14 +226,14 @@ function AbstractSyntaxTree.NewLiteralNode (line, type, value)
   return node
 end
 
---NewNegateNode:
+--NewNegateNode: Create a new node
 --  {
 --    id    = $number - NEGATE code
 --    exp   = $table  - EXPRESSION node
 --    line  = $number - line number
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewNegateNode (line, expression)
   if (_DEBUG) then print("AST :: NewNegateNode") end
   local node = {
@@ -243,7 +244,7 @@ function AbstractSyntaxTree.NewNegateNode (line, expression)
   return node
 end
 
---NewNewVarNode:
+--NewNewVarNode: Create a new node
 --  {
 --    id        = $number - NEWVAR code
 --    dimension = $number - var dimension
@@ -251,8 +252,8 @@ end
 --    line      = $number - line number
 --    type      = $string - [bool, char, int]
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewNewVarNode (line, expression, type, dimension)
   if (_DEBUG) then print("AST :: NewNewVarNode") end
   local node = {
@@ -269,7 +270,7 @@ function AbstractSyntaxTree.NewNewVarNode (line, expression, type, dimension)
   return node
 end
 
---NewOperatorNode:
+--NewOperatorNode: 
 --  {
 --    id    = $number - OPERATOR code
 --    line  = $number - line number
@@ -277,8 +278,8 @@ end
 --    [1]   = $table  - EXPRESSION node, left side of operator
 --    [2]   = $table  - EXPRESSION node, right side of operator
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewOperatorNode (line, left, operator, right)
   if (_DEBUG) then print("AST :: NewOperatorNode") end
   local node = {
@@ -291,7 +292,7 @@ function AbstractSyntaxTree.NewOperatorNode (line, left, operator, right)
   return node
 end
 
---NewParameterNode:
+--NewParameterNode: Create a new node
 --  {
 --    id        = $number - PARAMETER code
 --    dimension = $number - var dimension
@@ -299,8 +300,8 @@ end
 --    name      = $string - var name
 --    type      = $string - [bool, char, int]
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewParameterNode (line, name, typebase, size)
   if (_DEBUG) then print("AST :: NewProgramNode") end
   local node = {
@@ -317,13 +318,13 @@ function AbstractSyntaxTree.NewParameterNode (line, name, typebase, size)
   return node
 end
 
---NewProgramNode:
+--NewProgramNode: Create a new node, and set class current tree to this one
 --  {
 --    id       = $number - PROGRAM code
 --    [1 to N] = DECLARE or FUNCTION node
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewProgramNode (ast_tree)
   if (_DEBUG) then print("AST :: NewProgramNode") end
   tree = {}
@@ -332,14 +333,14 @@ function AbstractSyntaxTree.NewProgramNode (ast_tree)
   if (printTree) then AbstractSyntaxTree.Print() end
 end
 
---NewReturnNode:
+--NewReturnNode: Create a new node
 --  {
 --    id    = $number - RETURN code
 --    line  = $number - line number
 --    exp   = $table  - EXPRESSION node
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewReturnNode (line, expression)
   if (_DEBUG) then print("AST :: NewReturnNode") end
   local node = {
@@ -350,14 +351,14 @@ function AbstractSyntaxTree.NewReturnNode (line, expression)
   return node
 end
 
---NewUnaryNode:
+--NewUnaryNode: Create a new node
 --  {
 --    id    = $number - UNARY code
 --    exp   = $table  - EXPRESSION node
 --    line  = $number - line number
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewUnaryNode (line, expression)
   if (_DEBUG) then print("AST :: NewUnaryNode") end
   local node = {
@@ -368,15 +369,15 @@ function AbstractSyntaxTree.NewUnaryNode (line, expression)
   return node
 end
 
---NewVarNode:
+--NewVarNode: Create a new node
 --  {
 --    id    = $number - VAR code
 --    array = $table  - list of EXPRESSIONS, one for each dimension
 --    line  = $number - line number
 --    name  = $string - var name
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewVarNode (line, name, array)
   if (_DEBUG) then print("AST :: NewVarNode") end
   local node = {
@@ -388,15 +389,15 @@ function AbstractSyntaxTree.NewVarNode (line, name, array)
   return node
 end
 
---NewWhileNode:
+--NewWhileNode: Create a new node
 --  {
 --    id    = $number - WHILE code
 --    block = $table  - list of COMMANDS that will be executed if [cond] is true
 --    cond  = $table  - EXPRESSION node, represents condition
 --    line  = $number - line number
 --  }
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.NewWhileNode (line, condition, block)
   if (_DEBUG) then print("AST :: NewWhileNode") end
   local node = {
@@ -409,8 +410,8 @@ function AbstractSyntaxTree.NewWhileNode (line, condition, block)
 end
 
 --Print: Print Abstract Syntax Tree with comprehensible format
---  parameters:
---  return:
+--  Parameters:
+--  Return:
 function AbstractSyntaxTree.Print ()
   if (_DEBUG) then print("AST :: Print") end
   PrintClass.Print(tree)
