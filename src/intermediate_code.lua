@@ -42,7 +42,8 @@ local enum_opcodes = {
   ["ID[rval]=BYTErval"] = 36,
 
   ["CALLID"]            = 50,
-  ["IFFALSEGOTO"]       = 60,
+  ["IFGOTO"]            = 60,
+  ["IFFALSEGOTO"]       = 61,
   ["LABEL"]             = 70,
   ["PARAMrval"]         = 80,
   ["RETURN"]            = 90,
@@ -178,7 +179,7 @@ function InterCodeGen.DumpInstruction (output, inst)
   elseif (inst.code == enum_opcodes["ID=rvalEQrval"]) then
     output:write(string.format('%14s   %s = %s == %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
-  elseif (inst.code == enum_opcodes["ID=rvalNEval"]) then
+  elseif (inst.code == enum_opcodes["ID=rvalNErval"]) then
     output:write(string.format('%14s   %s = %s != %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
 
   elseif (inst.code == enum_opcodes["ID=rvalGErval"]) then
@@ -210,6 +211,9 @@ function InterCodeGen.DumpInstruction (output, inst)
 
   elseif (inst.code == enum_opcodes["ID[rval]=BYTErval"]) then
     output:write(string.format('%14s   %s[%s] = byte %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
+
+  elseif (inst.code == enum_opcodes["IFGOTO"]) then
+    output:write(string.format('%14s   if %s goto %s\n', inst.label or "", inst.op1, inst.op2))
 
   elseif (inst.code == enum_opcodes["IFFALSEGOTO"]) then
     output:write(string.format('%14s   ifFalse %s goto %s\n', inst.label or "", inst.op1, inst.op2))
@@ -300,8 +304,12 @@ function InterCodeGen.GenCall (node)
   if (_DEBUG) then print("ICG :: GenCall") end
   assert(node.id == nodes_codes["CALL"])
   if (node.exps) then
+    local params_list = {}
     for i=#node.exps, 1, -1 do
-      InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "PARAMrval", InterCodeGen.GenExpression(node.exps[i])))
+      table.insert(params_list, InterCodeGen.GenExpression(node.exps[i]))
+    end
+    for i=#node.exps, 1, -1 do
+      InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "PARAMrval", params_list[i]))
     end
   end
   InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "CALLID", node.name))
@@ -390,9 +398,28 @@ end
 function InterCodeGen.GenExpressionOperator (node)
   local op
   if (node.op == "and") then
-    -- COMPLETE
+    op = InterCodeGen.GetVariable()
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "ID=BYTErval", op, 0))
+    local lbl_end  = InterCodeGen.GetLabel()
+    local op_left  = InterCodeGen.GenExpression(node[1])
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "IFFALSEGOTO", op_left, lbl_end))
+    local op_right = InterCodeGen.GenExpression(node[2])
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "IFFALSEGOTO", op_right, lbl_end))
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "ID=BYTErval", op, 1))    
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(lbl_end, "LABEL"))
   elseif (node.op == "or") then
-    -- COMPLETE
+    op = InterCodeGen.GetVariable()
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "ID=BYTErval", op, 0))
+    local lbl_true  = InterCodeGen.GetLabel()
+    local lbl_end   = InterCodeGen.GetLabel()
+    local op_left   = InterCodeGen.GenExpression(node[1])
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "IFGOTO", op_left, lbl_true))
+    local op_right  = InterCodeGen.GenExpression(node[2])  
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "IFGOTO", op_right, lbl_true))
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "GOTO", lbl_end))
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(lbl_true, "LABEL"))
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(nil, "ID=BYTErval", op, 1))
+    InterCodeGen.AddInstruction(InterCodeGen.NewInstruction(lbl_end, "LABEL"))
   elseif (node.op == "=") then
     local left  = InterCodeGen.GenExpression(node[1])
     local right = InterCodeGen.GenExpression(node[2])
