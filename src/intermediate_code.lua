@@ -3,7 +3,7 @@
 --==============================================================================
 
 local printStruct = false
-local _DEBUG = false
+local test_cte    = false
 
 
 --==============================================================================
@@ -689,7 +689,9 @@ function InterCodeGen.Open (path, tree)
     end
     InterCodeGen.Dump(f)
     f:close()
-    os.execute("./cte/cte " .. util.FileRemoveExtension(path) .. ".icg")
+    if (test_cte) then
+      os.execute("./cte/cte " .. util.FileRemoveExtension(path) .. ".icg")
+    end    
   end)
   if (not ok) then
     return false, msg
