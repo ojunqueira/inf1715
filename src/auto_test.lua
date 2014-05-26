@@ -2601,7 +2601,14 @@ local files = {
   },
 
 
-  -- ITERATION 5
+  -- ITERATION 5  
+  {
+    name      = "icg_expression_and",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
   {
     name      = "icg_expression_negate",
     open      = true,
@@ -2624,7 +2631,21 @@ local files = {
     semantic  = true,
   },
   {
+    name      = "icg_expression_or",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
     name      = "icg_expression_unary",
+    open      = true,
+    lexical   = true,
+    syntactic = true,
+    semantic  = true,
+  },
+  {
+    name      = "icg_function_call",
     open      = true,
     lexical   = true,
     syntactic = true,
