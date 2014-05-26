@@ -151,7 +151,6 @@ function SymbolTable.SetSymbol (t)
   end
   scopes[#scopes] = scopes[#scopes] or {}
   scopes[#scopes][t.name] = symbol
-  --util.TablePrint(scopes)
 end
 
 
