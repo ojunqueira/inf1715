@@ -7,43 +7,41 @@
 -- Dependency
 --==============================================================================
 
-local NodesClass  = require "lib/node_codes"
+local TreeNodesCode = require "lib/tree_nodes_code"
 
 
 --==============================================================================
 -- Data Structure
 --==============================================================================
 
-local Print = {}
+local Class = {}
 
 --  list of nodes code
 --  {
 --    [name] = $number,
 --  }
-local nodes_codes = NodesClass.GetNodesList()
+local tree_nodes = TreeNodesCode.GetList()
 
 
 --==============================================================================
 -- Private Methods
 --==============================================================================
 
-function Print.Block (indent, t)
+function Class.Block (indent, t)
   if (t) then
     for _, node in ipairs(t) do
-      if (node.id == nodes_codes["ATTRIBUTION"]) then
-        Print.ComandAttribution(indent, node)
-      elseif (node.id == nodes_codes["IF"]) then
-        Print.ComandIf(indent, node)
-      elseif (node.id == nodes_codes["RETURN"]) then
-        Print.ComandReturn(indent, node)
-      elseif (node.id == nodes_codes["WHILE"]) then
-        Print.ComandWhile(indent, node)
-      elseif (node.id == nodes_codes["DECLARE"]) then
-        Print.Declare(indent, node)
-      elseif (node.id == nodes_codes["CALL"]) then
-        Print.Call(indent, node)
-      --elseif (node.id == nodes_codes["VAR"]) then
-        --Print.Variable(indent, node)
+      if (node.id == tree_nodes["ATTRIBUTION"]) then
+        Class.ComandAttribution(indent, node)
+      elseif (node.id == tree_nodes["IF"]) then
+        Class.ComandIf(indent, node)
+      elseif (node.id == tree_nodes["RETURN"]) then
+        Class.ComandReturn(indent, node)
+      elseif (node.id == tree_nodes["WHILE"]) then
+        Class.ComandWhile(indent, node)
+      elseif (node.id == tree_nodes["DECLARE"]) then
+        Class.Declare(indent, node)
+      elseif (node.id == tree_nodes["CALL"]) then
+        Class.Call(indent, node)
       else
         error("block node error")
       end
@@ -51,10 +49,10 @@ function Print.Block (indent, t)
   end
 end
 
-function Print.Call (indent, t)
+function Class.Call (indent, t)
   print(indent .. "CALL [" .. t.name .. "] @" .. t.line .. "  {")
   for _, node in ipairs(t.exps) do
-    print(indent .. "  PARAM " .. Print.Expression(node))
+    print(indent .. "  PARAM " .. Class.Expression(node))
   end
   local str = indent .. "}"
   if (t.sem_type and t.sem_dimension) then
@@ -63,95 +61,95 @@ function Print.Call (indent, t)
   print(str)
 end
 
-function Print.ComandAttribution (indent, t)
+function Class.ComandAttribution (indent, t)
   print(indent .. "ATRIB @" .. t.line .. " {")
   local str = ""
   str = str .. t.var.name
   if (t.var.array) then
     for _, exp in ipairs(t.var.array) do
-      str = str .. "[" .. Print.Expression(exp) .. "]"
+      str = str .. "[" .. Class.Expression(exp) .. "]"
     end
   end
-  Print.Variable(indent .. "  ", t.var)
+  Class.Variable(indent .. "  ", t.var)
 
-  print(indent .. "  =" .. Print.Expression(t.exp))
+  print(indent .. "  =" .. Class.Expression(t.exp))
   print(indent .. "}")
 end
 
-function Print.ComandElseIf (indent, t)
-  print(indent .. "ELSEIF [" .. Print.Expression(t.cond) .. "] @" .. t.line)
-  Print.Block(indent .. "  ", t.block)
+function Class.ComandElseIf (indent, t)
+  print(indent .. "ELSEIF [" .. Class.Expression(t.cond) .. "] @" .. t.line)
+  Class.Block(indent .. "  ", t.block)
 end
 
-function Print.ComandIf (indent, t)
-  print(indent .. "IF [" .. Print.Expression(t.cond) .. "] @" .. t.line .. " {")
-  Print.Block(indent .. "  ", t.block)
+function Class.ComandIf (indent, t)
+  print(indent .. "IF [" .. Class.Expression(t.cond) .. "] @" .. t.line .. " {")
+  Class.Block(indent .. "  ", t.block)
   if (t["elseif"]) then
     for _, elseif_node in ipairs(t["elseif"]) do
-      Print.ComandElseIf(indent, elseif_node)
+      Class.ComandElseIf(indent, elseif_node)
     end
   end
   if (t["else"]) then
     print(indent .. "ELSE ")
-    Print.Block(indent .. "  ", t["else"])
+    Class.Block(indent .. "  ", t["else"])
   end
   print(indent .. "}")
 end
 
-function Print.ComandReturn (indent, t)
+function Class.ComandReturn (indent, t)
   print(indent .. "RETURN @" .. t.line .. " {")
-  print(indent .. "  " .. Print.Expression(t.exp))
+  print(indent .. "  " .. Class.Expression(t.exp))
   print(indent .. "}")
-  -- print(indent .. "RETURN [" .. Print.Expression(t.exp) .. "] @" .. t.line)
+  -- print(indent .. "RETURN [" .. Class.Expression(t.exp) .. "] @" .. t.line)
 end
 
-function Print.ComandWhile (indent, t)
-  print(indent .. "WHILE [" .. Print.Expression(t.cond) .. "] @" .. t.line .. " {")
-  Print.Block(indent .. "  ", t.block)
+function Class.ComandWhile (indent, t)
+  print(indent .. "WHILE [" .. Class.Expression(t.cond) .. "] @" .. t.line .. " {")
+  Class.Block(indent .. "  ", t.block)
   print(indent .. "}")
 end
 
-function Print.Declare (indent, t)
+function Class.Declare (indent, t)
   print(indent .. "DECLARE @" .. t.line .. "{")
   print(indent .. "  ID [" .. t.name .. "] " .. t.type .. string.rep("[]", t.dimension) .. " @" .. t.line)
   print(indent .. "}")
   -- print(indent .. "DECLARE [" .. t.name .. "] " .. t.type .. string.rep("[]", t.dimension) .. " @" .. t.line)
 end
 
-function Print.Expression (t)
+function Class.Expression (t)
   local str = "("
   if (not t) then
     return ""
   end
-  if (t.id == nodes_codes["PARENTHESIS"]) then
-    str = str .. " (" .. Print.Expression(t.exp) .. ")"
-  elseif (t.id == nodes_codes["NEWVAR"]) then
-    str = str .. " new [" .. Print.Expression(t.exp) .. "] " .. t.type
-  elseif (t.id == nodes_codes["NEGATE"]) then
-    str = str .. " not " .. Print.Expression(t.exp)
-  elseif (t.id == nodes_codes["UNARY"]) then
-    str = str .. " - " .. Print.Expression(t.exp)
-  elseif (t.id == nodes_codes["OPERATOR"]) then
-    str = str .. Print.Expression(t[1]) .. " " .. t.op .. " " .. Print.Expression(t[2])
-  elseif (t.id == nodes_codes["LITERAL"]) then
+  if (t.id == tree_nodes["PARENTHESIS"]) then
+    str = str .. " (" .. Class.Expression(t.exp) .. ")"
+  elseif (t.id == tree_nodes["NEWVAR"]) then
+    str = str .. " new [" .. Class.Expression(t.exp) .. "] " .. t.type
+  elseif (t.id == tree_nodes["NEGATE"]) then
+    str = str .. " not " .. Class.Expression(t.exp)
+  elseif (t.id == tree_nodes["UNARY"]) then
+    str = str .. " - " .. Class.Expression(t.exp)
+  elseif (t.id == tree_nodes["OPERATOR"]) then
+    str = str .. Class.Expression(t[1]) .. " " .. t.op .. " " .. Class.Expression(t[2])
+  elseif (t.id == tree_nodes["LITERAL"]) then
     str = str .. " " .. t.value
-  elseif (t.id == nodes_codes["CALL"]) then
+  elseif (t.id == tree_nodes["CALL"]) then
     str = str .. " " .. t.name .. "("
     if (t.exps) then
-      str = str .. Print.Expression(t.exps[1])
+      str = str .. Class.Expression(t.exps[1])
       if (t.exps[2]) then
         for i = 2, #t.exps do
-          str = str .. ", " .. Print.Expression(t.exps[i])
+          str = str .. ", " .. Class.Expression(t.exps[i])
         end
       end
     end
     str = str .. ")"
-  elseif (t.id == nodes_codes["VAR"]) then
+  elseif (t.id == tree_nodes["VAR"]) then
     str = str .. " " .. t.name
     if (t.array) then
       for _, exp in ipairs(t.array) do
         str = str .. "["
-        str = str .. Print.Expression(exp)
+        str = str .. Class.Expression(exp)
         str = str .. "]"
       end
     end
@@ -164,67 +162,61 @@ function Print.Expression (t)
   return str .. ")"
 end
 
-function Print.Function (indent, t)
+function Class.Function (indent, t)
   print(indent .. "FUN [" .. t.name .. "] @" .. t.line .. " {")
   for _, node in ipairs(t.params) do
     print(indent .. "  FUNC_PARAMETER [" .. node.name .. "] " .. node.type .. string.rep("[]", node.dimension))
   end
   print(indent .. "  FUNC_RETURN " .. (t.ret_type or "VOID") .. string.rep("[]", t.ret_dimension or 0))
   for _, node in ipairs(t.block) do
-    if (node.id == nodes_codes["DECLARE"]) then
-      Print.Declare(indent .. "  ", node)
-    elseif (node.id == nodes_codes["CALL"]) then
-      Print.Call(indent .. "  ", node)
-    elseif (node.id == nodes_codes["ATTRIBUTION"]) then
-      Print.ComandAttribution(indent .. "  ", node)
-    elseif (node.id == nodes_codes["IF"]) then
-      Print.ComandIf(indent .. "  ", node)
-    elseif (node.id == nodes_codes["RETURN"]) then
-      Print.ComandReturn(indent .. "  ", node)
-    elseif (node.id == nodes_codes["WHILE"]) then
-      Print.ComandWhile(indent .. "  ", node)
+    if (node.id == tree_nodes["DECLARE"]) then
+      Class.Declare(indent .. "  ", node)
+    elseif (node.id == tree_nodes["CALL"]) then
+      Class.Call(indent .. "  ", node)
+    elseif (node.id == tree_nodes["ATTRIBUTION"]) then
+      Class.ComandAttribution(indent .. "  ", node)
+    elseif (node.id == tree_nodes["IF"]) then
+      Class.ComandIf(indent .. "  ", node)
+    elseif (node.id == tree_nodes["RETURN"]) then
+      Class.ComandReturn(indent .. "  ", node)
+    elseif (node.id == tree_nodes["WHILE"]) then
+      Class.ComandWhile(indent .. "  ", node)
     end
   end
   print(indent .. "}")
 end
 
-function Print.Program (indent, t)
+function Class.Program (indent, t)
   print(indent .. "PROGRAM {")
   for _, node in ipairs(t) do
-    if (node.id == nodes_codes["DECLARE"]) then
-      Print.Declare(indent .. "  ", node)
-    elseif (node.id == nodes_codes["FUNCTION"]) then
-      Print.Function(indent .. "  ", node)
+    if (node.id == tree_nodes["DECLARE"]) then
+      Class.Declare(indent .. "  ", node)
+    elseif (node.id == tree_nodes["FUNCTION"]) then
+      Class.Function(indent .. "  ", node)
     end
   end
   print(indent .. "}")
 end
 
-function Print.Variable (indent, t)
+function Class.Variable (indent, t)
   local array_str = ""
   for _, exp in ipairs(t.array) do
-    array_str = array_str .. "[" .. Print.Expression() .. "]"
+    array_str = array_str .. "[" .. Class.Expression() .. "]"
   end
   print(indent .. "ID [" .. t.name .. "] " .. array_str .. " @" .. t.line)
 end
 
 
 --==============================================================================
--- Initialize
---==============================================================================
-
-
-
---==============================================================================
 -- Public Methods
 --==============================================================================
 
---Print: Print Abstract Syntax or Semantic Tree with comprehensible format
+--Class: Class Abstract Syntax or Semantic Tree with comprehensible format
 --  parameters:
 --  return:
-function Print.Print (tree)
-  if (_DEBUG) then print("PRT :: Print") end
-  Print.Program("", tree)
+function Class.Class (tree)
+  if (_DEBUG) then print("PRT :: Class") end
+  Class.Program("", tree)
 end
 
 
@@ -232,4 +224,4 @@ end
 -- Return
 --==============================================================================
 
-return Print
+return Class

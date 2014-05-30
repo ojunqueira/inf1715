@@ -8,26 +8,20 @@
 -- Dependency
 --==============================================================================
 
-local ParserClass 	= require "src/parser"
-local LanguageClass = require "src/grammar"
-local ASTClass		  = require "src/syntax_tree"
+local Parser 	= require "src/parser"
+local Grammar = require "src/grammar"
+local AST		  = require "src/ast"
 
 
 --==============================================================================
 -- Data Structure
 --==============================================================================
 
-local Syntactic = {}
+local Class = {}
 
 
 --==============================================================================
 -- Private Methods
---==============================================================================
-
-
-
---==============================================================================
--- Initialize
 --==============================================================================
 
 
@@ -39,9 +33,9 @@ local Syntactic = {}
 --GetTree:
 --  parameters:
 --  return:
-function Syntactic.GetTree()
+function Class.GetTree()
   if (_DEBUG) then print("SYN :: GetTree") end
-  return ASTClass.GetTree()
+  return AST.GetTree()
 end
 
 --Open:
@@ -50,11 +44,11 @@ end
 --  return:
 --    [1] $boolean - false if found any problem, true otherwise
 --    [2] $string  - only when [1] is false, informing which error occurs
-function Syntactic.Open (t)
+function Class.Open (t)
   if (_DEBUG) then print("SYN :: Open") end
   assert(t and type(t) == "table")
-  ParserClass.Open(t)
-  local ok, msg = LanguageClass.Start(ParserClass.Advance, ParserClass.Peek, ParserClass.Peek2)
+  Parser.Open(t)
+  local ok, msg = Grammar.Start(Parser.Advance, Parser.Peek, Parser.Peek2)
   if (not ok) then
   	return false, msg
   end
@@ -62,9 +56,9 @@ function Syntactic.Open (t)
 end
 
 --PrintTree:
-function Syntactic.PrintTree()
+function Class.PrintTree()
   if (_DEBUG) then print("SYN :: PrintTree") end
-  return ASTClass.Print()
+  return AST.Print()
 end
 
 
@@ -72,4 +66,4 @@ end
 -- Return
 --==============================================================================
 
-return Syntactic
+return Class

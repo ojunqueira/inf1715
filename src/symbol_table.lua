@@ -9,14 +9,14 @@
 --==============================================================================
 
 require "lib/util"
-local NodesClass  = require "lib/node_codes"
+local TreeNodesCode = require "lib/tree_nodes_code"
 
 
 --==============================================================================
 -- Data Structure
 --==============================================================================
 
-local SymbolTable = {}
+local Class = {}
 
 local scopes = {}
 
@@ -24,7 +24,7 @@ local scopes = {}
 --  {
 --    [name] = $number,
 --  }
-local nodes_codes = NodesClass.GetNodesList()
+local tree_nodes = TreeNodesCode.GetList()
 
 
 --==============================================================================
@@ -35,11 +35,6 @@ function Error ()
   error("Symbol error.", 0)
 end
 
---==============================================================================
--- Initialize
---==============================================================================
-
-
 
 --==============================================================================
 -- Public Methods
@@ -48,7 +43,7 @@ end
 --AddScope: Insert a new scope level
 --  parameters:
 --  return:
-function SymbolTable.AddScope ()
+function Class.AddScope ()
   if (_DEBUG) then print("SYB :: AddScope") end
   scopes[#scopes + 1] = {}
 end
@@ -56,7 +51,7 @@ end
 --Clear: Remove all scopes
 --  parameters:
 --  return:
-function SymbolTable.Clear ()
+function Class.Clear ()
   if (_DEBUG) then print("SYB :: Clear") end
   scopes = {}
 end
@@ -66,7 +61,7 @@ end
 --    [1] $string         - Symbol name
 --  return:
 --    [1] $table or $nil  - Copy of symbol structure if found, otherwise nil
-function SymbolTable.GetCurrentScopeSymbol (name)
+function Class.GetCurrentScopeSymbol (name)
   if (_DEBUG) then print("SYB :: GetCurrentScopeSymbol") end
   local num_scope = #scopes
   if (scopes[#scopes][name]) then
@@ -82,7 +77,7 @@ end
 --    [1] $string         - Symbol name
 --  return:
 --    [1] $table or $nil  - Copy of symbol structure if found, otherwise nil
-function SymbolTable.GetSymbol (name)
+function Class.GetSymbol (name)
   if (_DEBUG) then print("SYB :: GetSymbol") end
   local num_scope = #scopes
   while (num_scope > 0) do
@@ -99,7 +94,7 @@ end
 --Print: Print symbol table
 --  parameters:
 --  return:
-function SymbolTable.Print ()
+function Class.Print ()
   if (_DEBUG) then print("SYB :: Print") end
   util.TablePrint(scopes)
 end
@@ -107,7 +102,7 @@ end
 --RemoveScope: Remove current scope
 --  parameters:
 --  return:
-function SymbolTable.RemoveScope ()
+function Class.RemoveScope ()
   if (_DEBUG) then print("SYB :: RemoveScope") end
   scopes[#scopes] = nil
 end
@@ -129,7 +124,7 @@ end
 --                dimension = $number - 
 --              }
 --  return:
-function SymbolTable.SetSymbol (t)
+function Class.SetSymbol (t)
   if (_DEBUG) then print("SYB :: SetSymbol") end
   assert(t and type(t) == "table")
   assert(t.line and type(t.line) == "number")
@@ -137,12 +132,12 @@ function SymbolTable.SetSymbol (t)
   local symbol = {}
   symbol.line = t.line
   symbol.name = t.name
-  if (t.id == nodes_codes["FUNCTION"]) then
+  if (t.id == tree_nodes["FUNCTION"]) then
     symbol.id = "function"
     symbol.params = util.TableCopy(t.params)
     symbol.ret_type = t.ret_type
     symbol.ret_dimension = t.ret_dimension
-  elseif (t.id == nodes_codes["DECLARE"] or t.id == nodes_codes["PARAMETER"]) then
+  elseif (t.id == tree_nodes["DECLARE"] or t.id == tree_nodes["PARAMETER"]) then
     symbol.id = "variable"
     symbol.type = t.type
     symbol.dimension = t.dimension
@@ -158,4 +153,4 @@ end
 -- Return
 --==============================================================================
 
-return SymbolTable
+return Class

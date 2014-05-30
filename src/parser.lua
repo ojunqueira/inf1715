@@ -14,7 +14,7 @@
 -- Data Structure
 --==============================================================================
 
-local Parser = {}
+local Class = {}
 
 -- store tokens list received in input
 local tokens_list = {}
@@ -30,19 +30,13 @@ local current = 0
 
 
 --==============================================================================
--- Initialize
---==============================================================================
-
-
-
---==============================================================================
 -- Public Methods
 --==============================================================================
 
 --Advance:
 --  parameters:
 --  return:
-function Parser.Advance ()
+function Class.Advance ()
   if (_DEBUG) then print("PAR :: Advance") end
   current = current + 1
 end
@@ -51,7 +45,7 @@ end
 --  parameters:
 --    [1] $table   - table with tokens read in lexical
 --  return:
-function Parser.Open (t)
+function Class.Open (t)
   if (_DEBUG) then print("PAR :: Open") end
   assert(type(t) == "table")
   current = 0
@@ -61,7 +55,7 @@ end
 --Peek: peek the next token
 --  parameters:
 --  return:
-function Parser.Peek ()
+function Class.Peek ()
   if (_DEBUG) then print("PAR :: Peek") end
   return tokens_list[current + 1]
 end
@@ -69,7 +63,7 @@ end
 --Peek2: peek the second next token
 --  parameters:
 --  return:
-function Parser.Peek2 ()
+function Class.Peek2 ()
   if (_DEBUG) then print("PAR :: Peek2") end
   return tokens_list[current + 2]
 end
@@ -79,4 +73,4 @@ end
 -- Return
 --==============================================================================
 
-return Parser
+return Class

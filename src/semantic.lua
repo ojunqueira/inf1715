@@ -18,22 +18,22 @@ local printTree = false
 --==============================================================================
 
 require "lib/util"
-local NodesClass  = require "lib/node_codes"
-local PrintClass  = require "lib/util_tree"
-local SymbolClass = require "src/symbol_table"
+local TreeNodesCode = require "lib/tree_nodes_code"
+local UtilTree      = require "lib/util_tree"
+local SymbolTable   = require "src/symbol_table"
 
 
 --==============================================================================
 -- Data Structure
 --==============================================================================
 
-local Semantic = {}
+local Class = {}
 
 --  list of nodes code
 --  {
 --    [name] = $number,
 --  }
-local nodes_codes = NodesClass.GetNodesList()
+local tree_nodes = TreeNodesCode.GetList()
 
 --  AST tree (structed nodes)
 local tree = {}
@@ -56,33 +56,33 @@ end
 --  Parameters:
 --    [1] $table  = ATTRIBUTION node
 --  Return:
-function Semantic.VerifyAttribution (node)
+function Class.VerifyAttribution (node)
   if (_DEBUG) then print("SEM :: VerifyAttribution") end
-  assert(node.id == nodes_codes["ATTRIBUTION"])
-  Semantic.VerifyVar(node.var)
-  Semantic.VerifyExpression(node.exp)
-  Semantic.VerifyCompatibleTypes(node.line, node.var.sem_type, node.var.sem_dimension, node.exp.sem_type, node.exp.sem_dimension)
+  assert(node.id == tree_nodes["ATTRIBUTION"])
+  Class.VerifyVar(node.var)
+  Class.VerifyExpression(node.exp)
+  Class.VerifyCompatibleTypes(node.line, node.var.sem_type, node.var.sem_dimension, node.exp.sem_type, node.exp.sem_dimension)
 end
 
 --VerifyBlock: Verify integrity of BLOCK/COMMANDS nodes
 --  Parameters:
 --    [1] $table  = collection of ATTRIBUTION, CALL, DECLARE, IF, RETURN and WHILE nodes
 --  Return:
-function Semantic.VerifyBlock (block)
+function Class.VerifyBlock (block)
   if (_DEBUG) then print("SEM :: VerifyBlock") end
   for _, node in ipairs(block or {}) do
-    if (node.id == nodes_codes["ATTRIBUTION"]) then
-      Semantic.VerifyAttribution(node)
-    elseif (node.id == nodes_codes["CALL"]) then
-      Semantic.VerifyCall(node)
-    elseif (node.id == nodes_codes["DECLARE"]) then
-      Semantic.VerifyDeclare(node)
-    elseif (node.id == nodes_codes["IF"]) then
-      Semantic.VerifyIf(node)
-    elseif (node.id == nodes_codes["RETURN"]) then
-      Semantic.VerifyReturn(node)
-    elseif (node.id == nodes_codes["WHILE"]) then
-      Semantic.VerifyWhile(node)
+    if (node.id == tree_nodes["ATTRIBUTION"]) then
+      Class.VerifyAttribution(node)
+    elseif (node.id == tree_nodes["CALL"]) then
+      Class.VerifyCall(node)
+    elseif (node.id == tree_nodes["DECLARE"]) then
+      Class.VerifyDeclare(node)
+    elseif (node.id == tree_nodes["IF"]) then
+      Class.VerifyIf(node)
+    elseif (node.id == tree_nodes["RETURN"]) then
+      Class.VerifyReturn(node)
+    elseif (node.id == tree_nodes["WHILE"]) then
+      Class.VerifyWhile(node)
     else
       Error("unknown block node")
     end
@@ -93,10 +93,10 @@ end
 --  Parameters:
 --    [1] $table  = CALL node
 --  Return:
-function Semantic.VerifyCall (node)
+function Class.VerifyCall (node)
   if (_DEBUG) then print("SEM :: VerifyCall") end
-  assert(node.id == nodes_codes["CALL"])
-  local symbol = SymbolClass.GetSymbol(node.name)
+  assert(node.id == tree_nodes["CALL"])
+  local symbol = SymbolTable.GetSymbol(node.name)
   if (not symbol) then
     Error(string.format("symbol '%s' was not declared.", node.name), node.line)
   end
@@ -109,8 +109,8 @@ function Semantic.VerifyCall (node)
     Error(string.format("attempt to call function '%s' with '%d' parameter(s), but it demands '%d'.", symbol.name, num_func_params, num_call_params), node.line)
   end
   for i = 1, num_func_params do
-    Semantic.VerifyExpression(node.exps[i])
-    Semantic.VerifyCompatibleTypes(node.line, symbol.params[i].type, symbol.params[i].dimension, node.exps[i].sem_type, node.exps[i].sem_dimension)
+    Class.VerifyExpression(node.exps[i])
+    Class.VerifyCompatibleTypes(node.line, symbol.params[i].type, symbol.params[i].dimension, node.exps[i].sem_type, node.exps[i].sem_dimension)
   end
   node.sem_type = symbol.ret_type
   node.sem_dimension = symbol.ret_dimension
@@ -124,7 +124,7 @@ end
 --    [4] $string = type of second variable
 --    [5] $number = dimension of second variable
 --  Return:
-function Semantic.VerifyCompatibleTypes (line, first_type, first_dimension, second_type, second_dimension)
+function Class.VerifyCompatibleTypes (line, first_type, first_dimension, second_type, second_dimension)
   local err = false
   if (first_type ~= second_type) then
     if (first_type == "int" and second_type == "char") or (first_type == "char" and second_type == "int") then
@@ -149,15 +149,15 @@ end
 --  Parameters:
 --    [1] $table  = DECLARE node
 --  Return:
-function Semantic.VerifyDeclare (node)
+function Class.VerifyDeclare (node)
   if (_DEBUG) then print("SEM :: VerifyDeclare") end
-  assert(node.id == nodes_codes["DECLARE"])
-  --local symbol = SymbolClass.GetCurrentScopeSymbol(node.name)
-  local symbol = SymbolClass.GetSymbol(node.name)
+  assert(node.id == tree_nodes["DECLARE"])
+  --local symbol = SymbolTable.GetCurrentScopeSymbol(node.name)
+  local symbol = SymbolTable.GetSymbol(node.name)
   if (symbol) then
     Error(string.format("symbol '%s' was already declared at line %d.", symbol.name, symbol.line), node.line)
   else
-    SymbolClass.SetSymbol(node)
+    SymbolTable.SetSymbol(node)
   end
 end
 
@@ -165,38 +165,38 @@ end
 --  Parameters:
 --    [1] $table  = ELSEIF node
 --  Return:
-function Semantic.VerifyElseIf (node)
+function Class.VerifyElseIf (node)
   if (_DEBUG) then print("SEM :: VerifyElseIf") end
-  assert(node.id == nodes_codes["ELSEIF"])
-  SymbolClass.AddScope()
-  Semantic.VerifyExpression(node.cond)
+  assert(node.id == tree_nodes["ELSEIF"])
+  SymbolTable.AddScope()
+  Class.VerifyExpression(node.cond)
   if (node.cond.sem_type ~= "bool" or node.cond.sem_dimension ~= 0) then
     Error(string.format("'else if' expects expression of type 'bool' with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
   end
-  Semantic.VerifyBlock(node.block)
-  SymbolClass.RemoveScope()
+  Class.VerifyBlock(node.block)
+  SymbolTable.RemoveScope()
 end
 
 --VerifyExpression: Verify integrity of EXPRESSION node
 --  Parameters:
 --    [1] $table  = CALL, NEGATE, NEWVAR, OPERATOR, UNARY, VALUE or VAR node
 --  Return:
-function Semantic.VerifyExpression (node)
+function Class.VerifyExpression (node)
   if (_DEBUG) then print("SEM :: VerifyExpression") end
-  if (node.id == nodes_codes["CALL"]) then
-    Semantic.VerifyCall(node)
-  elseif (node.id == nodes_codes["NEGATE"]) then
-    Semantic.VerifyNegate(node)
-  elseif (node.id == nodes_codes["NEWVAR"]) then
-    Semantic.VerifyNewVar(node)
-  elseif (node.id == nodes_codes["OPERATOR"]) then
-    Semantic.VerifyOperator(node)
-  elseif (node.id == nodes_codes["UNARY"]) then
-    Semantic.VerifyUnary(node)
-  elseif (node.id == nodes_codes["LITERAL"]) then
-    Semantic.VerifyLiteral(node)
-  elseif (node.id == nodes_codes["VAR"]) then
-    Semantic.VerifyVar(node)
+  if (node.id == tree_nodes["CALL"]) then
+    Class.VerifyCall(node)
+  elseif (node.id == tree_nodes["NEGATE"]) then
+    Class.VerifyNegate(node)
+  elseif (node.id == tree_nodes["NEWVAR"]) then
+    Class.VerifyNewVar(node)
+  elseif (node.id == tree_nodes["OPERATOR"]) then
+    Class.VerifyOperator(node)
+  elseif (node.id == tree_nodes["UNARY"]) then
+    Class.VerifyUnary(node)
+  elseif (node.id == tree_nodes["LITERAL"]) then
+    Class.VerifyLiteral(node)
+  elseif (node.id == tree_nodes["VAR"]) then
+    Class.VerifyVar(node)
   else
     Error("unknown expression node", node.line)
   end
@@ -206,44 +206,44 @@ end
 --  Parameters:
 --    [1] $table  = FUNCTION node
 --  Return:
-function Semantic.VerifyFunction (node)
+function Class.VerifyFunction (node)
   if (_DEBUG) then print("SEM :: VerifyFunction") end
-  assert(node.id == nodes_codes["FUNCTION"])
-  SymbolClass.AddScope()
+  assert(node.id == tree_nodes["FUNCTION"])
+  SymbolTable.AddScope()
   for _, param in ipairs(node.params) do
-    if (SymbolClass.GetSymbol(param.name)) then
-    --if (SymbolClass.GetCurrentScopeSymbol(param.name)) then
+    if (SymbolTable.GetSymbol(param.name)) then
+    --if (SymbolTable.GetCurrentScopeSymbol(param.name)) then
       Error(string.format("function parameter '%s' already declared.", param.name), node.line)
     end
-    SymbolClass.SetSymbol(param)
+    SymbolTable.SetSymbol(param)
   end
   if (node.ret_type) then
     local ret = {
-      id        = nodes_codes["DECLARE"],
+      id        = tree_nodes["DECLARE"],
       name      = "@ret",
       line      = node.line,
       type      = node.ret_type,
       dimension = node.ret_dimension,
     }
-    SymbolClass.SetSymbol(ret)
+    SymbolTable.SetSymbol(ret)
   end
-  Semantic.VerifyBlock(node.block)
-  SymbolClass.RemoveScope()
+  Class.VerifyBlock(node.block)
+  SymbolTable.RemoveScope()
 end
 
 --VerifyGlobals: Add global functions and variables to scope
 --  Parameters:
 --    [1] $table  = PROGRAM node
 --  Return:
-function Semantic.VerifyGlobals (t)
+function Class.VerifyGlobals (t)
   if (_DEBUG) then print("SEM :: VerifyGlobals") end
-  assert(t.id == nodes_codes["PROGRAM"])
+  assert(t.id == tree_nodes["PROGRAM"])
   for _, node in ipairs(t) do
-    local symbol = SymbolClass.GetSymbol(node.name)
+    local symbol = SymbolTable.GetSymbol(node.name)
     if (symbol) then
       Error(string.format("global symbol '%s' was already declared at line %d.", symbol.name, symbol.line), node.line)
     end
-    SymbolClass.SetSymbol(node)
+    SymbolTable.SetSymbol(node)
   end
 end
 
@@ -251,33 +251,33 @@ end
 --  Parameters:
 --    [1] $table  = IF node
 --  Return:
-function Semantic.VerifyIf (node)
+function Class.VerifyIf (node)
   if (_DEBUG) then print("SEM :: VerifyIf") end
-  assert(node.id == nodes_codes["IF"])
-  SymbolClass.AddScope()
-  Semantic.VerifyExpression(node.cond)
+  assert(node.id == tree_nodes["IF"])
+  SymbolTable.AddScope()
+  Class.VerifyExpression(node.cond)
   if (node.cond.sem_type ~= "bool" or node.cond.sem_dimension ~= 0) then
     Error(string.format("'if' expects expression of type 'bool' with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
   end
-  Semantic.VerifyBlock(node.block)
+  Class.VerifyBlock(node.block)
   if (node["elseif"]) then
     for _, n in ipairs (node["elseif"]) do
-      Semantic.VerifyElseIf(n)
+      Class.VerifyElseIf(n)
     end
   end
-  SymbolClass.AddScope()
-  Semantic.VerifyBlock(node["else"])
-  SymbolClass.RemoveScope()
-  SymbolClass.RemoveScope()
+  SymbolTable.AddScope()
+  Class.VerifyBlock(node["else"])
+  SymbolTable.RemoveScope()
+  SymbolTable.RemoveScope()
 end
 
 --VerifyLiteral: Verify integrity of LITERAL node
 --  Parameters:
 --    [1] $table  = LITERAL node
 --  Return:
-function Semantic.VerifyLiteral (node)
+function Class.VerifyLiteral (node)
   if (_DEBUG) then print("SEM :: VerifyLiteral") end
-  assert(node.id == nodes_codes["LITERAL"])
+  assert(node.id == tree_nodes["LITERAL"])
   node.sem_type = node.type
   node.sem_dimension = node.dimension
 end
@@ -286,10 +286,10 @@ end
 --  Parameters:
 --    [1] $table  = NEWVAR node
 --  Return:
-function Semantic.VerifyNewVar (node)
+function Class.VerifyNewVar (node)
   if (_DEBUG) then print("SEM :: VerifyNewVar") end
-  assert(node.id == nodes_codes["NEWVAR"])
-  Semantic.VerifyExpression(node.exp)
+  assert(node.id == tree_nodes["NEWVAR"])
+  Class.VerifyExpression(node.exp)
   if (node.exp.sem_type ~= "int" and node.exp.sem_type ~= "char") then
     Error(string.format("'new var' expression must have type 'int' or 'char', but got type '%s'.", node.exp.sem_type), node.line)
   end
@@ -301,10 +301,10 @@ end
 --  Parameters:
 --    [1] $table  = NEGATE node
 --  Return:
-function Semantic.VerifyNegate (node)
+function Class.VerifyNegate (node)
   if (_DEBUG) then print("SEM :: VerifyNegate") end
-  assert(node.id == nodes_codes["NEGATE"])
-  Semantic.VerifyExpression(node.exp)
+  assert(node.id == tree_nodes["NEGATE"])
+  Class.VerifyExpression(node.exp)
   if (node.exp.sem_type ~= "bool" or node.exp.sem_dimension ~= 0) then
     Error(string.format("'not' must be done over type 'bool' with dimension '0', but got type '%s' with dimension '%d'.", node.exp.sem_type, node.exp.sem_dimension))
   end
@@ -316,11 +316,11 @@ end
 --  Parameters:
 --    [1] $table  = NEGATE node
 --  Return:
-function Semantic.VerifyOperator (node)
+function Class.VerifyOperator (node)
   if (_DEBUG) then print("SEM :: VerifyOperator") end
-  assert(node.id == nodes_codes["OPERATOR"])
-  Semantic.VerifyExpression(node[1])
-  Semantic.VerifyExpression(node[2])
+  assert(node.id == tree_nodes["OPERATOR"])
+  Class.VerifyExpression(node[1])
+  Class.VerifyExpression(node[2])
   if (node.op == "and" or node.op == "or") then
     if (node[1].sem_type ~= "bool") then
       Error(string.format("operation '%s' cannot be made over left type '%s'.", node.op, node[1].sem_type), node.line)
@@ -371,38 +371,38 @@ end
 --  Parameters:
 --    [1] $table  = PROGRAM node
 --  Return:
-function Semantic.VerifyProgram (t)
+function Class.VerifyProgram (t)
   if (_DEBUG) then print("SEM :: VerifyProgram") end
-  assert(t.id == nodes_codes["PROGRAM"])
-  SymbolClass.AddScope()
-  Semantic.VerifyGlobals(t)
+  assert(t.id == tree_nodes["PROGRAM"])
+  SymbolTable.AddScope()
+  Class.VerifyGlobals(t)
   for _, node in ipairs(t) do
-    if (node.id == nodes_codes["DECLARE"]) then
+    if (node.id == tree_nodes["DECLARE"]) then
       -- node already saved in symbol table while verifying globals
-    elseif (node.id == nodes_codes["FUNCTION"]) then
-      Semantic.VerifyFunction(node)
+    elseif (node.id == tree_nodes["FUNCTION"]) then
+      Class.VerifyFunction(node)
     else
       Error("unknown program node.")
     end
   end
-  SymbolClass.RemoveScope()
+  SymbolTable.RemoveScope()
 end
 
 --VerifyReturn: Verify integrity of RETURN node
 --  Parameters:
 --    [1] $table  = RETURN node
 --  Return:
-function Semantic.VerifyReturn (node)
+function Class.VerifyReturn (node)
   if (_DEBUG) then print("SEM :: VerifyReturn") end
-  assert(node.id == nodes_codes["RETURN"])
-  local symbol = SymbolClass.GetSymbol("@ret")
+  assert(node.id == tree_nodes["RETURN"])
+  local symbol = SymbolTable.GetSymbol("@ret")
   if (not symbol) then
     if (node.exp) then
       Error(string.format("function with return 'void' must not attempt to call 'return'."), node.line)
     end
   elseif (node.exp) then
-    Semantic.VerifyExpression(node.exp)
-    Semantic.VerifyCompatibleTypes(node.line, symbol.type, symbol.dimension, node.exp.sem_type, node.exp.sem_dimension)
+    Class.VerifyExpression(node.exp)
+    Class.VerifyCompatibleTypes(node.line, symbol.type, symbol.dimension, node.exp.sem_type, node.exp.sem_dimension)
   elseif (symbol.type) then
     Error(string.format("function expected to return type '%s' but got 'nil'.", symbol.type), node.line)
   else
@@ -414,10 +414,10 @@ end
 --  Parameters:
 --    [1] $table  = UNARY node
 --  Return:
-function Semantic.VerifyUnary (node)
+function Class.VerifyUnary (node)
   if (_DEBUG) then print("SEM :: VerifyUnary") end
-  assert(node.id == nodes_codes["UNARY"])
-  Semantic.VerifyExpression(node.exp)
+  assert(node.id == tree_nodes["UNARY"])
+  Class.VerifyExpression(node.exp)
   if ((node.exp.sem_type ~= "int" and node.exp.sem_type ~= "char") or node.exp.sem_dimension ~= 0) then
     Error(string.format("'unary' must be done over type 'char' or 'int' with dimension '0', but got type '%s' with dimension '%d'.", node.exp.sem_type, node.exp.sem_dimension), node.line)
   end
@@ -429,10 +429,10 @@ end
 --  Parameters:
 --    [1] $table  = VAR node
 --  Return:
-function Semantic.VerifyVar (node)
+function Class.VerifyVar (node)
   if (_DEBUG) then print("SEM :: VerifyVar") end
-  assert(node.id == nodes_codes["VAR"])
-  local symbol = SymbolClass.GetSymbol(node.name)
+  assert(node.id == tree_nodes["VAR"])
+  local symbol = SymbolTable.GetSymbol(node.name)
   if (not symbol) then
     Error(string.format("symbol '%s' was not declared.", node.name), node.line)
   end
@@ -442,7 +442,7 @@ function Semantic.VerifyVar (node)
       Error(string.format("symbol '%s' dimension is '%d', but was called with dimension '%d'.", node.name, symbol.dimension, #node.array), node.line)
     end
     for _, exp in ipairs(node.array) do
-      Semantic.VerifyExpression(exp)
+      Class.VerifyExpression(exp)
       if (exp.sem_type ~= "int" and exp.sem_type ~= "char") then
         Error(string.format("symbol '%s' dimension must be an 'int' or 'char', but was called with dimension '%s'.", node.name, exp.sem_type), node.line)
       end
@@ -459,22 +459,17 @@ end
 --  Parameters:
 --    [1] $table  = WHILE node
 --  Return:
-function Semantic.VerifyWhile (node)
+function Class.VerifyWhile (node)
   if (_DEBUG) then print("SEM :: VerifyWhile") end
-  assert(node.id == nodes_codes["WHILE"])
-  SymbolClass.AddScope()
-  Semantic.VerifyExpression(node.cond)
+  assert(node.id == tree_nodes["WHILE"])
+  SymbolTable.AddScope()
+  Class.VerifyExpression(node.cond)
   if (node.cond.sem_type ~= "bool" or node.cond.sem_dimension ~= 0) then
     Error(string.format("while expects 'bool' expression with dimension '0', but got type '%s' with dimension '%d'.", node.cond.sem_type, node.cond.sem_dimension), node.line)
   end
-  Semantic.VerifyBlock(node.block)
-  SymbolClass.RemoveScope()
+  Class.VerifyBlock(node.block)
+  SymbolTable.RemoveScope()
 end
-
---==============================================================================
--- Initialize
---==============================================================================
-
 
 
 --==============================================================================
@@ -485,7 +480,7 @@ end
 --  parameters:
 --  return:
 --    [1] $boolean - false if found any problem, true otherwise
-function Semantic.GetTree ()
+function Class.GetTree ()
   return tree
 end
 
@@ -495,26 +490,26 @@ end
 --  return:
 --    [1] $boolean - false if found any problem, true otherwise
 --    [2] $string  - only when [1] is false, informing which error occurs
-function Semantic.Open (t)
+function Class.Open (t)
   if (_DEBUG) then print("SEM :: Open") end
   assert(t and type(t) == "table")
-  SymbolClass.Clear()
-  local ok, msg = pcall(function () Semantic.VerifyProgram(t) end)
+  SymbolTable.Clear()
+  local ok, msg = pcall(function () Class.VerifyProgram(t) end)
   if (not ok) then
     return false, msg
   end
   tree = t
   if (printTree) then
-    Semantic.Print(t)
+    Class.Print(t)
   end
   return true
 end
 
---Print: Print Abstract Semantic Tree with comprehensible format
+--Print: Print Abstract Class Tree with comprehensible format
 --  parameters:
 --  return:
-function Semantic.Print (t)
-  PrintClass.Print(t)
+function Class.Print (t)
+  UtilTree.Print(t)
 end
 
 
@@ -522,4 +517,4 @@ end
 -- Return
 --==============================================================================
 
-return Semantic
+return Class

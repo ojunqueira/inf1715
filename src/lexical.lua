@@ -10,14 +10,14 @@ local printTokensCapture  = false
 --==============================================================================
 
 local lulex       = require "lib/lulex"
-local TokensClass = require "lib/token_codes"
+local TokensCode  = require "lib/tokens_code"
 
 
 --==============================================================================
 -- Data Structure
 --==============================================================================
 
-local Lexical = {}
+local Class = {}
 
 -- number of current line
 local line_number
@@ -45,7 +45,7 @@ local tags = {}
 --  {
 --    [name] = $number,
 --  }
-local tokens = TokensClass.GetTokensList()
+local tokens = TokensCode.GetList()
 
 
 --==============================================================================
@@ -58,7 +58,7 @@ local function StoreToken (code, token, line)
   assert(token)
   assert(line and type(line) == "number")
   if (_DEBUG or printTokensCapture) then
-    print(string.format("codigo: '%10s' linha: %4d token: %s", TokensClass.GetTokenName(code), line, tostring(token)))
+    print(string.format("codigo: '%10s' linha: %4d token: %s", TokensCode.GetName(code), line, tostring(token)))
   end
   local t = {
     code = code,
@@ -320,7 +320,7 @@ lexer = lulex.New{
 --  return:
 --    [1] $boolean - false if found any problem, true otherwise
 --    [2] $string  - only when [1] is false, informing which error occurs
-function Lexical.Open (txt)
+function Class.Open (txt)
   if (_DEBUG) then print("LEX :: Open") end
   assert(txt and type(txt) == "string")
   tags = {}
@@ -334,7 +334,7 @@ function Lexical.Open (txt)
   return true
 end
 
-function Lexical.GetTags()
+function Class.GetTags()
   if (_DEBUG) then print("LEX :: GetTags") end
   return tags
 end
@@ -344,4 +344,4 @@ end
 -- Return
 --==============================================================================
 
-return Lexical
+return Class

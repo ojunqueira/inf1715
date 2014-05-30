@@ -10,21 +10,21 @@ local printTree = false
 --==============================================================================
 
 require "lib/util"
-local NodesClass  = require "lib/node_codes"
-local PrintClass  = require "lib/util_tree"
+local TreeNodesCode = require "lib/tree_nodes_code"
+local UtilTree      = require "lib/util_tree"
 
 
 --==============================================================================
 -- Data Structure
 --==============================================================================
 
-local AbstractSyntaxTree = {}
+local Class = {}
 
 --  list of nodes code
 --  {
 --    [name] = $number,
 --  }
-local nodes_codes = NodesClass.GetNodesList()
+local tree_nodes = TreeNodesCode.GetList()
 
 --  AST tree (structed nodes)
 local tree = {}
@@ -37,12 +37,6 @@ local tree = {}
 
 
 --==============================================================================
--- Initialize
---==============================================================================
-
-
-
---==============================================================================
 -- Public Methods
 --==============================================================================
 
@@ -50,7 +44,7 @@ local tree = {}
 --  Parameters:
 --  Return:
 --    [1] $table  - Tree structure
-function AbstractSyntaxTree.GetTree ()
+function Class.GetTree ()
   --return util.TableCopy(tree)
   return tree
 end
@@ -64,10 +58,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewAttributionNode (var, expression)
+function Class.NewAttributionNode (var, expression)
   if (_DEBUG) then print("AST :: NewAttributionNode") end
   local node = {
-    id    = nodes_codes["ATTRIBUTION"],
+    id    = tree_nodes["ATTRIBUTION"],
     exp   = expression,
     line  = var.line,
     var   = var,
@@ -84,10 +78,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewCallNode (line, name, expressions)
+function Class.NewCallNode (line, name, expressions)
   if (_DEBUG) then print("AST :: NewCallNode") end
   local node = {
-    id   = nodes_codes["CALL"],
+    id   = tree_nodes["CALL"],
     line = line,
     name = name,
     exps = expressions,
@@ -105,10 +99,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewDeclVarNode (line, name, typebase, size)
+function Class.NewDeclVarNode (line, name, typebase, size)
   if (_DEBUG) then print("AST :: NewDeclVarNode") end
   local node = {
-    id        = nodes_codes["DECLARE"],
+    id        = tree_nodes["DECLARE"],
     line      = line,
     name      = name,
     dimension = size,
@@ -130,10 +124,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewElseIfNode (line, condition, block)
+function Class.NewElseIfNode (line, condition, block)
   if (_DEBUG) then print("AST :: NewElseIfNode") end
   local node = {
-    id          = nodes_codes["ELSEIF"],
+    id          = tree_nodes["ELSEIF"],
     block       = block,
     cond        = condition,
     line        = line,
@@ -153,10 +147,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewFunctionNode (line, name, parameters, return_type, return_size, block)
+function Class.NewFunctionNode (line, name, parameters, return_type, return_size, block)
   if (_DEBUG) then print("AST :: NewFunctionNode") end
   local node = {
-    id            = nodes_codes["FUNCTION"],
+    id            = tree_nodes["FUNCTION"],
     line          = line,
     name          = name,
     params        = parameters,
@@ -182,13 +176,13 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewIfNode (line, condition, block, elseif_node, else_block)
+function Class.NewIfNode (line, condition, block, elseif_node, else_block)
   if (_DEBUG) then print("AST :: NewIfNode") end
   if (elseif_node and util.TableIsEmpty(elseif_node)) then
     elseif_node = nil
   end
   local node = {
-    id          = nodes_codes["IF"],
+    id          = tree_nodes["IF"],
     block       = block,
     cond        = condition,
     ["else"]    = else_block,
@@ -210,10 +204,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewLiteralNode (line, type, value)
+function Class.NewLiteralNode (line, type, value)
   if (_DEBUG) then print("AST :: NewLiteralNode") end
   local node = {
-    id        = nodes_codes["LITERAL"],
+    id        = tree_nodes["LITERAL"],
     dimension = 0,
     line      = line,
     type      = type,
@@ -234,10 +228,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewNegateNode (line, expression)
+function Class.NewNegateNode (line, expression)
   if (_DEBUG) then print("AST :: NewNegateNode") end
   local node = {
-    id    = nodes_codes["NEGATE"],
+    id    = tree_nodes["NEGATE"],
     exp   = expression,
     line  = line,
   }
@@ -254,10 +248,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewNewVarNode (line, expression, type, dimension)
+function Class.NewNewVarNode (line, expression, type, dimension)
   if (_DEBUG) then print("AST :: NewNewVarNode") end
   local node = {
-    id        = nodes_codes["NEWVAR"],
+    id        = tree_nodes["NEWVAR"],
     dimension = dimension,
     exp       = expression,
     line      = line,
@@ -280,10 +274,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewOperatorNode (line, left, operator, right)
+function Class.NewOperatorNode (line, left, operator, right)
   if (_DEBUG) then print("AST :: NewOperatorNode") end
   local node = {
-    id    = nodes_codes["OPERATOR"],
+    id    = tree_nodes["OPERATOR"],
     line  = line,
     op    = operator,
     left,
@@ -302,10 +296,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewParameterNode (line, name, typebase, size)
+function Class.NewParameterNode (line, name, typebase, size)
   if (_DEBUG) then print("AST :: NewProgramNode") end
   local node = {
-    id        = nodes_codes["PARAMETER"],
+    id        = tree_nodes["PARAMETER"],
     line      = line,
     name      = name,
     dimension = size,
@@ -325,12 +319,12 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewProgramNode (ast_tree)
+function Class.NewProgramNode (ast_tree)
   if (_DEBUG) then print("AST :: NewProgramNode") end
   tree = {}
   tree = util.TableCopy(ast_tree)
-  tree.id = nodes_codes["PROGRAM"]
-  if (printTree) then AbstractSyntaxTree.Print() end
+  tree.id = tree_nodes["PROGRAM"]
+  if (printTree) then Class.Print() end
 end
 
 --NewReturnNode: Create a new node
@@ -341,10 +335,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewReturnNode (line, expression)
+function Class.NewReturnNode (line, expression)
   if (_DEBUG) then print("AST :: NewReturnNode") end
   local node = {
-    id    = nodes_codes["RETURN"],
+    id    = tree_nodes["RETURN"],
     exp   = expression,
     line  = line,
   }
@@ -359,10 +353,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewUnaryNode (line, expression)
+function Class.NewUnaryNode (line, expression)
   if (_DEBUG) then print("AST :: NewUnaryNode") end
   local node = {
-    id    = nodes_codes["UNARY"],
+    id    = tree_nodes["UNARY"],
     exp   = expression,
     line  = line,
   }
@@ -378,10 +372,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewVarNode (line, name, array)
+function Class.NewVarNode (line, name, array)
   if (_DEBUG) then print("AST :: NewVarNode") end
   local node = {
-    id    = nodes_codes["VAR"],
+    id    = tree_nodes["VAR"],
     line  = line,
     name  = name,
     array = array,
@@ -398,10 +392,10 @@ end
 --  }
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.NewWhileNode (line, condition, block)
+function Class.NewWhileNode (line, condition, block)
   if (_DEBUG) then print("AST :: NewWhileNode") end
   local node = {
-    id    = nodes_codes["WHILE"],
+    id    = tree_nodes["WHILE"],
     block = block,
     cond  = condition,
     line  = line,
@@ -412,9 +406,9 @@ end
 --Print: Print Abstract Syntax Tree with comprehensible format
 --  Parameters:
 --  Return:
-function AbstractSyntaxTree.Print ()
+function Class.Print ()
   if (_DEBUG) then print("AST :: Print") end
-  PrintClass.Print(tree)
+  UtilTree.Print(tree)
 end
 
 
@@ -422,4 +416,4 @@ end
 -- Return
 --==============================================================================
 
-return AbstractSyntaxTree
+return Class

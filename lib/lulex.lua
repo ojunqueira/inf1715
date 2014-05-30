@@ -2,11 +2,13 @@
 -- Dependency
 --==============================================================================
 
+
+
 --==============================================================================
 -- Data Structure
 --==============================================================================
 
-local Lulex = {}
+local Class = {}
 
 local rex_ok, rex
 
@@ -16,6 +18,7 @@ for _, flavor in ipairs{"gnu", "pcre", "tre", "posix", "oniguruma"} do
       break
    end
 end
+
 
 --==============================================================================
 -- Private Methods
@@ -71,7 +74,7 @@ end
 -- Public Methods
 --==============================================================================
 
-function Lulex.New(rules, use_lua)
+function Class.New(rules, use_lua)
    if (_DEBUG) then print("LLX :: New") end
    return {
       match = (use_lua or not rex_ok) and Lua_match or Re_match,
@@ -85,4 +88,4 @@ end
 -- Return
 --==============================================================================
 
-return Lulex
+return Class
