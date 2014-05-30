@@ -45,7 +45,7 @@ local tree = {}
 --  Return:
 --    [1] $table  - Tree structure
 function Class.GetTree ()
-  --return util.TableCopy(tree)
+  if (_DEBUG) then print("AST :: GetTree") end
   return tree
 end
 

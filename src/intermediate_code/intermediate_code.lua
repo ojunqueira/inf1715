@@ -58,6 +58,7 @@ local function_counter = 0
 --    }
 --    functions = {
 --      [1 to N] = {      - list of functions
+--        header          - function header
 --        [1 to N] = {    - list of instructions
 --          label = 
 --          code  = 
@@ -126,6 +127,7 @@ end
 --    [2] $table  - Table created by 'AddInstruction' function
 --  Return:
 function Class.DumpInstruction (output, inst)
+  if (_DEBUG) then print("ICG :: DumpInstruction") end
   if ((inst.code == operations_code["CALLID"])) then
     output:write(string.format('%14s   call %s\n', inst.label or "", inst.op1))
   elseif (inst.code == operations_code["GOTO"]) then
@@ -179,11 +181,12 @@ function Class.DumpInstruction (output, inst)
   end
 end
 
---Error:
+--Error: Stop class execution and generate error message
 --  Parameters:
 --    [1] $string - 
 --  Return:
 function Class.Error (msg)
+  if (_DEBUG) then print("ICG :: Error") end
   local str = string.format("intermediate code generator error: %s", msg or "")
   error(str, 0)
 end

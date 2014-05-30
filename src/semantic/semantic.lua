@@ -20,7 +20,7 @@ local printTree = false
 require "lib/util"
 local TreeNodesCode = require "lib/tree_nodes_code"
 local UtilTree      = require "lib/util_tree"
-local SymbolTable   = require "src/symbol_table"
+local SymbolTable   = require "src/semantic/symbol_table"
 
 
 --==============================================================================
@@ -43,11 +43,12 @@ local tree = {}
 -- Private Methods
 --==============================================================================
 
---Error: Callback of errors that occurs during semantic analysis
+--Error: Stop class execution and generate error message
 --  Parameters:
 --    [1] $string
 --  Return:
 local function Error (msg, line)
+  if (_DEBUG) then print("SEM :: Error") end
   local str = string.format("@%d semantic error: %s", line or 0, msg or "")
   error(str, 0)
 end

@@ -12,11 +12,11 @@ local printASTTree  = false
 --==============================================================================
 
 require "lib/util"
-local Lexical           = require "src/lexical"
-local Syntactic         = require "src/syntactic"
-local Semantic          = require "src/semantic"
-local IntermediateCode  = require "src/intermediate_code"
-local MachineCode       = require "src/machine_code"
+local Lexical           = require "src/lexical/lexical"
+local Syntactic         = require "src/syntactic/syntactic"
+local Semantic          = require "src/semantic/semantic"
+local IntermediateCode  = require "src/intermediate_code/intermediate_code"
+local MachineCode       = require "src/machine_code/machine_code"
 
 
 --==============================================================================

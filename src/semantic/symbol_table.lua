@@ -31,7 +31,11 @@ local tree_nodes = TreeNodesCode.GetList()
 -- Private Methods
 --==============================================================================
 
+--Error: Stop class execution and generate error message
+--  Parameters:
+--  Return:
 function Error ()
+  if (_DEBUG) then print("SYB :: Error") end
   error("Symbol error.", 0)
 end
 

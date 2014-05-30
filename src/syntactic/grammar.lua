@@ -10,7 +10,7 @@ local printTokensMatch = false
 --==============================================================================
 
 local TokensCode  = require "lib/tokens_code"
-local AST         = require "src/ast"
+local AST         = require "src/syntactic/ast"
 
 
 --==============================================================================
@@ -42,11 +42,12 @@ local tokens = TokensCode.GetList()
 -- Private Methods
 --==============================================================================
 
---Error: Callback of errors that occurs during syntax analysis
+--Error: Stop class execution and generate error message
 --  Parameters:
 --    [1] $number - line number of grammar syntax error
 --  Return:
 local function Error (line)
+  if (_DEBUG) then print("LAN :: Error") end
   error(string.format("@%d syntactic error.", line), 0)
 end
 

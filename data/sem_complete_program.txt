@@ -16,6 +16,7 @@ s2:[][]string
 
 fun f_1 ()
   p:[][]int
+  s0 = "hello world"
   p = new [2] []int
 end
 
