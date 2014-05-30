@@ -11,10 +11,11 @@ local printFailMessage = false
 --==============================================================================
 
 require "lib/util"
-local Lexical       = require "src/lexical"
-local Syntactic     = require "src/syntactic"
-local Semantic      = require "src/semantic"
-local InterCodeGen  = require "src/intermediate_code"
+local Lexical           = require "src/lexical"
+local Syntactic         = require "src/syntactic"
+local Semantic          = require "src/semantic"
+local IntermediateCode  = require "src/intermediate_code"
+local MachineCode       = require "src/machine_code"
 
 
 --==============================================================================
@@ -2787,10 +2788,21 @@ local function Run ()
     ------------------------------------------------
     local icg_error = false
     if (not unexpected_error and not expected_error) then
-      ok, msg = InterCodeGen.Open("out/" .. valid.name, Semantic.GetTree())
+      ok, msg = IntermediateCode.Open("out/" .. valid.name, Semantic.GetTree())
       if (not ok) then
         icg_error = true
         print(string.format('(%3s de %3s) FAILURE - Unexpected error while writing intermediate code.', num_files_read, num_files))
+      end
+    end
+
+    -- TEST MACHINE CODE GENERATOR
+    ------------------------------------------------
+    local mcg_error = false
+    if (not unexpected_error and not expected_error) then
+      ok, msg = MachineCode.Open("out/" .. valid.name, IntermediateCode.GetCode())
+      if (not ok) then
+        mcg_error = true
+        print(string.format('(%3s de %3s) FAILURE - Unexpected error while writing machine code.', num_files_read, num_files))
       end
     end
 

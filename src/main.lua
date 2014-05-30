@@ -12,10 +12,11 @@ local printASTTree  = false
 --==============================================================================
 
 require "lib/util"
-local Lexical       = require "src/lexical"
-local Syntactic     = require "src/syntactic"
-local Semantic      = require "src/semantic"
-local InterCodeGen  = require "src/intermediate_code"
+local Lexical           = require "src/lexical"
+local Syntactic         = require "src/syntactic"
+local Semantic          = require "src/semantic"
+local IntermediateCode  = require "src/intermediate_code"
+local MachineCode       = require "src/machine_code"
 
 
 --==============================================================================
@@ -31,6 +32,7 @@ local ret_codes = {
   err_syntactic = 4,
   err_semantic  = 5,
   err_intercode = 6,
+  err_machcode  = 7,
 }
 
 
@@ -79,7 +81,7 @@ for k, v in ipairs(args) do
   else
     print("SYN: SUCCESS")
   end
-  print("\n== SYNTACTIC AST TREE =============================================")
+  print("\n== AST TREE =======================================================")
   if (printASTTree) then
     Syntactic.PrintTree()
   end
@@ -94,13 +96,22 @@ for k, v in ipairs(args) do
     print("SEM: SUCCESS")
   end
   print("\n== INTERMEDIATE CODE ==============================================")
-  ok, msg = InterCodeGen.Open(args[k], Semantic.GetTree())
+  ok, msg = IntermediateCode.Open(args[k], Semantic.GetTree())
   if (not ok) then
     print("ICG: FAILURE    ", msg)
     io.stderr:write(ret_codes.err_intercode)
     os.exit(ret_codes.err_intercode)
   else
     print("ICG: SUCCESS")
+  end
+  print("\n== MACHINE CODE ===================================================")
+  ok, msg = MachineCode.Open(args[k], IntermediateCode.GetCode())
+  if (not ok) then
+    print("MCG: FAILURE    ", msg)
+    io.stderr:write(ret_codes.err_machcode)
+    os.exit(ret_codes.err_machcode)
+  else
+    print("MCG: SUCCESS")
   end
   print("\n== FINISH =========================================================")
 end
