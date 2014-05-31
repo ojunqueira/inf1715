@@ -9,8 +9,8 @@ local printTokensCapture  = false
 -- Dependency
 --==============================================================================
 
-local TokensCode  = require "lib/tokens_code"
-local lulex       = require "src/lexical/lulex"
+local TokensCode  = require "tokens_code"
+local lulex       = require "lexical/lulex"
 
 
 --==============================================================================

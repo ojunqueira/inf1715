@@ -9,8 +9,8 @@ local printTokensMatch = false
 -- Dependency
 --==============================================================================
 
-local TokensCode  = require "lib/tokens_code"
-local AST         = require "src/syntactic/ast"
+local TokensCode  = require "tokens_code"
+local AST         = require "syntactic/ast"
 
 
 --==============================================================================

@@ -17,10 +17,10 @@ local printTree = false
 -- Dependency
 --==============================================================================
 
-require "lib/util"
-local TreeNodesCode = require "lib/tree_nodes_code"
-local UtilTree      = require "lib/util_tree"
-local SymbolTable   = require "src/semantic/symbol_table"
+require "util"
+local TreeNodesCode = require "tree_nodes_code"
+local UtilTree      = require "util_tree"
+local SymbolTable   = require "semantic/symbol_table"
 
 
 --==============================================================================

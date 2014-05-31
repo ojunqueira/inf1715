@@ -4,18 +4,20 @@
 
 _DEBUG = false
 local printFailMessage = false
+package.path  = package.path .. ';' .. "src/" .. '?.lua'
+package.path  = package.path .. ';' .. "lib/" .. '?.lua'
 
 
 --==============================================================================
 -- Dependency
 --==============================================================================
 
-require "lib/util"
-local Lexical           = require "src/lexical/lexical"
-local Syntactic         = require "src/syntactic/syntactic"
-local Semantic          = require "src/semantic/semantic"
-local IntermediateCode  = require "src/intermediate_code/intermediate_code"
-local MachineCode       = require "src/machine_code/machine_code"
+require "util"
+local Lexical           = require "lexical/lexical"
+local Syntactic         = require "syntactic/syntactic"
+local Semantic          = require "semantic/semantic"
+local IntermediateCode  = require "intermediate_code/intermediate_code"
+local MachineCode       = require "machine_code/machine_code"
 
 
 --==============================================================================

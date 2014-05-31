@@ -10,9 +10,9 @@ local test_cte    = false
 -- Dependency
 --==============================================================================
 
-require "lib/util"
-local TreeNodesCode   = require "lib/tree_nodes_code"
-local OperationsCode  = require "lib/operations_code"
+require "util"
+local TreeNodesCode   = require "tree_nodes_code"
+local OperationsCode  = require "operations_code"
 
 
 --==============================================================================

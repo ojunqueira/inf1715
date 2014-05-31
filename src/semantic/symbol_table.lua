@@ -8,8 +8,8 @@
 -- Dependency
 --==============================================================================
 
-require "lib/util"
-local TreeNodesCode = require "lib/tree_nodes_code"
+require "util"
+local TreeNodesCode = require "tree_nodes_code"
 
 
 --==============================================================================

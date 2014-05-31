@@ -8,9 +8,9 @@
 -- Dependency
 --==============================================================================
 
-local Parser 	= require "src/syntactic/parser"
-local Grammar = require "src/syntactic/grammar"
-local AST		  = require "src/syntactic/ast"
+local Parser 	= require "syntactic/parser"
+local Grammar = require "syntactic/grammar"
+local AST		  = require "syntactic/ast"
 
 
 --==============================================================================

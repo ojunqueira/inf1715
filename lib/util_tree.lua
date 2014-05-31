@@ -7,7 +7,7 @@
 -- Dependency
 --==============================================================================
 
-local TreeNodesCode = require "lib/tree_nodes_code"
+local TreeNodesCode = require "tree_nodes_code"
 
 
 --==============================================================================
