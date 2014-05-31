@@ -1,10 +1,7 @@
 
-fun f ()
-  b1:bool
-  b2:bool
-  b3:bool
-  b:bool
-  b = b1 and (b2 or b3)
+fun f_1 () :bool
+  i1:int
+  i2:int
+  i3:int
+  i1 = ((4*2) + (7*2)) / 2
 end
-
-
