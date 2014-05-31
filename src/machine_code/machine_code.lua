@@ -9,7 +9,8 @@ local printBasicBlocks = false
 -- Dependency
 --==============================================================================
 
-local OperationsCode  = require "lib/operations_code"
+local OperationsCode  = require "operations_code"
+local Registers       = require "machine_code/registers"
 
 
 --==============================================================================
@@ -24,18 +25,6 @@ local Class = {}
 --  }
 local operations_code = OperationsCode.GetList()
 
---  list of registers
---  {
---    [1 to N] = $string  - register name
---  }
-local registers = {
-  "%eax",
-  "%ebx",
-  "%ecx",
-  "%edx",
-  "%edi",
-  "%esi",
-}
 
 
 --==============================================================================
@@ -136,22 +125,12 @@ function Class.GenMachineBlock (basic_blocks)
   if (_DEBUG) then print("MCG :: GenMachineBlock") end
   assert(type(basic_blocks) == "table")
   local t = {}
-  -- build last time used variable table
-  -- prepare registers
-  -- create list
+  for _, block in ipairs(basic_blocks) do
+    Registers.New(block)
+
+    -- create list
+  end
   return t
-end
-
---GetRegisters: Receive a instruction node created by intermediate code
---    and return registers that should be used for operation
---  Parameters:
---    [1] $table  - Table containing a instruction
---  Return:
---    [1] $string - Register for first operator
---    [2] $string - Register for second operator
---    [3] $string - Register for third operator
-function Class.GetRegisters (instruction)
-
 end
 
 
@@ -159,10 +138,17 @@ end
 -- Public Methods
 --==============================================================================
 
+--Open: Write a 'path'.o file with machine code.
+--  Parameters:
+--    [1] $string   - Path of exit file. Extension will be converted to '.o'
+--    [2] $table    - Struct of program builded by intermediate code.
+--  Return:
+--    [1] $boolean  - false if found any problem, true otherwise
+--    [2] $string   - only when [1] is false, informing which error occurs
 function Class.Open (path, intermediate_code)
   if (_DEBUG) then print("MCG :: Open") end
   assert(path)
-  assert(intermediate_code and type(intermediate_code) == "table")
+  assert(type(intermediate_code) == "table")
   local ok, msg = pcall(function ()
     local f = io.open(util.FileRemoveExtension(path) .. ".o", "w")
     if (not f) then
