@@ -10,7 +10,7 @@ local printBasicBlocks = false
 --==============================================================================
 
 local OperationsCode  = require "operations_code"
-local Registers       = require "machine_code/registers"
+local RegAndAddress   = require "machine_code/reg_add_manager"
 
 
 --==============================================================================
@@ -25,6 +25,7 @@ local Class = {}
 --  }
 local operations_code = OperationsCode.GetList()
 
+local indent = "    "
 
 
 --==============================================================================
@@ -37,9 +38,12 @@ local operations_code = OperationsCode.GetList()
 --    [2] 
 --    [3] $table
 --  Return:
-function Class.DumpFunction (output, header, instructions)
+function Class.DumpFunction (output, name, instructions)
   if (_DEBUG) then print("MCG :: DumpFunction") end
-  -- COMPLETE
+  output:write(string.format("  %s:\n", name))
+  for _, instruction in ipairs(instructions) do
+    output:write(string.format("%s%s\n", indent, instruction))
+  end
 end
 
 --DumpGlobal:
@@ -47,11 +51,28 @@ end
 --    [1] $       - Desired output
 --    [2] $string - Variable name
 --  Return:
-function Class.DumpGlobal (output, var)
+function Class.DumpGlobal (output, list_funcs, list_globals)
   if (_DEBUG) then print("MCG :: DumpGlobal") end
-  assert(var)
-  -- MUST REDO FORMATTING
-  output:write(string.format('glob %s\n', var))
+  assert(type(list_funcs) == "table")
+  assert(type(list_globals) == "table")
+  local t = {}
+  if (not util.TableIsEmpty(list_funcs)) then
+    for _, func in ipairs(list_funcs) do
+      table.insert(t, func.name)
+    end
+  end
+  if (not util.TableIsEmpty(list_globals)) then
+    for _, glob in ipairs(list_globals) do
+      table.insert(t, glob)
+    end
+  end
+  local str = t[1]
+  if (#t > 1) then
+    for i = 2, #t do
+      str = str .. ", " .. t[i]
+    end
+  end
+  output:write(string.format('  .globl %s\n', str))
 end
 
 --DumpString:
@@ -64,8 +85,7 @@ function Class.DumpString (output, var, str)
   if (_DEBUG) then print("MCG :: DumpString") end
   assert(var)
   assert(str)
-  -- MUST REDO FORMATTING
-  output:write(string.format('stri %s = %s\n', var, str))
+  output:write(string.format('%s%s: .string "%s"\n', indent, var, str))
 end
 
 --Error: Stop class execution and generate error message
@@ -126,13 +146,87 @@ function Class.GenMachineBlock (basic_blocks)
   assert(type(basic_blocks) == "table")
   local t = {}
   for _, block in ipairs(basic_blocks) do
-    Registers.New(block)
+    RegAndAddress.New(block)
 
-    -- create list
+
+
+    
+    for num, instruction in ipairs(block) do
+      local op, reg1, reg2, reg3 = RegAndAddress.GetRegisters(num, instruction)
+      if (op) then
+        for _, inst in ipairs(op) do
+          table.insert(t, inst)
+        end
+      end
+      Class.GenMachineInstruction(t, instruction.code, reg1, reg2, reg3)
+    end
   end
   return t
 end
 
+--GenMachineInstruction:
+--  Parameters:
+--  Return:
+--    [1] $string   - Assembly instruction;
+function Class.GenMachineInstruction (t, code, op1, op2, op3)
+  if (_DEBUG) then print("MCG :: GenMachineInstruction") end
+  if (code == operations_code["CALLID"]) then
+    table.insert(t, string.format("  call   %s", op1))
+  elseif (code == operations_code["GOTO"]) then
+    table.insert(t, string.format("  jmp    %s", op1))
+  elseif (code == operations_code["IFFALSEGOTO"]) then
+    
+  elseif (code == operations_code["IFGOTO"]) then
+    table.insert(t, string.format("  jnz    %s", op1))
+  elseif (code == operations_code["LABEL"]) then
+    table.insert(t, string.format("%s", op1))
+  elseif (code == operations_code["PARAM"]) then
+    
+  elseif (code == operations_code["RET_OP"]) then
+    table.insert(t, string.format("  ret    %s", op1))
+  elseif (code == operations_code["RET_NIL"]) then
+    table.insert(t, string.format("  ret"))
+  elseif (code == operations_code["ID=rval"]) then
+    table.insert(t, string.format("  movl   %s, %s", op1, op2))
+  elseif (code == operations_code["ID=BYTErval"]) then
+    table.insert(t, string.format("  movb   %s, %s", op1, op2))
+  elseif (code == operations_code["ID=ID[rval]"]) then
+    
+  elseif (code == operations_code["ID=BYTEID[rval]"]) then
+
+  elseif (code == operations_code["ID=-rval"]) then
+    table.insert(t, string.format("  movl   %s, %s", op1, op2))
+    table.insert(t, string.format("  negl   %s", op1))
+  elseif (code == operations_code["ID=NEWrval"]) then
+    
+  elseif (code == operations_code["ID=NEWBYTErval"]) then
+    
+  elseif (code == operations_code["ID=rvalEQrval"]) then
+    
+  elseif (code == operations_code["ID=rvalNErval"]) then
+    
+  elseif (code == operations_code["ID=rvalGErval"]) then
+    
+  elseif (code == operations_code["ID=rvalLErval"]) then
+    
+  elseif (code == operations_code["ID=rval<rval"]) then
+    
+  elseif (code == operations_code["ID=rval>rval"]) then
+    
+  elseif (code == operations_code["ID=rval+rval"]) then
+    
+  elseif (code == operations_code["ID=rval-rval"]) then
+    
+  elseif (code == operations_code["ID=rval*rval"]) then
+    
+  elseif (code == operations_code["ID=rval/rval"]) then
+    
+  elseif (code == operations_code["ID[rval]=rval"]) then
+    
+  elseif (code == operations_code["ID[rval]=BYTErval"]) then
+    
+  end
+end
 
 --==============================================================================
 -- Public Methods
@@ -150,20 +244,20 @@ function Class.Open (path, intermediate_code)
   assert(path)
   assert(type(intermediate_code) == "table")
   local ok, msg = pcall(function ()
-    local f = io.open(util.FileRemoveExtension(path) .. ".o", "w")
+    local f = io.open(util.FileRemoveExtension(path) .. ".s", "w")
     if (not f) then
       Class.Error(string.format("output file '%s' could not be opened"), path)
     end
+    f:write(string.format('.data\n'))
     for _, string in ipairs(intermediate_code.strings) do
       Class.DumpString(f, string.var, string.str)
     end
-    for _, global in ipairs(intermediate_code.globals) do
-      Class.DumpGlobal(f, global)
-    end
+    f:write(string.format('.text\n'))
+    Class.DumpGlobal(f, intermediate_code.functions, intermediate_code.globals)
     for _, func in ipairs(intermediate_code.functions) do
       local basic_blocks = Class.GenBasicBlock(func)
       local machine_block = Class.GenMachineBlock(basic_blocks)
-      Class.DumpFunction(f, func.header, machine_block)
+      Class.DumpFunction(f, func.name, machine_block)
     end
   end)
   if (not ok) then
@@ -178,3 +272,18 @@ end
 --==============================================================================
 
 return Class
+
+-- ASSEMBLER
+--
+--  .data
+--      s1:  .string ""
+--  .text
+--  
+--  .globl main, etc, etc2
+--
+--  main:
+--  
+--  
+--  jz  .Label   jump if zero
+--  jmp .Label   jump
+--  jnz .Label   jump if not zero
