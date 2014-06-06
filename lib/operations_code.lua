@@ -27,26 +27,29 @@ local codes = {
   ["IFGOTO"]            = 04,
   ["LABEL"]             = 05,
   ["PARAM"]             = 06,
-  ["RETURN"]            = 07,
+  ["RET_OP"]            = 07,
+  ["RET_NIL"]           = 08,
   
   
   ["ID=rval"]           = 10,
   ["ID=BYTErval"]       = 11,
   ["ID=ID[rval]"]       = 12,
   ["ID=BYTEID[rval]"]   = 13,
-  ["ID=unoprval"]       = 14,
-  ["ID=rvalEQrval"]     = 15,
-  ["ID=rvalNErval"]     = 16,
-  ["ID=rvalGErval"]     = 17,
-  ["ID=rvalLErval"]     = 18,
-  ["ID=rval<rval"]      = 19,
-  ["ID=rval>rval"]      = 20,
-  ["ID=rval+rval"]      = 21,
-  ["ID=rval-rval"]      = 22,
-  ["ID=rval*rval"]      = 23,
-  ["ID=rval/rval"]      = 24,
-  ["ID[rval]=rval"]     = 25,
-  ["ID[rval]=BYTErval"] = 26,
+  ["ID=-rval"]          = 14,
+  ["ID=NEWrval"]        = 15,
+  ["ID=NEWBYTErval"]    = 16,
+  ["ID=rvalEQrval"]     = 17,
+  ["ID=rvalNErval"]     = 18,
+  ["ID=rvalGErval"]     = 19,
+  ["ID=rvalLErval"]     = 20,
+  ["ID=rval<rval"]      = 21,
+  ["ID=rval>rval"]      = 22,
+  ["ID=rval+rval"]      = 23,
+  ["ID=rval-rval"]      = 24,
+  ["ID=rval*rval"]      = 25,
+  ["ID=rval/rval"]      = 26,
+  ["ID[rval]=rval"]     = 27,
+  ["ID[rval]=BYTErval"] = 28,
 }
 
 
@@ -59,9 +62,9 @@ function Class.GetList ()
 end
 
 function Class.GetName (operation_code)
-  assert(type(node_code) == "number")
+  assert(type(operation_code) == "number")
   for name, code in pairs(codes) do
-    if (code == node_code) then
+    if (code == operation_code) then
       return name
     end
   end

@@ -59,6 +59,7 @@ local function_counter = 0
 --    functions = {
 --      [1 to N] = {      - list of functions
 --        header          - function header
+--        name            - function name
 --        [1 to N] = {    - list of instructions
 --          label = 
 --          code  = 
@@ -128,7 +129,7 @@ end
 --  Return:
 function Class.DumpInstruction (output, inst)
   if (_DEBUG) then print("ICG :: DumpInstruction") end
-  if ((inst.code == operations_code["CALLID"])) then
+  if (inst.code == operations_code["CALLID"]) then
     output:write(string.format('%14s   call %s\n', inst.label or "", inst.op1))
   elseif (inst.code == operations_code["GOTO"]) then
     output:write(string.format('%14s   goto %s\n', inst.label or "", inst.op1))
@@ -136,12 +137,14 @@ function Class.DumpInstruction (output, inst)
     output:write(string.format('%14s   ifFalse %s goto %s\n', inst.label or "", inst.op1, inst.op2))
   elseif (inst.code == operations_code["IFGOTO"]) then
     output:write(string.format('%14s   if %s goto %s\n', inst.label or "", inst.op1, inst.op2))
-  elseif ((inst.code == operations_code["LABEL"])) then
+  elseif (inst.code == operations_code["LABEL"]) then
     output:write(string.format('%14s\n', inst.label .. ":" or ""))
   elseif (inst.code == operations_code["PARAM"]) then
     output:write(string.format('%14s   param %s\n', inst.label or "", inst.op1))
-  elseif (inst.code == operations_code["RETURN"]) then
-    output:write(string.format('%14s   ret %s\n', inst.label or "", inst.op1 or ""))
+  elseif (inst.code == operations_code["RET_OP"]) then
+    output:write(string.format('%14s   ret %s\n', inst.label or "", inst.op1))
+  elseif (inst.code == operations_code["RET_NIL"]) then
+    output:write(string.format('%14s   ret\n', inst.label or ""))
   elseif (inst.code == operations_code["ID=rval"]) then
     output:write(string.format('%14s   %s = %s\n', inst.label or "", inst.op1, inst.op2))
   elseif (inst.code == operations_code["ID=BYTErval"]) then
@@ -150,8 +153,14 @@ function Class.DumpInstruction (output, inst)
     output:write(string.format('%14s   %s = %s[%s]\n', inst.label or "", inst.op1, inst.op2, inst.op3))
   elseif (inst.code == operations_code["ID=BYTEID[rval]"]) then
     output:write(string.format('%14s   %s = byte %s[%s]\n', inst.label or "", inst.op1, inst.op2, inst.op3))
-  elseif (inst.code == operations_code["ID=unoprval"]) then
-    output:write(string.format('%14s   %s = %s %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
+  -- UNARY OPERATORS
+  elseif (inst.code == operations_code["ID=-rval"]) then
+    output:write(string.format('%14s   %s = - %s\n', inst.label or "", inst.op1, inst.op2))
+  elseif (inst.code == operations_code["ID=NEWrval"]) then
+    output:write(string.format('%14s   %s = new %s\n', inst.label or "", inst.op1, inst.op2))
+  elseif (inst.code == operations_code["ID=NEWBYTErval"]) then
+    output:write(string.format('%14s   %s = new byte %s\n', inst.label or "", inst.op1, inst.op2))
+  -- COMPARISON
   elseif (inst.code == operations_code["ID=rvalEQrval"]) then
     output:write(string.format('%14s   %s = %s == %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
   elseif (inst.code == operations_code["ID=rvalNErval"]) then
@@ -164,6 +173,7 @@ function Class.DumpInstruction (output, inst)
     output:write(string.format('%14s   %s = %s < %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
   elseif (inst.code == operations_code["ID=rval>rval"]) then
     output:write(string.format('%14s   %s = %s > %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
+  --
   elseif (inst.code == operations_code["ID=rval+rval"]) then
     output:write(string.format('%14s   %s = %s + %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
   elseif (inst.code == operations_code["ID=rval-rval"]) then
@@ -172,6 +182,7 @@ function Class.DumpInstruction (output, inst)
     output:write(string.format('%14s   %s = %s * %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
   elseif (inst.code == operations_code["ID=rval/rval"]) then
     output:write(string.format('%14s   %s = %s / %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
+  --
   elseif (inst.code == operations_code["ID[rval]=rval"]) then
     output:write(string.format('%14s   %s[%s] = %s\n', inst.label or "", inst.op1, inst.op2, inst.op3))
   elseif (inst.code == operations_code["ID[rval]=BYTErval"]) then
@@ -349,9 +360,9 @@ function Class.GenExpressionNewVar (node)
   assert(node.id == tree_nodes["NEWVAR"])
   local op = Class.GetVariable()
   if ((node.sem_type == "bool" or node.sem_type == "char") and node.exp.sem_dimension == 0) then
-    Class.AddInstruction(Class.NewInstruction(nil, "ID=unoprval", op, "new byte", Class.GenExpression(node.exp)))
+    Class.AddInstruction(Class.NewInstruction(nil, "ID=NEWBYTErval", op, Class.GenExpression(node.exp)))
   else
-    Class.AddInstruction(Class.NewInstruction(nil, "ID=unoprval", op, "new", Class.GenExpression(node.exp)))
+    Class.AddInstruction(Class.NewInstruction(nil, "ID=NEWrval", op, Class.GenExpression(node.exp)))
   end
   return op
 end
@@ -439,7 +450,7 @@ end
 function Class.GenExpressionUnary (node)
   assert(node.id == tree_nodes["UNARY"])
   local op = Class.GetVariable()
-  Class.AddInstruction(Class.NewInstruction(nil, "ID=unoprval", op, "-", Class.GenExpression(node.exp)))
+  Class.AddInstruction(Class.NewInstruction(nil, "ID=-rval", op, Class.GenExpression(node.exp)))
   return op
 end
 
@@ -487,9 +498,10 @@ function Class.GenFunction (node)
   header = header .. ")\n"
   struct.functions[function_counter] = {
     header = header,
+    name   = node.name,
   }
   Class.GenBlock(node.block)
-  Class.AddInstruction(Class.NewInstruction(nil, "RETURN"))
+  Class.AddInstruction(Class.NewInstruction(nil, "RET_NIL"))
 end
 
 --GenGlobal: 
@@ -564,7 +576,12 @@ function Class.GenReturn (node)
   if (node.exp) then
     op = Class.GenExpression(node.exp)
   end
-  local t = Class.NewInstruction(nil, "RETURN", op)
+  local t
+  if (op) then
+    t = Class.NewInstruction(nil, "RET_OP", op)
+  else
+    t = Class.NewInstruction(nil, "RET_NIL", op)
+  end
   Class.AddInstruction(t)
 end
 
@@ -640,7 +657,7 @@ end
 --    [1] $table
 function Class.GetCode ()
   if (_DEBUG) then print("ICG :: GetIntermediateCode") end
-  return struct
+  return util.TableCopy(struct)
 end
 
 --Open: Write a 'path'.icg file with intermediate code. After writing it, calls
