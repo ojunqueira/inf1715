@@ -3,5 +3,12 @@ fun f_1 () :bool
   i1:int
   i2:int
   i3:int
-  i1 = ((4*2) + (7*2)) / 2
+  i4:int
+  i5:int
+  i6:int
+  i7:int
+  i1 = -4
+  i1 = (i2 + i3) * (i4) / (i5 * i2) + i6 - i7
+  i3 = i7 - i5 + i4
+  i2 = i6
 end
