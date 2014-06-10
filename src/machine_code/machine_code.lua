@@ -2,10 +2,9 @@
 -- Debug
 --==============================================================================
 
-local _DEBUG = false
-local printStruct     = false
-local printAppearance = false
-local printBasicBlocks = false
+local _DEBUG            = false
+local printBasicBlocks  = false
+local printRegVarTable  = false
 
 
 --==============================================================================
@@ -22,6 +21,14 @@ local OperationsCode  = require "operations_code"
 local Class = {}
 
 local indent = "    "
+
+--  table with list of function assembler code
+--  {
+--    [1 to N] =  {                 --  enum of functions.
+--      [1 to N] = "instruction"    --  enum of instructions.
+--    }
+--  }
+local fun_assembler = {}
 
 --  list of operations code
 --  {
@@ -55,7 +62,13 @@ local registers = {
 --      }
 --    }
 --  }
-local regs_vars = {}
+local reg_var = {}
+
+--  table with variables inside stack
+--  {
+--    [1 to N] = "name"
+--  }
+local stack = {}
 
 --  table with list of instruction number where they appear
 --  {
@@ -68,175 +81,67 @@ local regs_vars = {}
 --      }
 --    }
 --  }
-local vars_appear = {}
-
---  table with list of function assembler code
---  {
---    [1 to N] =  {                 --  enum of functions.
---      [1 to N] = "instruction"    --  enum of instructions.
---    }
---  }
-local func_assembly = {}
-
---  table with list of function basic blocks
---  {
---    [1 to N] =  {                 --  enum of functions.
---      [1 to N] = {                --  enum of basic blocks.
---      }
---    }
---  }
-local func_basic_blocks = {}
+local var_use = {}
 
 
 --==============================================================================
 -- Private Methods
 --==============================================================================
 
---AddAssemblerInstruction:
+--BuildTableStack:
 --  Parameters:
---    [1] $number   - Function number
---    [2] $string   - Assembler instruction
 --  Return:
-function Class.AddAssemblerInstruction (func_num, inst)
-  func_assembly[func_num] = func_assembly[func_num] or {}
-  table.insert(func_assembly[func_num], inst)
-end
-
---AddVariableToRegister:
---  Parameters:
---    [1] $number   - Number of register
---    [2] $string   - Variable name
---    [3] $boolean  - TRUE to empty register before addition
---  Return:
-function Class.AddVariableToRegister (reg, var, clear)
-  if (_DEBUG) then print("MCG :: AddVariableToRegister") end
-  assert(type(reg) == "number")
-  assert(type(var) == "string")
-  assert(type(clear) == "boolean")
-  if (clear) then
-    regs_vars.regs[reg] = {}
-    regs_vars.vars[var] = {reg}
+function Class.BuildTableStack (globals, func)
+  if (_DEBUG) then print("MCG :: BuildTableStack") end
+  -- globais nao entram aqui
+  for _, glob in ipairs(globals) do
+    print(glob)
   end
-  for _, var_in_reg in ipairs(regs_vars.regs[reg]) do
-    if (var == var_in_reg) then
-      return
+  local _, _, params = string.find(func.header, "%(([^%)]+)%)")
+  if (params) then
+    params = string.gsub(params, ",", " ")
+    for param in string.gmatch(params, "%w+") do
+      print(param)
     end
   end
-  table.insert(regs_vars.vars[var], reg)
-  table.insert(regs_vars.regs[reg], var)
-end
-
---BuildTableRegistersVariables: Initialize 'regs_vars' with desired values. In
---    'regs_vars', 'regs' are started empty and 'vars' with their own position
---    only.
---  Parameters:
---    [1] $table  - table containing one basic block
---  Return:
-function Class.BuildTableRegistersVariables (basic_block)
-  if (_DEBUG) then print("MCG :: BuildTableRegistersVariables") end
-  regs_vars = {
-    regs = {},
-    vars = {},
-  }
-  for num, _ in ipairs(registers) do
-    regs_vars.regs[num] = {}
-  end
-  for num, block in ipairs(basic_block) do
-    if (Class.OperatorIsVariable(block.op1)) then
-      regs_vars.vars[block.op1] = regs_vars.vars[block.op1] or {block.op1}
-    end
-    if (Class.OperatorIsVariable(block.op2)) then
-      regs_vars.vars[block.op2] = regs_vars.vars[block.op2] or {block.op2}
-    end
-    if (Class.OperatorIsVariable(block.op3)) then
-      regs_vars.vars[block.op3] = regs_vars.vars[block.op3] or {block.op3}
+  for _, func in ipairs(func) do
+    if (func.code == operations_code["ID=rval"] and Class.GetOperatorIsVar(func.op1) and func.op2 == "0") then
+      print(func.op1)
     end
   end
 end
 
---BuildTableVariablesNextUse: Initialize 'vars_appear' with desired values. In
---    'vars_appear', all instructions number wher variable appear will be placed
---    inside list.
+--Clear: Clear all persistance data. Return to class initial state
 --  Parameters:
---    [1] $table  - table containing one basic block
 --  Return:
-function Class.BuildTableVariablesNextUse (basic_block)
-  if (_DEBUG) then print("MCG :: BuildTableVariablesNextUse") end
-  vars_appear = {}
-  vars_appear[#basic_block + 1] = {}
-  for var_name, _ in pairs(regs_vars.vars) do
-    vars_appear[#basic_block + 1][var_name] = {
-      alive     = true,
-      next_inst = #basic_block + 1,
-    }
-  end
-  for i = #basic_block, 1, -1 do
-    vars_appear[i] = util.TableCopy(vars_appear[i + 1])
-    local group = Class.GetOperationGroup(basic_block[i].code)
-    if (group == "0in0out") then
-      -- nothing to do
-    elseif (group == "1in0out") then
-      if (Class.OperatorIsVariable(basic_block[i].op1)) then
-        vars_appear[i][basic_block[i].op1].alive = true
-        vars_appear[i][basic_block[i].op1].next_inst = i
-      end
-    elseif (group == "1in1out") then
-      if (Class.OperatorIsVariable(basic_block[i].op1)) then
-        vars_appear[i][basic_block[i].op1].alive = false
-        vars_appear[i][basic_block[i].op1].next_inst = i
-      end
-      if (Class.OperatorIsVariable(basic_block[i].op2)) then
-        vars_appear[i][basic_block[i].op2].alive = true
-        vars_appear[i][basic_block[i].op2].next_inst = i
-      end
-    elseif (group == "2in1out") then
-      if (Class.OperatorIsVariable(basic_block[i].op1)) then
-        vars_appear[i][basic_block[i].op1].alive = false
-        vars_appear[i][basic_block[i].op1].next_inst = i
-      end
-      if (Class.OperatorIsVariable(basic_block[i].op2)) then
-        vars_appear[i][basic_block[i].op2].alive = true
-        vars_appear[i][basic_block[i].op2].next_inst = i
-      end
-      if (Class.OperatorIsVariable(basic_block[i].op3)) then
-        vars_appear[i][basic_block[i].op3].alive = true
-        vars_appear[i][basic_block[i].op3].next_inst = i
-      end
-    elseif (group == "3in0out") then
-      if (Class.OperatorIsVariable(basic_block[i].op1)) then
-        vars_appear[i][basic_block[i].op1].alive = true
-        vars_appear[i][basic_block[i].op1].next_inst = i
-      end
-      if (Class.OperatorIsVariable(basic_block[i].op2)) then
-        vars_appear[i][basic_block[i].op2].alive = true
-        vars_appear[i][basic_block[i].op2].next_inst = i
-      end
-      if (Class.OperatorIsVariable(basic_block[i].op3)) then
-        vars_appear[i][basic_block[i].op3].alive = true
-        vars_appear[i][basic_block[i].op3].next_inst = i
-      end
-    end
-  end
+function Class.Clear ()
+  if (_DEBUG) then print("MCG :: Clear") end
+  fun_assembler = {}
+  reg_var       = {}
+  stack         = {}
+  var_use       = {}
 end
 
---DumpFunction:
+
+--DumpFunction: Write functions instructions in output
 --  Parameters:
 --    [1] $       - Desired output
---    [2] 
---    [3] $table
+--    [2] $string - Function name
+--    [3] $table  - List of instructions
 --  Return:
-function Class.DumpFunction (output, name, instructions)
+function Class.DumpFunction (output, func_num, func_name)
   if (_DEBUG) then print("MCG :: DumpFunction") end
-  output:write(string.format("  %s:\n", name))
-  for _, instruction in ipairs(instructions) do
+  output:write(string.format("  %s:\n", func_name))
+  for _, instruction in ipairs(fun_assembler[func_num]) do
     output:write(string.format("%s%s\n", indent, instruction))
   end
 end
 
---DumpGlobal:
+--DumpGlobal: Write globals in output
 --  Parameters:
 --    [1] $       - Desired output
---    [2] $string - Variable name
+--    [2] $table  - Functions list generated by 'intermediate_code'
+--    [3] $table  - Globals list generated by 'intermediate_code'
 --  Return:
 function Class.DumpGlobal (output, list_funcs, list_globals)
   if (_DEBUG) then print("MCG :: DumpGlobal") end
@@ -262,7 +167,7 @@ function Class.DumpGlobal (output, list_funcs, list_globals)
   output:write(string.format('  .globl %s\n', str))
 end
 
---DumpString:
+--DumpString: Write string in output
 --  Parameters:
 --    [1] $       - Desired output
 --    [2] $string - Variable name
@@ -285,95 +190,251 @@ function Class.Error (msg)
   error(str, 0)
 end
 
---GenerateFunctionBasicBlocks: Receives a list of instructions and split it into basic blocks
+--FunAddAssemblerInst: Insert instruction inside function table 'fun_assembler'
 --  Parameters:
---    [ ]
---    [1] $table  - list of function instructions generated by intermediate code
+--    [1] $number - Function number
+--    [2] $string - Assembler instruction
 --  Return:
-function Class.GenerateFunctionBasicBlocks (func_num, func_block)
-  if (_DEBUG) then print("MCG :: GenerateFunctionBasicBlocks") end
-  func_basic_blocks[func_num] = {}
+function Class.FunAddAssemblerInst (func_num, inst)
+  fun_assembler[func_num] = fun_assembler[func_num] or {}
+  table.insert(fun_assembler[func_num], inst)
+end
+
+--FunBuildTableRegistersVariables: Initialize 'reg_var' with desired values. In
+--    'reg_var', 'regs' are started empty and 'vars' with their own position
+--    only.
+--  Parameters:
+--    [1] $table  - Table containing one basic block
+--  Return:
+function Class.FunBuildTableRegistersVariables (basic_block)
+  if (_DEBUG) then print("MCG :: FunBuildTableRegistersVariables") end
+  reg_var = {
+    regs = {},
+    vars = {},
+  }
+  for num, _ in ipairs(registers) do
+    reg_var.regs[num] = {}
+  end
+  for num, block in ipairs(basic_block) do
+    if (Class.GetOperatorIsVar(block.op1)) then
+      reg_var.vars[block.op1] = reg_var.vars[block.op1] or {block.op1}
+    end
+    if (Class.GetOperatorIsVar(block.op2)) then
+      reg_var.vars[block.op2] = reg_var.vars[block.op2] or {block.op2}
+    end
+    if (Class.GetOperatorIsVar(block.op3)) then
+      reg_var.vars[block.op3] = reg_var.vars[block.op3] or {block.op3}
+    end
+  end
+end
+
+--FunBuildTableVariablesNextUse: Initialize 'var_use' with desired values. In
+--    'var_use', all instructions number wher variable appear will be placed
+--    inside list.
+--  Parameters:
+--    [1] $table  - Table containing one basic block
+--  Return:
+function Class.FunBuildTableVariablesNextUse (basic_block)
+  if (_DEBUG) then print("MCG :: FunBuildTableVariablesNextUse") end
+  var_use = {}
+  var_use[#basic_block + 1] = {}
+  for var_name, _ in pairs(reg_var.vars) do
+    var_use[#basic_block + 1][var_name] = {
+      alive     = true,
+      next_inst = #basic_block + 1,
+    }
+  end
+  for i = #basic_block, 1, -1 do
+    var_use[i] = util.TableCopy(var_use[i + 1])
+    local group = Class.GetOperationGroup(basic_block[i].code)
+    if (group == "0in0out") then
+      -- nothing to do
+    elseif (group == "1in0out") then
+      if (Class.GetOperatorIsVar(basic_block[i].op1)) then
+        var_use[i][basic_block[i].op1].alive = true
+        var_use[i][basic_block[i].op1].next_inst = i
+      end
+    elseif (group == "1in1out") then
+      if (Class.GetOperatorIsVar(basic_block[i].op1)) then
+        var_use[i][basic_block[i].op1].alive = false
+        var_use[i][basic_block[i].op1].next_inst = i
+      end
+      if (Class.GetOperatorIsVar(basic_block[i].op2)) then
+        var_use[i][basic_block[i].op2].alive = true
+        var_use[i][basic_block[i].op2].next_inst = i
+      end
+    elseif (group == "2in1out") then
+      if (Class.GetOperatorIsVar(basic_block[i].op1)) then
+        var_use[i][basic_block[i].op1].alive = false
+        var_use[i][basic_block[i].op1].next_inst = i
+      end
+      if (Class.GetOperatorIsVar(basic_block[i].op2)) then
+        var_use[i][basic_block[i].op2].alive = true
+        var_use[i][basic_block[i].op2].next_inst = i
+      end
+      if (Class.GetOperatorIsVar(basic_block[i].op3)) then
+        var_use[i][basic_block[i].op3].alive = true
+        var_use[i][basic_block[i].op3].next_inst = i
+      end
+    elseif (group == "3in0out") then
+      if (Class.GetOperatorIsVar(basic_block[i].op1)) then
+        var_use[i][basic_block[i].op1].alive = true
+        var_use[i][basic_block[i].op1].next_inst = i
+      end
+      if (Class.GetOperatorIsVar(basic_block[i].op2)) then
+        var_use[i][basic_block[i].op2].alive = true
+        var_use[i][basic_block[i].op2].next_inst = i
+      end
+      if (Class.GetOperatorIsVar(basic_block[i].op3)) then
+        var_use[i][basic_block[i].op3].alive = true
+        var_use[i][basic_block[i].op3].next_inst = i
+      end
+    end
+  end
+end
+
+--FunGenBasicBlocks: Split a list of instructions into basic blocks
+--  Parameters:
+--    [1] $number - Function number
+--    [2] $table  - List of function instructions generated by 'intermediate_code'
+--  Return:
+--    [1] $table  = {
+--          [1 to N] = {          -- enum of basic blocks
+--            [1 to N] = $table   -- node generated by 'intermediate_code' 
+--          }
+--        }
+function Class.FunGenBasicBlocks (block)
+  if (_DEBUG) then print("MCG :: FunGenBasicBlocks") end
+  assert(type(block) == "table")
+  local t = {}
   local enum_block = 0
   local next_is_block = false
-  for enum_inst, inst in ipairs(func_block) do
+  for enum_inst, inst in ipairs(block) do
     if (next_is_block) then
       next_is_block = false
       enum_block = enum_block + 1
-      func_basic_blocks[func_num][enum_block] = {}
-      table.insert(func_basic_blocks[func_num][enum_block], inst)
+      t[enum_block] = {}
+      table.insert(t[enum_block], inst)
     elseif (enum_inst == 1) then
       enum_block = enum_block + 1
-      func_basic_blocks[func_num][enum_block] = {}
-      table.insert(func_basic_blocks[func_num][enum_block], inst)
+      t[enum_block] = {}
+      table.insert(t[enum_block], inst)
     elseif (inst.code == operations_code["LABEL"]) then
       enum_block = enum_block + 1
-      func_basic_blocks[func_num][enum_block] = {}
-      table.insert(func_basic_blocks[func_num][enum_block], inst)
+      t[enum_block] = {}
+      table.insert(t[enum_block], inst)
     elseif (inst.code == operations_code["GOTO"] or inst.code == operations_code["IFFALSEGOTO"] or inst.code == operations_code["IFGOTO"]) then
       next_is_block = true
-      table.insert(func_basic_blocks[func_num][enum_block], inst)
+      table.insert(t[enum_block], inst)
     else
-      table.insert(func_basic_blocks[func_num][enum_block], inst)
+      table.insert(t[enum_block], inst)
     end
   end
+  if (printBasicBlocks) then
+    util.TablePrint(t)
+  end
+  return t
 end
 
---GenerateFunctionMachineCode:
+--FunGenMachineCode:
 --  Parameters:
---    [1] $table  - Table generated by 'GenerateFunctionBasicBlocks' function
+--    [1] $table  - Table generated by 'FunGenBasicBlocks' function
 --  Return:
-function Class.GenerateFunctionMachineCode (func_num, basic_blocks)
-  if (_DEBUG) then print("MCG :: GenerateFunctionMachineCode") end
+function Class.FunGenMachineCode (func_num, basic_blocks)
+  if (_DEBUG) then print("MCG :: FunGenMachineCode") end
   assert(type(basic_blocks) == "table")
   for _, block in ipairs(basic_blocks) do
-    Class.BuildTableRegistersVariables(block)
-    Class.BuildTableVariablesNextUse(block)
-    for num, instruction in ipairs(block) do
-      reg1, reg2, reg3 = Class.GetRegs(func_num, num, instruction)
-      Class.GenerateMachineInstruction(func_num, instruction.code, instruction.label, reg1, reg2, reg3)
+    Class.FunBuildTableRegistersVariables(block)
+    Class.FunBuildTableVariablesNextUse(block)
+    Class.FunAddAssemblerInst(func_num, string.format("  pushl  %%ebp"))
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %%esp, %%ebp"))
+    -- SALVAR VARIAVEIS LOCAIS NO TOPO DA PILHA (SUBL $N, %esp)
+    -- PUSHL %EBP
+    -- PUSHL %ESI
+    -- PUSHL %EDI
+    for num, inst in ipairs(block) do
+      reg1, reg2, reg3 = Class.GetReg(func_num, num, inst)
+      reg1 = (registers[reg1]) or (tonumber(inst.op1) and "$" .. inst.op1) or inst.op1
+      reg2 = (registers[reg2]) or (tonumber(inst.op2) and "$" .. inst.op2) or inst.op2
+      reg3 = (registers[reg3]) or (tonumber(inst.op3) and "$" .. inst.op3) or inst.op3
+      if (printRegVarTable) then
+        print("----------------------------")
+        print(string.format("INS %d: 1: %s 2: %s 3: %s", num, reg1 or "", reg2 or "", reg3 or ""))
+        Class.PrintTableRegistersVariables()
+      end
+      Class.FunGenMachineInst(func_num, inst.code, inst.label, reg1, reg2, reg3)
     end
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %%ebp, %%esp"))
+    Class.FunAddAssemblerInst(func_num, string.format("  popl   %%ebp"))
+    Class.FunAddAssemblerInst(func_num, string.format("  ret    %s", op1))
   end
 end
 
---GenerateMachineInstruction:
+--FunGenMachineInst:
 --  Parameters:
 --  Return:
 --    [1] $string   - Assembly instruction;
-function Class.GenerateMachineInstruction (func_num, code, label, op1, op2, op3)
-  if (_DEBUG) then print("MCG :: GenerateMachineInstruction") end
+function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
+  if (_DEBUG) then print("MCG :: FunGenMachineInst") end
   if (code == operations_code["CALLID"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  call   %s", op1))
+    -- SALVAR REGISTRADORES EAX, ECX e EDX
+    -- OU FAZER UM SPILL DESSES REGISTRADORES
+    -- PUSHL %EAX
+    -- PUSHL %ECX
+    -- PUSHL %EDX
+    --Class.FunAddAssemblerInst(func_num, string.format("  pushl  %%ebp"))
+    --Class.FunAddAssemblerInst(func_num, string.format("  movl   %%esp, %%ebp"))
+    Class.FunAddAssemblerInst(func_num, string.format("  call   %s", op1))
+    --Class.FunAddAssemblerInst(func_num, string.format("  movl   %%ebp, %%esp"))
+    --Class.FunAddAssemblerInst(func_num, string.format("  popl   %%ebp"))
+    -- RETORNO EM EAX
+    -- PUSHL %EDX
+    -- PUSHL %ECX
+    -- PUSHL %EAX
   elseif (code == operations_code["GOTO"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  jmp    %s", op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  jmp    %s", op1))
   elseif (code == operations_code["IFFALSEGOTO"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  cmpl   %s, $0", op1))
-    Class.AddAssemblerInstruction(func_num, string.format("  je     %s", op2))
+    Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, $0", op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  je     %s", op2))
   elseif (code == operations_code["IFGOTO"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  cmpl   %s, $1", op1))
-    Class.AddAssemblerInstruction(func_num, string.format("  je     %s", op2))
+    Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, $1", op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  je     %s", op2))
   elseif (code == operations_code["LABEL"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("%s", label))
+    Class.FunAddAssemblerInst(func_num, string.format("%s", label))
   elseif (code == operations_code["PARAM"]) then
-    
+    Class.FunAddAssemblerInst(func_num, string.format("  pushl  %s", op1))
   elseif (code == operations_code["RET_OP"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  ret    %s", op1))
+    -- POPL %EDI
+    -- POPL %ESI
+    -- POPL %EBP
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %%ebp, %%esp"))
+    Class.FunAddAssemblerInst(func_num, string.format("  popl   %%ebp"))
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s", op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  ret"))
   elseif (code == operations_code["RET_NIL"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  ret"))
+    -- POPL %EDI
+    -- POPL %ESI
+    -- POPL %EBP
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %%ebp, %%esp"))
+    Class.FunAddAssemblerInst(func_num, string.format("  popl   %%ebp"))
+    Class.FunAddAssemblerInst(func_num, string.format("  ret"))
   elseif (code == operations_code["ID=rval"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  movl   %s, %s", op2, op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
   elseif (code == operations_code["ID=BYTErval"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  movb   %s, %s", op2, op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  movsbl %s, %s", op2, op1))
   elseif (code == operations_code["ID=ID[rval]"]) then
-    
+
   elseif (code == operations_code["ID=BYTEID[rval]"]) then
 
   elseif (code == operations_code["ID=-rval"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  movl   %s, %s", op2, op1))
-    Class.AddAssemblerInstruction(func_num, string.format("  negl   %s", op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  negl   %s", op1))
   elseif (code == operations_code["ID=NEWrval"]) then
-    
+    -- call malloc (parametro é tamanho * 4)
   elseif (code == operations_code["ID=NEWBYTErval"]) then
-    
+    -- push parametro
+    -- call malloc (parametro é tamanho)
+    -- retorno no eax
   elseif (code == operations_code["ID=rvalEQrval"]) then
     
   elseif (code == operations_code["ID=rvalNErval"]) then
@@ -387,15 +448,17 @@ function Class.GenerateMachineInstruction (func_num, code, label, op1, op2, op3)
   elseif (code == operations_code["ID=rval>rval"]) then
     
   elseif (code == operations_code["ID=rval+rval"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  movl   %s, %s", op2, op1))
-    Class.AddAssemblerInstruction(func_num, string.format("  addl   %s, %s", op3, op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  addl   %s, %s", op3, op1))
   elseif (code == operations_code["ID=rval-rval"]) then
-    Class.AddAssemblerInstruction(func_num, string.format("  movl   %s, %s", op2, op1))
-    Class.AddAssemblerInstruction(func_num, string.format("  subl   %s, %s", op3, op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  subl   %s, %s", op3, op1))
   elseif (code == operations_code["ID=rval*rval"]) then
-    
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
+    Class.FunAddAssemblerInst(func_num, string.format("  imul   %s, %s", op3, op1))
   elseif (code == operations_code["ID=rval/rval"]) then
-    
+    -- cltd
+    -- idiv
   elseif (code == operations_code["ID[rval]=rval"]) then
     
   elseif (code == operations_code["ID[rval]=BYTErval"]) then
@@ -403,7 +466,8 @@ function Class.GenerateMachineInstruction (func_num, code, label, op1, op2, op3)
   end
 end
 
---GetOperationGroup:
+--GetOperationGroup: Get a operation node received from intermediate_code and
+--    return the group where it belong
 --  Parameters:
 --    [1] $number - Operation code;
 --  Return:
@@ -444,17 +508,33 @@ function Class.GetOperationGroup (code)
   return group[name]
 end
 
---GetRegs: Receive a instruction node created by intermediate code
+--GetOperatorIsVar: Verify if a operator defined in intermediate code is a
+--    variable. If the operator is not a variable, it is $nil, a $number
+--    (LIT_NUM), or a label, that starts with '.'
+--  Parameters:
+--    [1] $string   - Operator defined in intermediate code
+--  Return:
+--    [1] $boolean  - TRUE if operator is a variable, FALSE otherwise
+function Class.GetOperatorIsVar (op)
+  if (_DEBUG) then print("MCG :: GetOperatorIsVar") end
+  if (op and not tonumber(op) and not string.find(op, "^%.")) then
+    return true
+  end
+  return false
+end
+
+--GetReg: Receive a instruction node created by intermediate code
 --    and return registers that should be used for operation
 --  Parameters:
---    [1] $number - number of instruction inside a basic block
---    [1] $table  - table containing a instruction
+--    [1] $number - Function number
+--    [2] $number - Number of current instruction
+--    [3] $table  - Table containing a instruction
 --  Return:
---    [1] $string         - register for first operator
---    [2] $string         - register for second operator
---    [3] $string         - register for third operator
-function Class.GetRegs (func_num, inst_num, inst)
-  if (_DEBUG) then print("MCG :: GetRegs") end
+--    [1] $string or $nil - Register for first operator
+--    [2] $string or $nil - Register for second operator
+--    [3] $string or $nil - Register for third operator
+function Class.GetReg (func_num, inst_num, inst)
+  if (_DEBUG) then print("MCG :: GetReg") end
   assert(type(func_num) == "number")
   assert(type(inst_num) == "number")
   local operations = {}
@@ -475,22 +555,18 @@ function Class.GetRegs (func_num, inst_num, inst)
     reg2 = Class.GetRegRead(func_num, inst_num, inst.op2)
     reg3 = Class.GetRegRead(func_num, inst_num, inst.op3)
   end
-  print(reg1, reg2, reg3)
-  reg1 = (registers[reg1]) or (tonumber(inst.op1) and "$" .. inst.op1) or inst.op1
-  reg2 = (registers[reg2]) or (tonumber(inst.op2) and "$" .. inst.op2) or inst.op2
-  reg3 = (registers[reg3]) or (tonumber(inst.op3) and "$" .. inst.op3) or inst.op3
   return reg1, reg2, reg3
 end
 
 --GetRegRead:
 --  Parameters:
---    [ ]
---    [1] $number         - Number of current instruction;
---    [2] $string         - Variable that should get a registrator;
---    [3] $string or $nil - Operator 1 already allocated by 'GetRegs';
---    [4] $number or $nil - Number of register used by Operator 1;
---    [5] $string or $nil - Operator 2 already allocated by 'GetRegs';
---    [6] $number or $nil - Number of register used by Operator 2;
+--    [1] $number         - Function number
+--    [2] $number         - Number of current instruction
+--    [3] $string         - Variable that should get a registrator
+--    [4] $string or $nil - Operator 1 already allocated by 'GetReg'
+--    [5] $number or $nil - Number of register used by Operator 1
+--    [6] $string or $nil - Operator 2 already allocated by 'GetReg'
+--    [7] $number or $nil - Number of register used by Operator 2
 --  Return:
 --    [1] $number         - Number of register to use;
 function Class.GetRegRead (func_num, inst_num, op, op1, reg1, op2, reg2)
@@ -503,45 +579,80 @@ function Class.GetRegRead (func_num, inst_num, op, op1, reg1, op2, reg2)
   assert(not op2 or type(op2) == "string")
   assert(not reg2 or type(reg2) == "number")
   local operations = {}
-  if (not Class.OperatorIsVariable(op)) then
+  if (not Class.GetOperatorIsVar(op)) then
     return nil
   end
   local reg
-  if (Class.GetVariableInsideRegister(op)) then
-    reg = Class.GetVariableInsideRegister(op)
-    Class.AddVariableToRegister(reg, op, false)
-  elseif (Class.GetRegisterEmpty()) then
-    reg = Class.GetRegisterEmpty()
-    Class.AddVariableToRegister(reg, op, false)
-  else
-    for regnum, regtable in ipairs(regs_vars.regs) do
-      local avaiable = true
-      for _, var in ipairs(regtable) do
-        if (not Class.GetVariableInsideMemory(var)) then
-          avaiable = false
-          break
-        end
-      end
-      if (avaiable) then
-        reg = regnum
+  if (Class.GetVarInReg(op)) then
+    return Class.GetVarInReg(op)
+  end
+  if (Class.GetRegEmpty()) then
+    reg = Class.GetRegEmpty()
+    Class.UpdateTables(reg, op)
+    return reg
+  end
+  for regnum, regtable in ipairs(reg_var.regs) do
+    local avaiable = true
+    for _, var in ipairs(regtable) do
+      if (not Class.GetVarInMem(var)) then
+        avaiable = false
         break
       end
-        print("Fail to find regs with variables in memory")
-        
+    end
+    if (avaiable) then
+      Class.UpdateTables(regnum, op, true)
+      return regnum
     end
   end
-  return reg
+  for regnum, regtable in ipairs(reg_var.regs) do
+    local avaiable = true
+    for _, var in ipairs(regtable) do
+      if (Class.GetVarNextUse(inst_num, var)) then
+        avaiable = false
+        break
+      end
+    end
+    if (avaiable) then
+      Class.UpdateTables(regnum, op, true)
+      return regnum
+    end
+  end
+  local t = {}
+  for regnum, regtable in ipairs(reg_var.regs) do
+    if ((not op1 or regnum ~= op1) and (not op2 or regnum ~= op2)) then
+      local count = 0
+      for _, var in ipairs(regtable) do
+        if (not Class.GetVarInMem(var) and Class.GetVarNextUse(inst_num, var)) then
+          count = count + 1
+        end
+      end
+      t[regnum] = count
+    end
+  end
+  local selected
+  for i = 1, #registers do
+    if (t[i] and not selected) then
+      selected = t[i]
+    elseif (t[i] and t[i] > selected) then
+      selected = t[i]
+    end
+  end
+  for _, var in ipairs(reg_var.regs[selected]) do
+    Class.VarClear(var)
+    Class.VarSaveMem(func_num, var, selected)
+  end
+  return selected
 end
 
 --GetRegWrite:
 --  Parameters:
---    [0]
---    [1] $number         - Number of current instruction
---    [2] $string         - Variable that should get a registrator
---    [3] $string or $nil - Operator 1 already allocated by 'GetRegs'
---    [4] $number or $nil - Number of register used by Operator 1
---    [5] $string or $nil - Operator 2 already allocated by 'GetRegs'
---    [6] $number or $nil - Number of register used by Operator 2
+--    [1] $number         - Function number
+--    [2] $number         - Number of current instruction
+--    [3] $string         - Variable that should get a registrator
+--    [4] $string or $nil - Operator 1 already allocated by 'GetReg'
+--    [5] $number or $nil - Number of register used by Operator 1
+--    [6] $string or $nil - Operator 2 already allocated by 'GetReg'
+--    [7] $number or $nil - Number of register used by Operator 2
 --  Return:
 --    [1] $number         - Number of register to use
 function Class.GetRegWrite (func_num, inst_num, op, op1, reg1, op2, reg2)
@@ -553,41 +664,92 @@ function Class.GetRegWrite (func_num, inst_num, op, op1, reg1, op2, reg2)
   assert(not reg1 or type(reg1) == "number")
   assert(not op2 or type(op2) == "string")
   assert(not reg2 or type(reg2) == "number")
-  if (not Class.OperatorIsVariable(op)) then
+  if (not Class.GetOperatorIsVar(op)) then
     return nil
   end
-  for regnum, regtable in ipairs(regs_vars.regs) do
+  for regnum, regtable in ipairs(reg_var.regs) do
     if (#regtable == 1 and regtable[1] == op) then
       return regnum
     end
   end
-  if (reg1 and not Class.GetVariableNextUse(inst_num, op1)) then
-    if (#regs_vars.regs[reg1] == 1) then
-      local reg = reg1
-      Class.AddVariableToRegister(reg, op, true)
-      return reg
+  if (reg1 and not Class.GetVarNextUse(inst_num, op1)) then
+    if (#reg_var.regs[reg1] == 1) then
+      Class.UpdateTables(reg1, op, true, true)
+      return reg1
     end
-  elseif (reg2 and not Class.GetVariableNextUse(inst_num, op2)) then
-    if (#regs_vars.regs[reg2] == 1) then
-      local reg = reg2
-      Class.AddVariableToRegister(reg, op, true)
-      return reg
+  end
+  if (reg2 and not Class.GetVarNextUse(inst_num, op2)) then
+    if (#reg_var.regs[reg2] == 1) then
+      Class.UpdateTables(reg2, op, false, true)
+      return reg2
     end
-  else
-    local reg = Class.GetRegRead(func_num, inst_num, op, op1, reg1, op2, reg2)
-    Class.AddVariableToRegister(reg, op, true)
+  end
+  if (Class.GetRegEmpty()) then
+    reg = Class.GetRegEmpty()
+    Class.UpdateTables(reg, op, false, true)
     return reg
   end
+  for regnum, regtable in ipairs(reg_var.regs) do
+    local avaiable = true
+    for _, var in ipairs(regtable) do
+      if (not Class.GetVarInMem(var)) then
+        avaiable = false
+        break
+      end
+    end
+    if (avaiable) then
+      Class.UpdateTables(regnum, op, true, true)
+      return regnum
+    end
+  end
+  for regnum, regtable in ipairs(reg_var.regs) do
+    local avaiable = true
+    for _, var in ipairs(regtable) do
+      if (Class.GetVarNextUse(inst_num, var)) then
+        avaiable = false
+        break
+      end
+    end
+    if (avaiable) then
+      Class.UpdateTables(regnum, op, true, true)
+      return regnum
+    end
+  end
+  local t = {}
+  for regnum, regtable in ipairs(reg_var.regs) do
+    if ((not op1 or regnum ~= op1) and (not op2 or regnum ~= op2)) then
+      local count = 0
+      for _, var in ipairs(regtable) do
+        if (not Class.GetVarInMem(var) and Class.GetVarNextUse(inst_num, var)) then
+          count = count + 1
+        end
+      end
+      t[regnum] = count
+    end
+  end
+  local selected
+  for i = 1, #registers do
+    if (t[i] and not selected) then
+      selected = t[i]
+    elseif (t[i] and t[i] > selected) then
+      selected = t[i]
+    end
+  end
+  for _, var in ipairs(reg_var.regs[selected]) do
+    Class.VarClear(var)
+    Class.VarSaveMem(func_num, var, selected)
+  end
+  return selected
 end
 
---GetRegisterEmpty:
+--GetRegEmpty: Check if a register is empty
 --  Parameters:
 --    [1] $number         - Start counting from this number
 --  Return:
 --    [1] $number or $nil - Number of register who is empty
-function Class.GetRegisterEmpty ()
-  if (_DEBUG) then print("MCG :: GetRegisterEmpty") end
-  for regnum, regtable in ipairs(regs_vars.regs) do
+function Class.GetRegEmpty ()
+  if (_DEBUG) then print("MCG :: GetRegEmpty") end
+  for regnum, regtable in ipairs(reg_var.regs) do
     if (util.TableIsEmpty(regtable)) then
       return regnum
     end
@@ -595,15 +757,15 @@ function Class.GetRegisterEmpty ()
   return nil
 end
 
---GetVariableInsideMemory:
+--GetVarInMem: Check if a variable is placed inside memory
 --  Parameters:
 --    [1] $string   - Variable name
 --  Return:
 --    [1] $boolean  - TRUE if variable is saved in memory, FALSE otherwise
-function Class.GetVariableInsideMemory (var)
-  if (_DEBUG) then print("MCG :: GetReg") end
-  assert(var and type(var) == "string")
-  for _, place in ipairs(regs_vars.vars[var]) do
+function Class.GetVarInMem (var)
+  if (_DEBUG) then print("MCG :: GetVarInMem") end
+  assert(type(var) == "string")
+  for _, place in ipairs(reg_var.vars[var]) do
     if (place == var) then
       return true
     end
@@ -611,16 +773,17 @@ function Class.GetVariableInsideMemory (var)
   return false
 end
 
---GetVariableInsideRegister:
+--GetVarInReg: Check if a variable is placed inside a register
 --  Parameters:
 --    [1] $string         - Variable name
 --  Return:
 --    [1] $number or $nil - Number of register who has variable inside
-function Class.GetVariableInsideRegister (variable)
-  if (_DEBUG) then print("MCG :: GetVariableInsideRegister") end
-  for regnum, regtable in ipairs(regs_vars.regs) do
-    for _, var in ipairs(regtable) do
-      if (variable == var) then
+function Class.GetVarInReg (var)
+  if (_DEBUG) then print("MCG :: GetVarInReg") end
+  assert(type(var) == "string")
+  for regnum, regtable in ipairs(reg_var.regs) do
+    for _, variable in ipairs(regtable) do
+      if (var == variable) then
         return regnum
       end
     end
@@ -628,33 +791,141 @@ function Class.GetVariableInsideRegister (variable)
   return nil
 end
 
---GetVariableNextUse:
+--GetVarNextUse:
 --  Parameters:
---    [1] $string - variable name
---    [2] $number - number of current instruction
+--    [1] $string - Variable name
+--    [2] $number - Number of current instruction
 --  Return:
 --    [1] $boolean  - TRUE if variable is going to be used, FALSE if value
 --                    can be erased
 --    [2] $number   - Return the next use of variable
-function Class.GetVariableNextUse (inst_num, var)
-  if (_DEBUG) then print("MCG :: GetVariableNextUse") end
+function Class.GetVarNextUse (inst_num, var)
+  if (_DEBUG) then print("MCG :: GetVarNextUse") end
   assert(type(inst_num) == "number")
   assert(type(var) == "string")
-  return vars_appear[inst_num][var].alive, vars_appear[inst_num][var].next_inst
+  return var_use[inst_num][var].alive, var_use[inst_num][var].next_inst
 end
 
---OperatorIsVariable: Verify if a operator defined in intermediate code is a variable.
---    If it is $nil, or $number (LIT_NUM), or starts with '.' will return FALSE
+--PrintTableRegistersVariables:
 --  Parameters:
---    [1] $string   - Operator defined in intermediate code
 --  Return:
---    [1] $boolean  - TRUE if operator is a variable, FALSE otherwise
-function Class.OperatorIsVariable (op)
-  if (_DEBUG) then print("MCG :: OperatorIsVariable") end
-  if (op and not tonumber(op) and not string.find(op, "^%.")) then
-    return true
+function Class.PrintTableRegistersVariables ()
+  if (_DEBUG) then print("MCG :: PrintTableRegistersVariables") end
+  for regnum, regtable in ipairs(reg_var.regs) do
+    local str = "REG " .. regnum .. ": "
+    for _, var in ipairs(regtable) do
+      str = str .. " \t" .. var
+    end
+    print(str)
   end
-  return false
+  for varname, vartable in pairs(reg_var.vars) do
+    local str = "VAR " .. varname .. ": "
+    for _, place in ipairs(vartable) do
+      str = str .. " \t" .. place
+    end
+    print(str)
+  end
+end
+
+--RegAddVar: Add a variable inside a register
+--  Parameters:
+--    [1] $number   - Number of register
+--    [2] $string   - Variable name
+--  Return:
+function Class.RegAddVar (reg, var)
+  if (_DEBUG) then print("MCG :: RegAddVar") end
+  assert(type(reg) == "number")
+  assert(type(var) == "string")
+  table.insert(reg_var.regs[reg], var)
+end
+
+--RegClear: Remove all variables from a register
+--  Parameters:
+--    [1] $number   - Number of register
+--  Return:
+function Class.RegClear (reg)
+  if (_DEBUG) then print("MCG :: RegClear") end
+  assert(type(reg) == "number")
+  reg_var.regs[reg] = {}
+end
+
+--UpdateTables: Update 'reg_var' and 'var_use' tables
+--  Parameters:
+--    [1] $number   - Number of register
+--    [2] $string   - Variable name
+--    [3] $boolean  - TRUE to empty register before addition
+--    [4] $boolean  - TRUE to empty var references except new register
+--  Return:
+function Class.UpdateTables (reg, var, reg_clear, var_write)
+  if (_DEBUG) then print("MCG :: UpdateTables") end
+  assert(type(reg) == "number")
+  assert(type(var) == "string")
+  assert(not reg_clear or type(reg_clear) == "boolean")
+  assert(not var_write or type(var_write) == "boolean")
+  if (var_write or reg_clear) then
+    for _, var_in_reg in ipairs(reg_var.regs[reg]) do
+      Class.VarRemoveReg(var_in_reg, reg)
+    end
+    Class.RegClear(reg)
+    Class.RegAddVar(reg, var)
+    if (var_write) then
+      Class.VarClear(var)
+      Class.VarAddReg(var, reg)
+    end
+  else
+    Class.RegAddVar(reg, var)
+  end
+end
+
+--VarAddReg: Add a register inside a variable
+--  Parameters:
+--    [1] $string   - Variable name
+--    [2] $number   - Number of register
+--  Return:
+function Class.VarAddReg (var, reg)
+  if (_DEBUG) then print("MCG :: VarAddReg") end
+  assert(type(reg) == "number")
+  assert(type(var) == "string")
+  table.insert(reg_var.vars[var], reg)
+end
+
+--VarClear: Remove all registers and variable from a variable
+--  Parameters:
+--    [1] $string   - Variable name
+--  Return:
+function Class.VarClear (var)
+  if (_DEBUG) then print("MCG :: VarClear") end
+  assert(type(var) == "string")
+  reg_var.vars[var] = {}
+end
+
+--VarRemoveReg: Remove a register from a variable
+--  Parameters:
+--    [1] $string   - Variable name
+--    [2] $number   - Number of register
+--  Return:
+function Class.VarRemoveReg (var, reg)
+  if (_DEBUG) then print("MCG :: VarRemoveReg") end
+  assert(type(var) == "string")
+  assert(type(reg) == "number")
+  for i, data in ipairs(reg_var.vars[var]) do
+    if (data == reg) then
+      table.remove(reg_var.vars[var], i)
+    end
+  end
+end
+
+--VarSaveMem: Add assembler instruction to save variable from register to memory
+--    and update table;
+--  Parameters:
+--  Return:
+function Class.VarSaveMem (func_num, var, reg)
+  if (_DEBUG) then print("MCG :: VarSaveMem") end
+  assert(type(func_num) == "number")
+  assert(type(var) == "string")
+  assert(type(reg) == "number")
+  -- ASSEMBLER CODE TO SAVE
+  table.insert(reg_var.vars[var], var)
 end
 
 
@@ -674,6 +945,7 @@ function Class.Open (path, intermediate_code)
   assert(path)
   assert(type(intermediate_code) == "table")
   local ok, msg = pcall(function ()
+    Class.Clear()
     local f = io.open(util.FileRemoveExtension(path) .. ".s", "w")
     if (not f) then
       Class.Error(string.format("output file '%s' could not be opened"), path)
@@ -685,9 +957,10 @@ function Class.Open (path, intermediate_code)
     f:write(string.format('.text\n'))
     Class.DumpGlobal(f, intermediate_code.functions, intermediate_code.globals)
     for i, func in ipairs(intermediate_code.functions) do
-      Class.GenerateFunctionBasicBlocks(i, func)
-      Class.GenerateFunctionMachineCode(i, func_basic_blocks[i])
-      Class.DumpFunction(f, func.name, func_assembly[i])
+      Class.BuildTableStack(intermediate_code.globals, func)
+      local basic_block = Class.FunGenBasicBlocks(func)
+      Class.FunGenMachineCode(i, basic_block)
+      Class.DumpFunction(f, i, func.name)
     end
   end)
   if (not ok) then
