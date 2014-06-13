@@ -12,6 +12,7 @@ fun f_1 (b1:bool, b2:bool) :bool
   i1 = (i2 + i3) * (i4) / (i5 * i2) + i6 - i7
   i3 = i7 - i5 + i4
   i2 = i6
+  b1 = i2 = i1
   if true
     i8:int
   end
@@ -19,6 +20,16 @@ fun f_1 (b1:bool, b2:bool) :bool
   sum (i5, i2)
 end
 
-fun sum (p1:int, p2:int) :int
-  return p1 + p2
+fun mul (a:int, b:int) :int
+  return a * b
 end
+
+fun sub (a:int, b:int) :int
+  return a - b
+end
+
+fun sum (a:int, b:int) :int
+  return a + b
+end
+
+
