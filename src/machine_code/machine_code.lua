@@ -7,10 +7,6 @@
 --      access its lowest byte. If third operator is inside ESI or EDI, it wont
 --      complete its instructions
 
--- BUG: After calling a instruction, the number of parameters pushed into %ebp
---      must be discharged. "ADDL $(4 * number of parameters), %esi" must be
---      inserted to assembler.
-
 -- IMP: Intermediate code insert a 'ret' instruction at the end of every function.
 --      We could dischard this intruction if function already has a 'return'.
 

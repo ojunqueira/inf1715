@@ -646,6 +646,23 @@ function Class.NewInstruction (label, code, operator1, operator2, operator3)
   return t
 end
 
+--OptimizeDoubleReturn:
+--  Parameters:
+--  Return:
+function Class.OptimizeDoubleReturn ()
+  if (_DEBUG) then print("ICG :: OptimizeDoubleReturn") end
+  for _, func in ipairs(struct.functions) do
+    local previous_inst
+    for i, inst in ipairs(func) do
+      if ((previous_inst == operations_code["RET_OP"] or previous_inst == operations_code["RET_NIL"]) and inst.code == operations_code["RET_NIL"]) then
+        table.remove(func, i)
+      else
+        previous_inst = inst.code
+      end
+    end
+  end
+end
+
 
 --==============================================================================
 -- Public Methods
@@ -683,6 +700,7 @@ function Class.Open (path, tree)
         Class.Error("unknown program node.")
       end
     end
+    Class.OptimizeDoubleReturn()
     if (printStruct) then
       util.TablePrint(struct)
     end
