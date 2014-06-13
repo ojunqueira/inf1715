@@ -130,7 +130,7 @@ end
 function Class.DumpInstruction (output, inst)
   if (_DEBUG) then print("ICG :: DumpInstruction") end
   if (inst.code == operations_code["CALLID"]) then
-    output:write(string.format('%14s   call %s\n', inst.label or "", inst.op1))
+    output:write(string.format('%14s   call %s %d\n', inst.label or "", inst.op1, inst.op2))
   elseif (inst.code == operations_code["GOTO"]) then
     output:write(string.format('%14s   goto %s\n', inst.label or "", inst.op1))
   elseif (inst.code == operations_code["IFFALSEGOTO"]) then
@@ -280,7 +280,7 @@ function Class.GenCall (node)
       Class.AddInstruction(Class.NewInstruction(nil, "PARAM", params_list[i]))
     end
   end
-  Class.AddInstruction(Class.NewInstruction(nil, "CALLID", node.name))
+  Class.AddInstruction(Class.NewInstruction(nil, "CALLID", node.name, #node.exps))
 end
 
 --GenDeclare: Add instructions of node to it's function structure
@@ -639,9 +639,9 @@ function Class.NewInstruction (label, code, operator1, operator2, operator3)
   local t = {
     label = label,
     code  = operations_code[code],
-    op1   = operator1,
-    op2   = operator2,
-    op3   = operator3,
+    op1   = tostring(operator1),
+    op2   = tostring(operator2),
+    op3   = tostring(operator3),
   }
   return t
 end
