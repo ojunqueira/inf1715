@@ -17,7 +17,7 @@ fun f_1 (b1:bool, b2:bool) :bool
     i8:int
   end
   i7 = 14
-  sum (i5, i2)
+  i1 = sum (i5, i2)
 end
 
 fun mul (a:int, b:int) :int
