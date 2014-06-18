@@ -646,7 +646,7 @@ function Class.NewInstruction (label, code, operator1, operator2, operator3)
   return t
 end
 
---OptimizeDoubleReturn:
+--OptimizeDoubleReturn: Removes double 'ret' instructions
 --  Parameters:
 --  Return:
 function Class.OptimizeDoubleReturn ()

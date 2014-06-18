@@ -7,8 +7,8 @@
 --      access its lowest byte. If third operator is inside ESI or EDI, it wont
 --      complete its instructions
 
--- IMP: Intermediate code insert a 'ret' instruction at the end of every function.
---      We could dischard this intruction if function already has a 'return'.
+-- BUG: Parameters are being pushed to stack before %ecx and %edx. Must be done
+--      before that
 
 
 --==============================================================================
@@ -247,6 +247,22 @@ function Class.BlockBuildVariablesNextUse (basic_block)
   end
 end
 
+--BlockSpillRegisters: Spill variables that are only saved in registers back
+--    to memory.
+--  Parameters:
+--    [1] $number - Function number
+--  Return:
+function Class.BlockSpillRegisters (func_num)
+  if (_DEBUG) then print("MCG :: BlockSpillRegisters") end
+  for regnum, regtable in ipairs(reg_var.regs) do
+    for _, var in ipairs(regtable) do
+      if (not Class.GetVarInMem(var)) then
+        Class.VarSaveMem(func_num, var, regnum)
+      end
+    end
+  end
+end
+
 --Clear: Clear all persistance data. Return to class initial state
 --  Parameters:
 --  Return:
@@ -363,11 +379,11 @@ function Class.FunBuildStack (func)
     end
     if (func.op2 and Class.GetOperatorIsVar(func.op2) and not stack[func.op2]) then
       count = count + 1
-      stack[func.op1] = "-" .. (count * 4) .. "(%ebp)"
+      stack[func.op2] = "-" .. (count * 4) .. "(%ebp)"
     end
     if (func.op3 and Class.GetOperatorIsVar(func.op3) and not stack[func.op3]) then
       count = count + 1
-      stack[func.op1] = "-" .. (count * 4) .. "(%ebp)"
+      stack[func.op3] = "-" .. (count * 4) .. "(%ebp)"
     end
   end
   return count - 1
@@ -391,7 +407,7 @@ function Class.FunGenMachineCode (func_num, func)
   Class.FunAddAssemblerInst(func_num, string.format("  pushl  %%esi"))
   Class.FunAddAssemblerInst(func_num, string.format("  pushl  %%edi"))
   local var_count = Class.FunBuildStack(func)
-  Class.FunAddAssemblerInst(func_num, string.format("  subl   $%d, %%esp", var_count * 4))
+  Class.FunAddAssemblerInst(func_num, string.format("  subl   $%d, %%esp\t%s", var_count * 4, (_DETAIL and "/* allocate vars on stack */") or ""))
   local basic_blocks = Class.BlockGenerateBasicBlocks(func)
   for _, block in ipairs(basic_blocks) do
     Class.BlockBuildRegistersVariables(block)
@@ -408,6 +424,7 @@ function Class.FunGenMachineCode (func_num, func)
       end
       Class.FunGenMachineInst(func_num, inst.code, inst.label, reg1, reg2, reg3)
     end
+    Class.BlockSpillRegisters(func_num)
   end
 end
 
@@ -418,44 +435,52 @@ end
 function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
   if (_DEBUG) then print("MCG :: FunGenMachineInst") end
   if (code == operations_code["CALLID"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
-    -- registrador EAX é feito spill para fazer o call da chamada,
-    -- enquanto o ECX e EDX sao empilhados e depois do call desempilhados
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* CALLID */")) end
     local eax_num = Class.RegGetNum("%eax")
     for _, var in ipairs(reg_var.regs[eax_num]) do
       Class.VarClear(var)
       Class.VarSaveMem(func_num, var, eax_num)
     end
-    Class.FunAddAssemblerInst(func_num, string.format("  pushl  %%ecx"))
-    Class.FunAddAssemblerInst(func_num, string.format("  pushl  %%edx"))
+    local ecx_num = Class.RegGetNum("%ecx")
+    for _, var in ipairs(reg_var.regs[ecx_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, ecx_num)
+    end
+    local edx_num = Class.RegGetNum("%edx")
+    for _, var in ipairs(reg_var.regs[edx_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, edx_num)
+    end
     Class.FunAddAssemblerInst(func_num, string.format("  call   %s", op1))
-    -- RETORNO EM EAX
-    Class.FunAddAssemblerInst(func_num, string.format("  pushl  %%edx"))
-    Class.FunAddAssemblerInst(func_num, string.format("  pushl  %%ecx"))
     local _, _, num_params = string.find(op2, "(%d+)")
-    Class.FunAddAssemblerInst(func_num, string.format("  addl   $%s, %%esp", num_params * 4))
-    -- DESEMPILHA PARAMETROS
+    Class.FunAddAssemblerInst(func_num, string.format("  addl   $%s, %%esp\t%s", num_params * 4, (_DETAIL and "/* discharge params from stack */") or ""))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["GOTO"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* GOTO */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  jmp    %s", op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["IFFALSEGOTO"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
-    Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, $0", op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* IFFALSEGOTO */")) end
+    Class.FunAddAssemblerInst(func_num, string.format("  cmpl   $0, %s", op1))
     Class.FunAddAssemblerInst(func_num, string.format("  je     %s", op2))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["IFGOTO"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
-    Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, $1", op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* IFGOTO */")) end
+    Class.FunAddAssemblerInst(func_num, string.format("  cmpl   $1, %s", op1))
     Class.FunAddAssemblerInst(func_num, string.format("  je     %s", op2))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["LABEL"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* LABEL */")) end
     Class.FunAddAssemblerInst(func_num, string.format("%s:", label))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["PARAM"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* PARAM */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  pushl  %s", op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["RET_OP"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* RET_OP */")) end
     if (op1 ~= "%eax") then
-      Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %%eax", op1))
+      Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %%eax\t%s", op1, (_DETAIL and "/* save %eax for ret */") or ""))
     end
     Class.FunAddAssemblerInst(func_num, string.format("  popl   %%edi"))
     Class.FunAddAssemblerInst(func_num, string.format("  popl   %%esi"))
@@ -463,45 +488,54 @@ function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
     Class.FunAddAssemblerInst(func_num, string.format("  movl   %%ebp, %%esp"))
     Class.FunAddAssemblerInst(func_num, string.format("  popl   %%ebp"))
     Class.FunAddAssemblerInst(func_num, string.format("  ret"))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["RET_NIL"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* RET_NIL */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  popl   %%edi"))
     Class.FunAddAssemblerInst(func_num, string.format("  popl   %%esi"))
     Class.FunAddAssemblerInst(func_num, string.format("  popl   %%ebx"))
     Class.FunAddAssemblerInst(func_num, string.format("  movl   %%ebp, %%esp"))
     Class.FunAddAssemblerInst(func_num, string.format("  popl   %%ebp"))
     Class.FunAddAssemblerInst(func_num, string.format("  ret"))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rval */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=BYTErval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=BYTErval */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  movsbl %s, %s", op2, op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=ID[rval]"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=ID[rval] */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %%esi", op3))
     Class.FunAddAssemblerInst(func_num, string.format("  imul   $4, %%esi"))
     Class.FunAddAssemblerInst(func_num, string.format("  addl   %s, %%esi", op2))
     Class.FunAddAssemblerInst(func_num, string.format("  movl   (%%esi), %s", op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=BYTEID[rval]"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=BYTEID[rval] */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %%esi", op3))
     Class.FunAddAssemblerInst(func_num, string.format("  addl   %s, %%esi", op2))
     Class.FunAddAssemblerInst(func_num, string.format("  movsbl %s, (%%esi)", op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=-rval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=-rval */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
     Class.FunAddAssemblerInst(func_num, string.format("  negl   %s", op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=NEWrval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=NEWrval */")) end
     -- call malloc (parametro é tamanho * 4)
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=NEWBYTErval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=NEWBYTErval */")) end
     -- push parametro
     -- call malloc (parametro é tamanho)
     -- retorno no eax
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rvalEQrval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rvalEQrval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
     Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
@@ -511,8 +545,9 @@ function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_true))
     Class.FunAddAssemblerInst(func_num, string.format("  movl   $1, %s", op1))
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_end))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rvalNErval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rvalNErval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
     Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
@@ -522,8 +557,9 @@ function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_true))
     Class.FunAddAssemblerInst(func_num, string.format("  movl   $1, %s", op1))
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_end))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rvalGErval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rvalGErval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
     Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
@@ -533,8 +569,9 @@ function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_true))
     Class.FunAddAssemblerInst(func_num, string.format("  movl   $1, %s", op1))
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_end))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rvalLErval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rvalLErval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
     Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
@@ -544,8 +581,9 @@ function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_true))
     Class.FunAddAssemblerInst(func_num, string.format("  movl   $1, %s", op1))
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_end))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rval<rval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rval<rval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
     Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
@@ -555,8 +593,9 @@ function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_true))
     Class.FunAddAssemblerInst(func_num, string.format("  movl   $1, %s", op1))
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_end))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rval>rval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rval>rval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
     Class.FunAddAssemblerInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
@@ -566,31 +605,54 @@ function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_true))
     Class.FunAddAssemblerInst(func_num, string.format("  movl   $1, %s", op1))
     Class.FunAddAssemblerInst(func_num, string.format("%s:", lbl_end))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rval+rval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
-    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
-    Class.FunAddAssemblerInst(func_num, string.format("  addl   %s, %s", op3, op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rval+rval */")) end
+    if (op1 == op2) then
+      Class.FunAddAssemblerInst(func_num, string.format("  addl   %s, %s", op3, op1))
+    elseif (op1 == op3) then
+      Class.FunAddAssemblerInst(func_num, string.format("  addl   %s, %s", op2, op1))
+    else
+      Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
+      Class.FunAddAssemblerInst(func_num, string.format("  addl   %s, %s", op3, op1))
+    end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rval-rval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
-    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
-    Class.FunAddAssemblerInst(func_num, string.format("  subl   %s, %s", op3, op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rval-rval */")) end
+    if (op1 == op2) then
+      Class.FunAddAssemblerInst(func_num, string.format("  subl   %s, %s", op3, op1))
+    elseif (op1 == op3) then
+      Class.FunAddAssemblerInst(func_num, string.format("  subl   %s, %s", op2, op1))
+    else
+      Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
+      Class.FunAddAssemblerInst(func_num, string.format("  subl   %s, %s", op3, op1))
+    end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rval*rval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
-    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
-    Class.FunAddAssemblerInst(func_num, string.format("  imul   %s, %s", op3, op1))
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rval*rval */")) end
+    if (op1 == op2) then
+      Class.FunAddAssemblerInst(func_num, string.format("  imul   %s, %s", op3, op1))
+    elseif (op1 == op3) then
+      Class.FunAddAssemblerInst(func_num, string.format("  imul   %s, %s", op2, op1))
+    else
+      Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", op2, op1))
+      Class.FunAddAssemblerInst(func_num, string.format("  imul   %s, %s", op3, op1))
+    end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rval/rval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID=rval/rval */")) end
     -- cltd
     -- idiv
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID[rval]=rval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID[rval]=rval */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %%esi", op2))
     Class.FunAddAssemblerInst(func_num, string.format("  imul   $4, %%esi"))
     Class.FunAddAssemblerInst(func_num, string.format("  addl   %s, %%esi", op1))
     Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, (%%esi)", op3))
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID[rval]=BYTErval"]) then
-    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*-------*/")) end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/* ID[rval]=BYTErval */")) end
     Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %%esi", op2))
     Class.FunAddAssemblerInst(func_num, string.format("  addl   %s, %%esi", op1))
     -- WARNING: REGISTER USED IN LAST RVAL VALUE MUST BE ONE OF: EAX, EBX, ECX or EDX
@@ -608,6 +670,7 @@ function Class.FunGenMachineInst (func_num, code, label, op1, op2, op3)
       print(string.format("  movb   %s, (%%esi)", op3))
       Class.FunAddAssemblerInst(func_num, string.format("  movb   %s, (%%esi)", op3))
     end
+    if (_DETAIL) then Class.FunAddAssemblerInst(func_num, string.format("/*----------------*/")) end
   end
 end
 
@@ -662,7 +725,7 @@ end
 --    [1] $boolean  - TRUE if operator is a variable, FALSE otherwise
 function Class.GetOperatorIsVar (op)
   if (_DEBUG) then print("MCG :: GetOperatorIsVar") end
-  if (op and not tonumber(op) and not string.find(op, "^%.")) then
+  if (op and op ~= "nil" and not tonumber(op) and not string.find(op, "^%.")) then
     return true
   end
   return false
@@ -733,20 +796,26 @@ function Class.GetRegRead (func_num, inst_num, op, op1, reg1, op2, reg2)
   end
   if (Class.GetRegEmpty()) then
     reg = Class.GetRegEmpty()
+    Class.RegAddVar(reg, op)
+    Class.VarAddReg(op, reg)
     Class.RegGetMem(func_num, reg, op)
-    Class.UpdateTables(reg, op)
     return reg
   end
   for regnum, regtable in ipairs(reg_var.regs) do
     local avaiable = true
-    for _, var in ipairs(regtable) do
-      if (not Class.GetVarInMem(var)) then
+    for i, var in ipairs(regtable) do
+      if (i == reg1 or i == reg2 or not Class.GetVarInMem(var)) then
         avaiable = false
         break
       end
     end
     if (avaiable) then
-      Class.UpdateTables(regnum, op, true)
+      for _, var in ipairs(regtable) do
+        Class.VarRemoveReg(var, regnum)
+      end
+      Class.RegClear(regnum)
+      Class.RegAddVar(regnum, op)
+      Class.VarAddReg(op, regnum)
       Class.RegGetMem(func_num, regnum, op)
       return regnum
     end
@@ -760,7 +829,12 @@ function Class.GetRegRead (func_num, inst_num, op, op1, reg1, op2, reg2)
       end
     end
     if (avaiable) then
-      Class.UpdateTables(regnum, op, true)
+      for _, var in ipairs(regtable) do
+        Class.VarRemoveReg(var, regnum)
+      end
+      Class.RegClear(regnum)
+      Class.RegAddVar(regnum, op)
+      Class.VarAddReg(op, regnum)
       Class.RegGetMem(func_num, regnum, op)
       return regnum
     end
@@ -791,6 +865,7 @@ function Class.GetRegRead (func_num, inst_num, op, op1, reg1, op2, reg2)
   end
   Class.RegClear(selected)
   Class.RegAddVar(selected, op)
+  Class.VarAddReg(op, selected)
   Class.RegGetMem(func_num, selected, op)
   return selected
 end
@@ -820,24 +895,35 @@ function Class.GetRegWrite (func_num, inst_num, op, op1, reg1, op2, reg2)
   end
   for regnum, regtable in ipairs(reg_var.regs) do
     if (#regtable == 1 and regtable[1] == op) then
+      Class.VarClear(op)
       return regnum
     end
   end
   if (reg1 and not Class.GetVarNextUse(inst_num, op1)) then
     if (#reg_var.regs[reg1] == 1) then
-      Class.UpdateTables(reg1, op, true, true)
+      Class.VarRemoveReg(op1, reg1)
+      Class.RegClear(reg1)
+      Class.VarClear(op)
+      Class.VarAddReg(op, reg1)
+      Class.RegAddVar(reg1, op)
       return reg1
     end
   end
   if (reg2 and not Class.GetVarNextUse(inst_num, op2)) then
     if (#reg_var.regs[reg2] == 1) then
-      Class.UpdateTables(reg2, op, false, true)
+      Class.VarRemoveReg(op2, reg2)
+      Class.RegClear(reg2)
+      Class.VarClear(op)
+      Class.VarAddReg(op, reg2)
+      Class.RegAddVar(reg2, op)
       return reg2
     end
   end
   if (Class.GetRegEmpty()) then
     reg = Class.GetRegEmpty()
-    Class.UpdateTables(reg, op, false, true)
+    Class.RegAddVar(reg, op)
+    Class.VarClear(op)
+    Class.VarAddReg(op, reg)
     return reg
   end
   for regnum, regtable in ipairs(reg_var.regs) do
@@ -849,7 +935,13 @@ function Class.GetRegWrite (func_num, inst_num, op, op1, reg1, op2, reg2)
       end
     end
     if (avaiable) then
-      Class.UpdateTables(regnum, op, true, true)
+      for _, var in ipairs(regtable) do
+        Class.VarRemoveReg(var, regnum)
+      end
+      Class.RegClear(regnum)
+      Class.VarClear(op)
+      Class.VarAddReg(op, regnum)
+      Class.RegAddVar(regnum, op)
       return regnum
     end
   end
@@ -862,7 +954,13 @@ function Class.GetRegWrite (func_num, inst_num, op, op1, reg1, op2, reg2)
       end
     end
     if (avaiable) then
-      Class.UpdateTables(regnum, op, true, true)
+      for _, var in ipairs(regtable) do
+        Class.VarRemoveReg(var, regnum)
+      end
+      Class.RegClear(regnum)
+      Class.VarClear(op)
+      Class.VarAddReg(op, regnum)
+      Class.RegAddVar(regnum, op)
       return regnum
     end
   end
@@ -892,6 +990,8 @@ function Class.GetRegWrite (func_num, inst_num, op, op1, reg1, op2, reg2)
   end
   Class.RegClear(selected)
   Class.RegAddVar(selected, op)
+  Class.VarClear(op)
+  Class.VarAddReg(op, selected)
   return selected
 end
 
@@ -1041,11 +1141,23 @@ end
 --  Parameters:
 --  Return:
 function Class.RegGetMem (func_num, reg, var)
-  if (_DEBUG) then print("MCG :: VarSaveMem") end
+  if (_DEBUG) then print("MCG :: RegGetMem") end
   assert(type(func_num) == "number")
   assert(type(reg) == "number")
   assert(type(var) == "string")
-  Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", stack[var], registers[reg]))
+  if (var == "$ret") then
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s\t%s",
+      "$ret",
+      registers[reg],
+      (_DETAIL and "/* save fun ret */") or ""
+    ))
+  else
+    Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s\t%s",
+      stack[var],
+      registers[reg],
+      (_DETAIL and "/* get " .. var .. " from stack */") or ""
+    ))
+  end
 end
 
 --RegGetNum: Get a register number 
@@ -1060,34 +1172,6 @@ function Class.RegGetNum (str)
     end
   end
   return nil
-end
-
---UpdateTables: Update 'reg_var' and 'var_use' tables
---  Parameters:
---    [1] $number   - Number of register
---    [2] $string   - Variable name
---    [3] $boolean  - TRUE to empty register before addition
---    [4] $boolean  - TRUE to empty var references except new register
---  Return:
-function Class.UpdateTables (reg, var, reg_clear, var_write)
-  if (_DEBUG) then print("MCG :: UpdateTables") end
-  assert(type(reg) == "number")
-  assert(type(var) == "string")
-  assert(not reg_clear or type(reg_clear) == "boolean")
-  assert(not var_write or type(var_write) == "boolean")
-  if (var_write or reg_clear) then
-    for _, var_in_reg in ipairs(reg_var.regs[reg]) do
-      Class.VarRemoveReg(var_in_reg, reg)
-    end
-    Class.RegClear(reg)
-    Class.RegAddVar(reg, var)
-    if (var_write) then
-      Class.VarClear(var)
-      Class.VarAddReg(var, reg)
-    end
-  else
-    Class.RegAddVar(reg, var)
-  end
 end
 
 --VarAddReg: Add a register inside a variable
@@ -1137,7 +1221,11 @@ function Class.VarSaveMem (func_num, var, reg)
   assert(type(func_num) == "number")
   assert(type(var) == "string")
   assert(type(reg) == "number")
-  Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s", registers[reg], stack[var]))
+  Class.FunAddAssemblerInst(func_num, string.format("  movl   %s, %s\t%s",
+    registers[reg],
+    stack[var], 
+    (_DETAIL and "/* save " .. var .. " back to stack */") or ""
+  ))
   table.insert(reg_var.vars[var], var)
 end
 
