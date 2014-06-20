@@ -6,6 +6,8 @@
 --      byte accessed. When we dump instruction ["ID[rval]=BYTErval"] we need to
 --      access its lowest byte. If third operator is inside ESI or EDI, it wont
 --      complete its instructions
+-- SOL: Solution is to clear a register (%edx, for example) if register is not
+--      compatible.
 
 -- BUG: Calling malloc (NEW or NEW BYTE) was not implemented
 
@@ -654,9 +656,8 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
       end  
     end
     if (op2 ~= "%eax") then
-      Class.FunAddMachineInst(func_num, string.format("  movl   %s, %%eax", op2))
+      Class.FunAddMachineInst(func_num, string.format("  movl   %s, %%eax\t%s", op2, (_DETAIL and "/* set dividend on %eax */") or ""))
     end
-
     local ecx_num = Class.RegGetNum("%ecx")
     for _, var in ipairs(reg_var.regs[ecx_num]) do
       Class.VarClear(var)
@@ -667,14 +668,11 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
       Class.VarClear(var)
       Class.VarSaveMem(func_num, var, edx_num)
     end
-
     Class.FunAddMachineInst(func_num, string.format("  cltd"))
-    Class.FunAddMachineInst(func_num, string.format("  idivl  %s", op3))
-
+    Class.FunAddMachineInst(func_num, string.format("  idivl  %s\t%s", op3, (_DETAIL and "/* divide %eax by reg */") or ""))
     if (op1 ~= "%eax") then
-      Class.FunAddMachineInst(func_num, string.format("  movl   %%eax, %s", op2))
+      Class.FunAddMachineInst(func_num, string.format("  movl   %%eax, %s\t%s", op1, (_DETAIL and "/* set division return on correct reg */") or ""))
     end
-
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID[rval]=rval"]) then
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID[rval]=rval */")) end
