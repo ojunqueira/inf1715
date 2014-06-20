@@ -162,6 +162,15 @@ function Class.Expression (t)
   return str .. ")"
 end
 
+function Class.Extern (indent, t)
+  print(indent .. "EXTERN FUN [" .. t.name .. "] @" .. t.line .. " {")
+  for _, node in ipairs(t.params) do
+    print(indent .. "  EXTERN_FUNC_PARAMETER [" .. node.name .. "] " .. node.type .. string.rep("[]", node.dimension))
+  end
+  print(indent .. "  EXTERN_FUNC_RETURN " .. (t.ret_type or "VOID") .. string.rep("[]", t.ret_dimension or 0))
+  print(indent .. "}")
+end
+
 function Class.Function (indent, t)
   print(indent .. "FUN [" .. t.name .. "] @" .. t.line .. " {")
   for _, node in ipairs(t.params) do
@@ -191,6 +200,8 @@ function Class.Program (indent, t)
   for _, node in ipairs(t) do
     if (node.id == tree_nodes["DECLARE"]) then
       Class.Declare(indent .. "  ", node)
+    elseif (node.id == tree_nodes["EXTERN"]) then
+      Class.Extern(indent .. "  ", node)
     elseif (node.id == tree_nodes["FUNCTION"]) then
       Class.Function(indent .. "  ", node)
     end
@@ -214,7 +225,7 @@ end
 --Class: Class Abstract Syntax or Semantic Tree with comprehensible format
 --  parameters:
 --  return:
-function Class.Class (tree)
+function Class.Print (tree)
   if (_DEBUG) then print("PRT :: Class") end
   Class.Program("", tree)
 end

@@ -135,6 +135,34 @@ function Class.NewElseIfNode (line, condition, block)
   return node
 end
 
+--NewExternNode: Create a new node
+--  {
+--    id            = $number         - EXTERN code
+--    line          = $number         - line number
+--    name          = $string         - var name
+--    params        = $table          - list of PARAMETER nodes
+--    ret_type      = $string or $nil - [bool, char, int], represents function return type
+--    ret_dimension = $number or $nil - function return dimension
+--  }
+--  Parameters:
+--  Return:
+function Class.NewExternNode (line, name, parameters, return_type, return_size)
+  if (_DEBUG) then print("AST :: NewExternNode") end
+  local node = {
+    id            = tree_nodes["EXTERN"],
+    line          = line,
+    name          = name,
+    params        = parameters,
+    ret_type      = return_type,
+    ret_dimension = return_size,
+  }
+  if (node.ret_type == "string") then
+    node.ret_type = "char"
+    node.ret_dimension = node.ret_dimension + 1
+  end
+  return node
+end
+
 --NewFunctionNode: Create a new node
 --  {
 --    id            = $number         - FUNCTION code

@@ -136,7 +136,7 @@ function Class.SetSymbol (t)
   local symbol = {}
   symbol.line = t.line
   symbol.name = t.name
-  if (t.id == tree_nodes["FUNCTION"]) then
+  if (t.id == tree_nodes["FUNCTION"] or t.id == tree_nodes["EXTERN"]) then
     symbol.id = "function"
     symbol.params = util.TableCopy(t.params)
     symbol.ret_type = t.ret_type

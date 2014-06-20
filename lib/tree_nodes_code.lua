@@ -25,6 +25,7 @@ local codes = {
   ["CALL"]        = 02,
   ["DECLARE"]     = 03,
   ["ELSEIF"]      = 04,
+  ["EXTERN"]      = 17,
   ["FUNCTION"]    = 05,
   ["IF"]          = 06,
   ["LITERAL"]     = 07,

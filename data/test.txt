@@ -1,3 +1,6 @@
+
+extern fun print(s:string):int
+
 i0:int
 
 fun f_1 (b1:bool, b2:bool) :bool
@@ -13,6 +16,7 @@ fun f_1 (b1:bool, b2:bool) :bool
   i3 = i7 - i5 + i4
   i2 = i6
   b1 = i2 = i1
+  print("hello")
   if true
     i8:int
   end

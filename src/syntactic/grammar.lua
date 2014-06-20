@@ -258,15 +258,17 @@ end
 --    decl      → funcao | global
 --  parameters:
 --  return:
---    [1] $table  - DECLARE or FUNCTION node
+--    [1] $table  - DECLARE or FUNCTION or EXTERN node
 function Grammar.Declare ()
   if (_DEBUG) then print("LAN :: Grammar_decl") end
   local decl
   local token = Parser.Peek()
   if (token and token.code == tokens.K_FUN) then
-    decl = Grammar.Function(parent_node)
+    decl = Grammar.Function()
+  elseif (token and token.code == tokens.K_EXTERN) then
+    decl = Grammar.Extern()
   elseif (token and token.code == tokens.ID) then
-    decl = Grammar.Global(parent_node)
+    decl = Grammar.Global()
   else
     Error(token and token.line or 0)
   end
@@ -441,6 +443,31 @@ function Grammar.ExpressionLevel7 ()
   end
 end
 
+--Extern:
+--  syntax:
+--    externa   → 'extern' 'fun' ID '(' params ')' [ ':' tipo ] nl
+--  parameters:
+--  return:
+--    [1] $table  - EXTERN node
+function Grammar.Extern ()
+  if (_DEBUG) then print("LAN :: Grammar_funcao") end
+  local name, line, params, ret_type, array_size
+  Match(tokens.K_EXTERN)
+  Match(tokens.K_FUN)
+  name, line = Match(tokens.ID)
+  Match(tokens["OP_("])
+  params = Grammar.Parameters()
+  Match(tokens["OP_)"])
+  local token = Parser.Peek()
+  if (token and token.code == tokens["OP_:"]) then
+    Match(tokens["OP_:"])
+    ret_type, array_size = Grammar.Type()
+  end
+  Grammar.LineEnd()
+  return AST.NewExternNode(line, name, params, ret_type, array_size)
+end
+
+
 --Function:
 --  syntax:
 --    funcao    → 'fun' ID '(' params ')' [ ':' tipo ] nl
@@ -574,7 +601,7 @@ function Grammar.Program ()
     Grammar.LineEnd()
   end
   token = Parser.Peek()
-  if (token and (token.code == tokens.K_FUN or token.code == tokens.ID)) then
+  if (token and (token.code == tokens.K_FUN or token.code == tokens.K_EXTERN or token.code == tokens.ID)) then
     table.insert(node, Grammar.Declare())
     while (true) do
       token = Parser.Peek()
@@ -703,7 +730,9 @@ return Class
 
 -- programa  → { NL } decl { decl }
 --
--- decl      → funcao | global
+-- decl      → funcao | global | externa
+--
+-- externa   → 'extern' 'fun' ID '(' params ')' [ ':' tipo ] nl
 --
 -- nl        → NL { NL }
 --

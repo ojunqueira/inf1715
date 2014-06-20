@@ -232,7 +232,7 @@ function Class.VerifyFunction (node)
   SymbolTable.RemoveScope()
 end
 
---VerifyGlobals: Add global functions and variables to scope
+--VerifyGlobals: Add global functions, externs and variables to scope
 --  Parameters:
 --    [1] $table  = PROGRAM node
 --  Return:
@@ -379,6 +379,8 @@ function Class.VerifyProgram (t)
   Class.VerifyGlobals(t)
   for _, node in ipairs(t) do
     if (node.id == tree_nodes["DECLARE"]) then
+      -- node already saved in symbol table while verifying globals
+    elseif (node.id == tree_nodes["EXTERN"]) then
       -- node already saved in symbol table while verifying globals
     elseif (node.id == tree_nodes["FUNCTION"]) then
       Class.VerifyFunction(node)

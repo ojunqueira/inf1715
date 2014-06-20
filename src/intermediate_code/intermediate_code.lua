@@ -478,6 +478,16 @@ function Class.GenExpressionVar (node)
   end
 end
 
+--GenExtern: 
+--  Parameters:
+--    [1] $table  - EXTERN node
+--  Return:
+function Class.GenExtern (node)
+  if (_DEBUG) then print("ICG :: GenExtern") end
+  assert(node.id == tree_nodes["EXTERN"])
+
+end
+
 --GenFunction: 
 --  Parameters:
 --    [1] $table  - FUNCTION node
@@ -694,6 +704,8 @@ function Class.Open (path, tree)
     for _, node in ipairs(tree) do
       if (node.id == tree_nodes["DECLARE"]) then
         Class.GenGlobal(node)
+      elseif (node.id == tree_nodes["EXTERN"]) then
+        Class.GenExtern(node)
       elseif (node.id == tree_nodes["FUNCTION"]) then
         Class.GenFunction(node)
       else

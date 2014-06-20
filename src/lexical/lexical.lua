@@ -109,6 +109,11 @@ lexer = lulex.New{
       StoreToken(tokens.K_ELSE, token, line_number)
     end
   },
+  { 'extern',
+    function (token)
+      StoreToken(tokens.K_EXTERN, token, line_number)
+    end
+  },
   { 'while',
     function (token)
       StoreToken(tokens.K_WHILE, token, line_number)

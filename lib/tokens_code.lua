@@ -26,6 +26,7 @@ local codes = {
   K_IF          = 101,
   K_THEN        = 102,
   K_ELSE        = 103,
+  K_EXTERN      = 119,
   K_WHILE       = 104,
   K_LOOP        = 105,
   K_FUN         = 106,
