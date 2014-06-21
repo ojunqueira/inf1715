@@ -1,4 +1,4 @@
-*.icg
-*.o
 
-*.s
+/out
+/data/*.icg
+/data/*.s

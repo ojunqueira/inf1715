@@ -1,0 +1,12 @@
+         fun _mul (a,b)
+                 $t1 = a * b
+                 ret $t1
+         fun _sub (a,b)
+                 $t2 = a - b
+                 ret $t2
+         fun _sum (a,b)
+                 $t3 = a + b
+                 ret $t3
+         fun _div (a,b)
+                 $t4 = a / b
+                 ret $t4
