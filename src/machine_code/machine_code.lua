@@ -2,14 +2,6 @@
 -- Bugs and Improvement
 --==============================================================================
 
--- BUG: We are using 6 registers. Only EAX, EBX, ECX and EDX can have its lowest
---      byte accessed. When we dump instruction ["ID[rval]=BYTErval"] we need to
---      access its lowest byte. If third operator is inside ESI or EDI, it wont
---      complete its instructions
--- SOL: Solution is to clear a register (%edx, for example) if register is not
---      compatible.
-
--- BUG: Calling malloc (NEW or NEW BYTE) was not implemented
 
 
 --==============================================================================
@@ -365,7 +357,7 @@ function Class.FunBuildStack (func)
   local _, _, params = string.find(func.header, "%(([^%)]+)%)")
   if (params) then
     params = string.gsub(params, ",", " ")
-    local count = 0
+    local count = 1
     for param in string.gmatch(params, "%w+") do
       count = count + 1
       stack[param] = (count * 4) .. "(%ebp)"
@@ -505,10 +497,13 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=BYTErval"]) then
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=BYTErval */")) end
-
-    -- WARNING: REGISTER USED IN SECOND RVAL VALUE MUST BE ONE OF: EAX, EBX, ECX or EDX
-    Class.FunAddMachineInst(func_num, string.format("  movsbl %s, %s", op2, op1))
-
+    local edx_num = Class.RegGetNum("%edx")
+    for _, var in ipairs(reg_var.regs[edx_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, edx_num)
+    end
+    Class.FunAddMachineInst(func_num, string.format("  movl   %s, %%edx\t%s", op2, (_DETAIL and "/* use %edx to access lowest position */") or ""))
+    Class.FunAddMachineInst(func_num, string.format("  movsbl %%dl, %s", op1))
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=ID[rval]"]) then
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=ID[rval] */")) end
@@ -521,10 +516,13 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=BYTEID[rval] */")) end
     Class.FunAddMachineInst(func_num, string.format("  movl   %s, %%esi", op3))
     Class.FunAddMachineInst(func_num, string.format("  addl   %s, %%esi", op2))
-
-    -- WARNING: REGISTER USED IN SECOND RVAL VALUE MUST BE ONE OF: EAX, EBX, ECX or EDX
-    Class.FunAddMachineInst(func_num, string.format("  movsbl %s, (%%esi)", op1))
-
+    local edx_num = Class.RegGetNum("%edx")
+    for _, var in ipairs(reg_var.regs[edx_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, edx_num)
+    end
+    Class.FunAddMachineInst(func_num, string.format("  movl   %s, %%edx\t%s", op1, (_DETAIL and "/* use %edx to access lowest position */") or ""))
+    Class.FunAddMachineInst(func_num, string.format("  movsbl %%dl, (%%esi)", op1))
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=-rval"]) then
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=-rval */")) end
@@ -532,14 +530,56 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     Class.FunAddMachineInst(func_num, string.format("  negl   %s", op1))
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=NEWrval"]) then
-    if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=NEWrval */")) end
-    -- call malloc (parametro é tamanho * 4)
+    if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=NEWrval */")) end    
+    local eax_num = Class.RegGetNum("%eax")
+    for _, var in ipairs(reg_var.regs[eax_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, eax_num)
+    end
+    local ecx_num = Class.RegGetNum("%ecx")
+    for _, var in ipairs(reg_var.regs[ecx_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, ecx_num)
+    end
+    local edx_num = Class.RegGetNum("%edx")
+    for _, var in ipairs(reg_var.regs[edx_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, edx_num)
+    end
+    Class.FunAddMachineInst(func_num, string.format("  movl   $4, %%eax\t%s", (_DETAIL and "/* malloc size is 4 * " .. op2 .. " */") or ""))
+    Class.FunAddMachineInst(func_num, string.format("  imul   %s, %%eax", op2))
+    Class.FunAddMachineInst(func_num, string.format("  pushl  %%eax"))
+    Class.FunAddMachineInst(func_num, string.format("  call   malloc"))
+    Class.FunAddMachineInst(func_num, string.format("  addl   $4, %%esp\t%s", (_DETAIL and "/* discharge malloc param from stack */") or ""))
+    if (op1 ~= "%eax") then
+      Class.FunAddMachineInst(func_num, string.format("  movl   %%eax, %s\t%s", op1, (_DETAIL and "/* save malloc ret */") or ""))
+    end
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=NEWBYTErval"]) then
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=NEWBYTErval */")) end
-    -- push parametro
-    -- call malloc (parametro é tamanho)
-    -- retorno no eax
+    
+    local eax_num = Class.RegGetNum("%eax")
+    for _, var in ipairs(reg_var.regs[eax_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, eax_num)
+    end
+    local ecx_num = Class.RegGetNum("%ecx")
+    for _, var in ipairs(reg_var.regs[ecx_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, ecx_num)
+    end
+    local edx_num = Class.RegGetNum("%edx")
+    for _, var in ipairs(reg_var.regs[edx_num]) do
+      Class.VarClear(var)
+      Class.VarSaveMem(func_num, var, edx_num)
+    end
+    Class.FunAddMachineInst(func_num, string.format("  movl   %s, %%eax\t%s", op2, (_DETAIL and "/* malloc size is " .. op2 .. " */") or ""))
+    Class.FunAddMachineInst(func_num, string.format("  pushl  %%eax"))
+    Class.FunAddMachineInst(func_num, string.format("  call   malloc"))
+    Class.FunAddMachineInst(func_num, string.format("  addl   $4, %%esp\t%s", (_DETAIL and "/* discharge malloc param from stack */") or ""))
+    if (op1 ~= "%eax") then
+      Class.FunAddMachineInst(func_num, string.format("  movl   %%eax, %s\t%s", op1, (_DETAIL and "/* save malloc ret */") or ""))
+    end
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["ID=rvalEQrval"]) then
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=rvalEQrval */")) end
@@ -685,19 +725,21 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID[rval]=BYTErval */")) end
     Class.FunAddMachineInst(func_num, string.format("  movl   %s, %%esi", op2))
     Class.FunAddMachineInst(func_num, string.format("  addl   %s, %%esi", op1))
-    -- WARNING: REGISTER USED IN LAST RVAL VALUE MUST BE ONE OF: EAX, EBX, ECX or EDX
     if (Class.RegGetNum(op3)) then
       local _, _, reg_low = string.find(op3, "([abcd])")
       if (reg_low) then
         reg_low = "%" .. reg_low .. "l"
         Class.FunAddMachineInst(func_num, string.format("  movb   %s, (%%esi)", reg_low))
       else
-        print(string.format("Operator '%s' cannot be accessed by his lowest value"))
-        Class.Error("Register cannot have its lowest byte accessed")
+        local edx_num = Class.RegGetNum("%edx")
+        for _, var in ipairs(reg_var.regs[edx_num]) do
+          Class.VarClear(var)
+          Class.VarSaveMem(func_num, var, edx_num)
+        end
+        Class.FunAddMachineInst(func_num, string.format("  movl   %s, %%edx", op3))
+        Class.FunAddMachineInst(func_num, string.format("  movb   %%dl, (%%esi)"))
       end
     else
-      print("operator is num: ", op3)
-      print(string.format("  movb   %s, (%%esi)", op3))
       Class.FunAddMachineInst(func_num, string.format("  movb   %s, (%%esi)", op3))
     end
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
@@ -1181,7 +1223,8 @@ function Class.RegGetMem (func_num, reg, var)
   assert(type(var) == "string")
   if (var == "$ret") then
     Class.FunAddMachineInst(func_num, string.format("  movl   %s, %s\t%s",
-      "$ret",
+      --"$ret",
+      "%eax",
       registers[reg],
       (_DETAIL and "/* save fun ret */") or ""
     ))
