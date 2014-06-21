@@ -3,7 +3,7 @@ extern fun print(s:string):int
 
 i0:int
 
-fun f_1 (b1:bool, b2:bool) :bool
+fun _main (b1:bool, b2:bool) :bool
   i1:int
   i2:int
   i3:int
@@ -11,6 +11,10 @@ fun f_1 (b1:bool, b2:bool) :bool
   i5:int
   i6:int
   i7:int
+  ii:[]int
+  bb:[]bool
+  ii = new [8]int
+  bb = new [10]bool
   i1 = -4
   i1 = (i2 + i3) * (i4) / (i5 * i2) + i6 - i7
   i3 = i7 - i5 + i4
