@@ -432,7 +432,22 @@ function Class.FunGenMachineCode (func_num, func)
   end
 end
 
+local inverse_jump = {
+  je = "jne",
+  jl = "jge",
+  jg = "jle",
+  jne = "je",
+  jge = "jl",
+  jle = "jg",
+}
+
+function Class.GenCompareJump(func_num, op1, op2, jump, label)
+  if op2:sub(1,1) ~= "%" then
+    op1, op2 = op2, op1
+    jump = inverse_jump[jump]
   end
+  Class.FunAddMachineInst(func_num, string.format("  cmpl   %s, %s", op1, op2))
+  Class.FunAddMachineInst(func_num, string.format("  %s     %s", jump, label))
 end
 
 --FunGenOperation: Create list of machine instructions to complete an equivalent
@@ -468,13 +483,11 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["IFFALSEGOTO"]) then
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* IFFALSEGOTO */")) end
-    Class.FunAddMachineInst(func_num, string.format("  cmpl   $0, %s", op1))
-    Class.FunAddMachineInst(func_num, string.format("  je     %s", op2))
+    Class.GenCompareJump(func_num, op1, "$0", "je", op2)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["IFGOTO"]) then
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* IFGOTO */")) end
-    Class.FunAddMachineInst(func_num, string.format("  cmpl   $1, %s", op1))
-    Class.FunAddMachineInst(func_num, string.format("  je     %s", op2))
+    Class.GenCompareJump(func_num, op1, "$1", "je", op2)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/*----------------*/")) end
   elseif (code == operations_code["LABEL"]) then
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* LABEL */")) end
@@ -599,8 +612,7 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=rvalEQrval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
-    Class.FunAddMachineInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
-    Class.FunAddMachineInst(func_num, string.format("  je     %s", lbl_true))
+    Class.GenCompareJump(func_num, op2, op3, "je", lbl_true)
     Class.FunAddMachineInst(func_num, string.format("  movl   $0, %s", op1))
     Class.FunAddMachineInst(func_num, string.format("  jmp    %s", lbl_end))
     Class.FunAddMachineInst(func_num, string.format("%s:", lbl_true))
@@ -611,8 +623,7 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=rvalNErval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
-    Class.FunAddMachineInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
-    Class.FunAddMachineInst(func_num, string.format("  jne    %s", lbl_true))
+    Class.GenCompareJump(func_num, op2, op3, "jne", lbl_true)
     Class.FunAddMachineInst(func_num, string.format("  movl   $0, %s", op1))
     Class.FunAddMachineInst(func_num, string.format("  jmp    %s", lbl_end))
     Class.FunAddMachineInst(func_num, string.format("%s:", lbl_true))
@@ -623,8 +634,7 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=rvalGErval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
-    Class.FunAddMachineInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
-    Class.FunAddMachineInst(func_num, string.format("  jge    %s", lbl_true))
+    Class.GenCompareJump(func_num, op2, op3, "jge", lbl_true)
     Class.FunAddMachineInst(func_num, string.format("  movl   $0, %s", op1))
     Class.FunAddMachineInst(func_num, string.format("  jmp    %s", lbl_end))
     Class.FunAddMachineInst(func_num, string.format("%s:", lbl_true))
@@ -635,8 +645,7 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=rvalLErval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
-    Class.FunAddMachineInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
-    Class.FunAddMachineInst(func_num, string.format("  jle    %s", lbl_true))
+    Class.GenCompareJump(func_num, op2, op3, "jle", lbl_true)
     Class.FunAddMachineInst(func_num, string.format("  movl   $0, %s", op1))
     Class.FunAddMachineInst(func_num, string.format("  jmp    %s", lbl_end))
     Class.FunAddMachineInst(func_num, string.format("%s:", lbl_true))
@@ -647,8 +656,7 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=rval<rval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
-    Class.FunAddMachineInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
-    Class.FunAddMachineInst(func_num, string.format("  jl     %s", lbl_true))
+    Class.GenCompareJump(func_num, op2, op3, "jl", lbl_true)
     Class.FunAddMachineInst(func_num, string.format("  movl   $0, %s", op1))
     Class.FunAddMachineInst(func_num, string.format("  jmp    %s", lbl_end))
     Class.FunAddMachineInst(func_num, string.format("%s:", lbl_true))
@@ -659,8 +667,7 @@ function Class.FunGenOperation (func_num, code, label, op1, op2, op3)
     if (_DETAIL) then Class.FunAddMachineInst(func_num, string.format("/* ID=rval>rval */")) end
     local lbl_true  = Class.LabelGetNew()
     local lbl_end   = Class.LabelGetNew()
-    Class.FunAddMachineInst(func_num, string.format("  cmpl   %s, %s", op2, op3))
-    Class.FunAddMachineInst(func_num, string.format("  jg     %s", lbl_true))
+    Class.GenCompareJump(func_num, op2, op3, "jg", lbl_true)
     Class.FunAddMachineInst(func_num, string.format("  movl   $0, %s", op1))
     Class.FunAddMachineInst(func_num, string.format("  jmp    %s", lbl_end))
     Class.FunAddMachineInst(func_num, string.format("%s:", lbl_true))
