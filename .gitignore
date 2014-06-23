@@ -2,3 +2,5 @@
 /out
 /data/*.icg
 /data/*.s
+luacov.report.out
+luacov.stats.out
