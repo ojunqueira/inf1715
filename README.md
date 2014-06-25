@@ -7,5 +7,10 @@ Professor: Hisham Muhammad
 
 Aluno: Otávio Junqueira
 
+
 Linguagem Mini-0:
 =======
+
+A linguagem Mini-0 é uma linguagem bastante pequena, mas com um conjunto razoável de recursos para manipulação básica de inteiros, caracteres, booleanos e vetores. Ela oferece estruturas de controle if/else/end e while/loop; variáveis; funções com parâmetros e retorno de valores.
+
+Além disso, nossa implementação gerará código objeto compatível com C, o que permitirá que programas Mini-0 possam chamar funções das bibliotecas padrão de C.
