@@ -32,3 +32,8 @@ Trabalho 4 - Tabela de Símbolos e Verificação de Tipos
 Trabalho 5 - Código Intermediário
 
 Trabalho 6 - Geração de Assembly Nativo
+
+Requisitos
+=======
+
+O compilador foi escrito em linguagem Lua (http://www.lua.org/), utilizando a biblioteca Perl Compatible Regular Expression - PCRE (http://www.pcre.org/). A instalação é indicada com o uso do gerenciador de pacotes LuaRocks (http://luarocks.org/br).
