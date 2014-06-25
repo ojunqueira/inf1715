@@ -5,7 +5,7 @@ PUC-Rio - 14.1 - INF1715 - Compiladores
 
 Professor: Hisham Muhammad
 
-Aluno: Otávio Junqueira
+Aluno: Otávio Junqueira C. Leão (otaviojcl@me.com)
 
 Objetivo
 =======
