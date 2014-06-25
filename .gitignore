@@ -1,6 +1,21 @@
+#####################
+# tests cases
+#####################
+run_autotest.sh
+/src/auto_test.lua
+/test_cases
+/test_prog_1
+/test_prog_2
 
-/out
-/data/*.icg
-/data/*.s
+#####################
+# astah diagrams
+#####################
+diagram.asta
+diagram.asta.bak
+
+#####################
+# luacov report
+#####################
+run_luacov.sh
 luacov.report.out
 luacov.stats.out

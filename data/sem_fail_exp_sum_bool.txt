@@ -1,6 +1,0 @@
-a:bool
-
-fun x ()
-  b:int
-  b = 4 - a
-end

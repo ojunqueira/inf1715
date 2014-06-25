@@ -1,6 +1,0 @@
-
-fun func1 () :int
-  a:int
-  a:int
-  return a
-end

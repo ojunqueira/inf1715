@@ -1,6 +1,0 @@
-
-fun x ()
-  a:int
-  b:bool
-  a = b
-end

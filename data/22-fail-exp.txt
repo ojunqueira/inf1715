@@ -1,7 +1,0 @@
-
-fun exps()
-   if 2 < x <= or 5
-      print("woof")
-   end
-end
-

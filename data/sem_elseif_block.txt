@@ -1,9 +1,0 @@
-
-
-fun x ()
-  if (true)
-  else if (false)
-    a:int
-    a = 4
-  end
-end

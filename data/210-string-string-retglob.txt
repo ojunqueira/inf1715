@@ -1,4 +1,0 @@
-glob:string
-fun foo():string
-   return glob
-end

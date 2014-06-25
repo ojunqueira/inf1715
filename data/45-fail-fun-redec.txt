@@ -1,7 +1,0 @@
-
-fun foo()
-end
-
-fun foo():int
-end
-

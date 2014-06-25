@@ -1,5 +1,0 @@
-fun foo()
-   a: char
-   b: char
-   a = b
-end

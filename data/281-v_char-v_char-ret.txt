@@ -1,3 +1,0 @@
-fun foo(v:[]char):[]char
-   return v
-end

@@ -1,4 +1,0 @@
-glob:[]bool
-fun foo():[]bool
-   return glob
-end

@@ -1,4 +1,0 @@
-
-fun func1 ()
-  return
-end

@@ -1,4 +1,0 @@
-glob:bool
-fun foo():string
-   return glob
-end

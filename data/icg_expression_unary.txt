@@ -1,6 +1,0 @@
-fun f_1 ()
-  i:int
-  i = - 4
-end
-
-

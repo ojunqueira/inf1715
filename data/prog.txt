@@ -1,5 +1,0 @@
-
-fun y () :string
- b:[][]int
- b = new [2][]int
-end

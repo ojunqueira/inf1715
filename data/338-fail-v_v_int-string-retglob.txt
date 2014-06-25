@@ -1,4 +1,0 @@
-glob:string
-fun foo():[][]int
-   return glob
-end

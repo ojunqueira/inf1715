@@ -1,5 +1,0 @@
-
-// erro: arg redeclarado
-fun foo(i: int, i: int): int
-   return 1
-end

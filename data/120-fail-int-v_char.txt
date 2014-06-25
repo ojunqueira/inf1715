@@ -1,5 +1,0 @@
-fun foo()
-   a: int
-   b: []char
-   a = b
-end

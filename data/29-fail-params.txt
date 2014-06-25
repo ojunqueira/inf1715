@@ -1,3 +1,0 @@
-
-fun f(x:int,y:int,)
-end

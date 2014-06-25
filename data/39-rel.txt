@@ -1,7 +1,0 @@
-
-fun foo(): bool
-   a: int
-   b: int
-   return a < b
-end
-

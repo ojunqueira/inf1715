@@ -1,6 +1,0 @@
-fun f_1 ()
-  x:[]bool
-  x = new [5] bool
-end
-
-

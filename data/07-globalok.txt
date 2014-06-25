@@ -1,6 +1,0 @@
-
-glob:bool
-
-fun foo()
-   glob = true
-end

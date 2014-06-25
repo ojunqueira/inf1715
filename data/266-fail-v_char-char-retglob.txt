@@ -1,4 +1,0 @@
-glob:char
-fun foo():[]char
-   return glob
-end

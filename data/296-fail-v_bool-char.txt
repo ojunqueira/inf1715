@@ -1,5 +1,0 @@
-fun foo()
-   a: []bool
-   b: char
-   a = b
-end

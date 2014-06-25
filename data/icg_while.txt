@@ -1,7 +1,0 @@
-
-fun f_1 ()
-  while true
-  loop
-end
-
-

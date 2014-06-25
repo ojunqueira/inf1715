@@ -1,7 +1,0 @@
-fun f_1 ()
-  if false
-  else
-  end
-end
-
-

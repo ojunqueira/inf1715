@@ -1,5 +1,0 @@
-fun x ()
-  a:[]int
-  b:char
-  a = b
-end

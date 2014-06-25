@@ -1,3 +1,0 @@
-fun foo(v:[][]bool):bool
-   return v[0]
-end

@@ -1,4 +1,0 @@
-fun main () :bool
-  x = 2 - (e[3])
-  return 4 + 2 * (5 + 40 - e) + b
-end

@@ -1,6 +1,0 @@
-a:char
-
-fun x ()
-  b:bool
-  b = not a
-end

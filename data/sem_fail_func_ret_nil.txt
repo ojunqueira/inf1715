@@ -1,4 +1,0 @@
-
-fun func1 () :int
-  return
-end

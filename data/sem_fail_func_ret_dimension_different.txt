@@ -1,5 +1,0 @@
-
-fun func1 () :int
-  x:[]int
-  return x
-end

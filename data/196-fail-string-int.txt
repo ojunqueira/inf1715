@@ -1,5 +1,0 @@
-fun foo()
-   a: string
-   b: int
-   a = b
-end

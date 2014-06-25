@@ -1,5 +1,0 @@
-fun foo()
-   a: bool
-   b: [][]int
-   a = b
-end

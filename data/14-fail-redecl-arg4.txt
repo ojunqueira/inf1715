@@ -1,7 +1,0 @@
-
-fun foo(): int
-   i: int
-   x: int
-   i: int
-   return 1
-end
