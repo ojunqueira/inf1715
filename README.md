@@ -1,4 +1,4 @@
-INF-1715
+INF 1715
 =======
 
 PUC-Rio - 14.1 - INF1715 - Compiladores
@@ -7,6 +7,9 @@ Professor: Hisham Muhammad
 
 Aluno: Otávio Junqueira
 
+Objetivo
+=======
+Criação de um compilador capaz de transformar um código escrito em linguagem Mini-0 em código assembly.
 
 Linguagem Mini-0:
 =======
@@ -23,6 +26,9 @@ Trabalho 1 - Análise Léxica
 Trabalho 2 - Análise Sintática
 
 Trabalho 3 - Árvore Sintática Abstrata
+
 Trabalho 4 - Tabela de Símbolos e Verificação de Tipos
+
 Trabalho 5 - Código Intermediário
+
 Trabalho 6 - Geração de Assembly Nativo
